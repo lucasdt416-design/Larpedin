@@ -10,6 +10,12 @@
     .gallery-toolbar   row with live stats + presenter button
     .gallery-stats     "🔥 23 larps · 5 delarps · 2 battles" from /api/stats
     .present-btn       toggles presenter mode
+    .leaderboard       "Most cringe in the room" box (top 3 by score.overall)
+    .leaderboard-header / .leaderboard-title
+    .battle-link       <a> to /battle.html?a=<id>&b=<id> for the top two
+    .leaderboard-list  <ol> of rows
+    .leaderboard-row   one row; data-rank="1|2|3"
+    .leaderboard-rank / .leaderboard-name / .leaderboard-text / .leaderboard-score
     .gallery-flash     big "New larp just dropped" banner (presenter mode)
     .gallery-layout    two columns: QR panel + feed
     .qr-panel          "Scan to post" box
@@ -52,6 +58,13 @@
 
     <section aria-label="Gallery posts">
       <p class="error-banner" id="error" role="alert" hidden></p>
+      <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboard-title" hidden>
+        <div class="leaderboard-header">
+          <h2 class="leaderboard-title" id="leaderboard-title">🏆 Most cringe in the room</h2>
+          <a class="battle-link" id="battle-link" hidden>⚔️ Battle the top two</a>
+        </div>
+        <ol class="leaderboard-list" id="leaderboard-list"></ol>
+      </section>
       <p class="gallery-empty" id="empty" hidden>No posts yet. Scan the code and be the first to larp.</p>
       <ol class="gallery-feed" id="feed" aria-live="polite"></ol>
     </section>

@@ -169,6 +169,39 @@ function focusLinkedPost() {
   setTimeout(() => card.classList.remove("is-new"), 4000);
 }
 
+// ---------- Leaderboard ----------
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function renderLeaderboard(posts) {
+  const top = posts
+    .filter((p) => p.score)
+    .sort((a, b) => b.score.overall - a.score.overall || b.votes - a.votes)
+    .slice(0, 3);
+  $("leaderboard").hidden = top.length === 0;
+  $("leaderboard-list").replaceChildren(...top.map((p, i) => {
+    const row = document.createElement("li");
+    row.className = "leaderboard-row";
+    row.dataset.rank = String(i + 1);
+    const cell = (cls, text) => {
+      const el = document.createElement("span");
+      el.className = cls;
+      el.textContent = text;
+      return el;
+    };
+    row.append(
+      cell("leaderboard-rank", MEDALS[i]),
+      cell("leaderboard-name", p.name || FAKE_NAMES[p.id % FAKE_NAMES.length]),
+      cell("leaderboard-text", p.text),
+      cell("leaderboard-score", `${p.score.overall}/100`),
+    );
+    return row;
+  }));
+  const link = $("battle-link");
+  link.hidden = top.length < 2;
+  if (top.length >= 2) link.href = `/battle.html?a=${top[0].id}&b=${top[1].id}`;
+}
+
 // ---------- Presenter mode ----------
 
 function setPresenting(on) {
@@ -212,7 +245,8 @@ async function loadStats() {
     if (!res.ok) return;
     const s = await res.json();
     const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-    const parts = [`🔥 ${plural(s.posts || 0, "larp")} posted`];
+    // Seed posts don't count, so hide "0 larps" until the room has posted something.
+    const parts = s.posts ? [`🔥 ${plural(s.posts, "larp")} posted`] : [];
     if (s.delarps) parts.push(plural(s.delarps, "delarp"));
     if (s.battles) parts.push(plural(s.battles, "battle"));
     $("stats").textContent = parts.join(" · ");
@@ -245,7 +279,9 @@ async function poll() {
   try {
     const res = await fetch("/api/gallery", { cache: "no-store", signal: AbortSignal.timeout(10000) });
     if (!res.ok) throw new Error(`Gallery error (${res.status})`);
-    render(await res.json());
+    const posts = await res.json();
+    render(posts);
+    renderLeaderboard(posts);
     showError("");
     loadStats();
   } catch {
