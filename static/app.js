@@ -14,8 +14,48 @@ const MODES = {
   delarp: { label: "Paste a LinkedIn post", button: "Delarp it", empty: "Paste a LinkedIn post first.", maxLength: 3000 },
 };
 
+// Clickable examples under the textarea. Delarp ones are full fake posts.
+const INSPO = {
+  larp: [
+    "I woke up at 11am",
+    "I parallel parked on the first try",
+    "I replied \"thanks!\" to an email",
+    "I made instant ramen",
+    "I watched a TED talk at 2x speed",
+    "I got a B- on a quiz",
+    "I unsubscribed from a newsletter",
+    "I drank water today",
+    "I fixed the printer by turning it off and on",
+    "I said \"you too\" when the waiter said enjoy your meal",
+  ],
+  delarp: [
+    ["Layoff post", "Thrilled to announce that after 6 incredible years, I'm embarking on a new chapter! 🚀 Grateful for every lesson. Open to new opportunities. #OpenToWork #Grateful"],
+    ["Award post", "Humbled and honored to be recognized as one of the Top 50 Voices in Synergy. I never set out to win awards, I just wanted to add value. 🙏 #Leadership"],
+    ["Hustle post", "Woke up at 4am. Ran 10k. Closed 3 deals before breakfast. Your competition is sleeping. Are you? 💪 #Grindset #Mindset"],
+  ],
+};
+
 let tone = "thought leader";
 let mode = "larp";
+
+function renderInspo() {
+  const list = mode === "delarp"
+    ? INSPO.delarp
+    : [...INSPO.larp].sort(() => Math.random() - 0.5).slice(0, 4).map((t) => [t, t]);
+  $("inspo-chips").replaceChildren(...list.map(([label, text]) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "inspo-chip";
+    chip.textContent = label;
+    chip.addEventListener("click", () => {
+      $("text").value = text;
+      $("text").focus();
+    });
+    return chip;
+  }));
+  $("inspo-label").textContent = mode === "delarp" ? "Try one:" : "Need inspo?";
+}
+renderInspo();
 
 // ---------- Composer ----------
 
@@ -46,6 +86,7 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
     placeholderIndex = 0;
     $("text").placeholder = PLACEHOLDERS[mode][0];
     if (!$("generate").disabled) $("generate").textContent = m.button;
+    renderInspo();
     clearError();
   });
 });
@@ -523,6 +564,10 @@ function renderCard(data, slot, req) {
     q(".link-btn").addEventListener("click", () => copyText(`${location.origin}/p/${data.id}`, "Link copied!"));
   }
   q(".download-btn").addEventListener("click", (e) => downloadCard(q(".post-card"), e.currentTarget));
+  if (data.id != null) {
+    q(".gallery-link").href = `gallery.html#post-${data.id}`;
+    q(".gallery-link").hidden = false;
+  }
   q(".regen-btn").addEventListener("click", () => run(req.text, [generateTask(req)], item));
 
   slot.replaceWith(item);

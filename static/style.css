@@ -721,3 +721,30 @@ main {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Inspo chips + gallery link ---------- */
+
+.inspo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 10px; }
+.inspo-label { color: var(--muted); font-size: 13px; font-weight: 600; }
+.inspo-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.inspo-chip {
+  padding: 4px 10px;
+  border-radius: var(--pill);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  transition: background-color 0.15s;
+}
+.inspo-chip:hover { background: #e9e6df; }
+
+.gallery-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--pill);
+  font-size: 14px;
+  color: var(--muted);
+}
+.gallery-link:hover { background: var(--hover); color: var(--text); text-decoration: none; }
+.gallery-card { scroll-margin-top: 80px; }

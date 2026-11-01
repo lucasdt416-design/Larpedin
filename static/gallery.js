@@ -126,6 +126,7 @@ function render(posts) {
     let card = cards.get(p.id);
     if (!card) {
       card = buildCard(p);
+      card.id = `post-${p.id}`;
       cards.set(p.id, card);
       if (!firstLoad) {
         card.classList.add("is-new");
@@ -150,7 +151,17 @@ function render(posts) {
   }
 
   $("empty").hidden = posts.length > 0;
+  if (firstLoad) focusLinkedPost();
   firstLoad = false;
+}
+
+// Arriving from "See it in the Hall of Larp" (#post-12): scroll to it and flash it.
+function focusLinkedPost() {
+  const card = location.hash.startsWith("#post-") && document.getElementById(location.hash.slice(1));
+  if (!card) return;
+  card.scrollIntoView({ behavior: "smooth", block: "center" });
+  card.classList.add("is-new");
+  setTimeout(() => card.classList.remove("is-new"), 4000);
 }
 
 async function poll() {

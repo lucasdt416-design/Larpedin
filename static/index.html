@@ -20,6 +20,10 @@
     .composer-field    wraps the textarea + mic button
     .mic-btn           voice input toggle; .is-listening while recording
                        (hidden if the browser has no speech recognition)
+    .inspo             "Need inspo?" row under the textarea
+    .inspo-label       its label
+    .inspo-chips       container for the example chips
+    .inspo-chip        one example; click fills the textarea
     .vibe-label        "Pick a vibe" label
     .vibe-pills        group of the 4 vibe buttons
     .vibe-pill         one vibe button; .is-active = selected
@@ -84,6 +88,7 @@
     .copy-btn          copy the post text only
     .link-btn          copy a shareable /p/<id> link (hidden if no id)
     .download-btn      save the .post-card as a PNG (html2canvas)
+    .gallery-link      <a> to this post in gallery.html (hidden if no id)
     .regen-btn         same text + vibe + level again, replaces this card
 -->
 <html lang="en">
@@ -111,6 +116,10 @@
       <div class="composer-field">
         <textarea class="composer-input" id="text" rows="3" maxlength="500" placeholder="I touched grass"></textarea>
         <button type="button" class="mic-btn" id="mic" aria-pressed="false" aria-label="Speak instead of typing" hidden><span aria-hidden="true">🎤</span></button>
+      </div>
+      <div class="inspo">
+        <span class="inspo-label" id="inspo-label">Need inspo?</span>
+        <div class="inspo-chips" id="inspo-chips" role="group" aria-labelledby="inspo-label"></div>
       </div>
 
       <div class="larp-options" id="larp-options">
@@ -234,6 +243,7 @@
         <button type="button" class="link-btn" hidden>🔗 Share link</button>
         <button type="button" class="download-btn">📸 Download image</button>
         <button type="button" class="regen-btn">🔄 Regenerate</button>
+        <a class="gallery-link" hidden>🏆 See it in the Hall of Larp</a>
       </div>
     </div>
   </template>
