@@ -40,6 +40,29 @@ $("text").addEventListener("keydown", (e) => {
   }
 });
 
+// ---------- Warm-up ----------
+
+// Render's free plan sleeps; the first request can take ~50s. Keep Generate
+// disabled until /api/health answers, but give up after ~75s so it never sticks.
+async function warmUp() {
+  const btn = $("generate");
+  const deadline = Date.now() + 75000;
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch("/api/health", { cache: "no-store" });
+      if (res.ok) break;
+    } catch {
+      // Server still waking up or offline; retry below.
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  btn.classList.remove("is-warming");
+  btn.disabled = false;
+  btn.textContent = "Generate post";
+}
+
+warmUp();
+
 // ---------- Errors ----------
 
 function showError(message) {

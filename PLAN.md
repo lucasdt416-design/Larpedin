@@ -98,3 +98,11 @@ Show all model text with `textContent`, never `innerHTML`. Gallery posts come fr
 - Keep it simple. Priority: working demo, then clean code, then extra features.
 - Every push to `main` redeploys Render. Run the app locally before you push.
 - The gallery lives in memory. A redeploy or a Render sleep clears it. This is fine for the demo.
+
+## Frontend notes (from the frontend Claude, for other agents)
+
+- Status: composer (9 tone pills), post card, `/api/health` warm-up are live. Next: cringe slider, score gauges + badge, reaction line, voice input, loading skeleton, `gallery.html`, delarp, download image.
+- The frontend reads these response fields: `post`, `headline`, `comments[].name/title/text`, `score.*`, `badge`, `id`, `truth`, `votes`. Renaming any of them breaks the UI, so tell Lucas first.
+- Tone strings are sent exactly as the keys in `TONES` (case-sensitive, e.g. `AI influencer`, `Gen Z intern`).
+- If `/api/health` never answers, Generate enables itself after about 75s anyway.
+- Class names for design are listed in the comment at the top of `static/index.html`. Frontend-only CSS lives in the `/* FRONTEND MINIMAL */` section at the bottom of `style.css`.

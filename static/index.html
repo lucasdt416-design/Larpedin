@@ -16,7 +16,8 @@
     .vibe-pills        group of the 4 vibe buttons
     .vibe-pill         one vibe button; .is-active = selected
     .vibe-emoji        emoji inside a pill
-    .generate-btn      submit button; .is-loading while waiting
+    .generate-btn      submit button; .is-loading while waiting,
+                       .is-warming while the server wakes up (/api/health)
     .shortcut-hint     "Ctrl/⌘ + Enter" hint text
 
   FEEDBACK
@@ -75,9 +76,14 @@
         <button type="button" class="vibe-pill" data-tone="humble brag" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">😇</span> Humble brag</button>
         <button type="button" class="vibe-pill" data-tone="hustle bro" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">💪</span> Hustle bro</button>
         <button type="button" class="vibe-pill" data-tone="agree?" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🤔</span> Agree?</button>
+        <button type="button" class="vibe-pill" data-tone="laid off but grateful" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🙏</span> Laid off but grateful</button>
+        <button type="button" class="vibe-pill" data-tone="AI influencer" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🤖</span> AI influencer</button>
+        <button type="button" class="vibe-pill" data-tone="founder who failed 3 startups" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🚀</span> Founder who failed 3 startups</button>
+        <button type="button" class="vibe-pill" data-tone="recruiter" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🎯</span> Recruiter</button>
+        <button type="button" class="vibe-pill" data-tone="Gen Z intern" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">💅</span> Gen Z intern</button>
       </div>
 
-      <button type="submit" class="generate-btn" id="generate">Generate post</button>
+      <button type="submit" class="generate-btn is-warming" id="generate" disabled>Warming up the hustle...</button>
       <span class="shortcut-hint" id="shortcut-hint">Ctrl + Enter</span>
     </form>
 
