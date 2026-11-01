@@ -103,6 +103,8 @@ FALLBACK_POSTS = [
 # ponytail: in-memory gallery, cleared on redeploy/sleep; needs one gunicorn worker so all requests share it.
 GALLERY = {}
 NEXT_ID = itertools.count(1)
+PROFILES = {}
+NEXT_PROFILE_ID = itertools.count(1)
 LOCK = threading.Lock()
 STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0, "tokens": 0, "by_model": {}}
 
@@ -375,6 +377,11 @@ def profile():
         out = {**FALLBACK_PROFILE, "fallback": True}
     out["name"] = name
     count("profiles")
+    with LOCK:
+        out["id"] = next(NEXT_PROFILE_ID)
+        PROFILES[out["id"]] = out
+        for old in sorted(PROFILES)[:-50]:
+            del PROFILES[old]
     return jsonify(out)
 
 
@@ -460,22 +467,18 @@ def no_emoji(text):
     return "".join(ch for ch in text if drawable(ord(ch))).strip()
 
 
-@app.get("/og/<int:post_id>.png")
-def og_image(post_id):
-    with LOCK:
-        post = dict(GALLERY.get(post_id) or {})
+def card_png(name, headline, body, tag):
     font = ImageFont.load_default
     img = Image.new("RGB", (1200, 630), "#f4f2ee")
     d = ImageDraw.Draw(img)
     d.rounded_rectangle((40, 40, 1160, 590), radius=16, fill="white", outline="#dcdad6", width=2)
     d.ellipse((80, 80, 170, 170), fill="#0a66c2")
-    d.text((125, 125), "LV", font=font(size=38), fill="white", anchor="mm")
-    d.text((195, 88), "A LarpedIn Visionary", font=font(size=34), fill="#191919")
-    headline = no_emoji(post.get("headline", "Visionary | Professional Larper"))
-    d.text((195, 134), textwrap.shorten(headline, 60), font=font(size=24), fill="#666666")
-    body = no_emoji(post.get("post", "This post went back to being a normal day."))
+    initials = "".join(w[0] for w in no_emoji(name).split()[:2]).upper() or "LV"
+    d.text((125, 125), initials, font=font(size=38), fill="white", anchor="mm")
+    d.text((195, 88), textwrap.shorten(no_emoji(name), 45), font=font(size=34), fill="#191919")
+    d.text((195, 134), textwrap.shorten(no_emoji(headline), 60), font=font(size=24), fill="#666666")
     lines = []
-    for para in body.splitlines():
+    for para in no_emoji(body).splitlines():
         lines += textwrap.wrap(para, 58) if para.strip() else []
     y = 205
     for line in lines[:8]:
@@ -483,10 +486,9 @@ def og_image(post_id):
         y += 40
     if len(lines) > 8:
         d.text((80, y), "...see more", font=font(size=28), fill="#666666")
-    if post:
-        tag = f"{post['badge']}  |  Cringe {post['score']['overall']}/100"
-        d.rounded_rectangle((80, 520, 100 + font(size=26).getlength(tag) + 20, 566), radius=23, fill="#0a66c2")
-        d.text((110, 543), tag, font=font(size=26), fill="white", anchor="lm")
+    if tag:
+        d.rounded_rectangle((80, 520, 120 + font(size=26).getlength(tag), 566), radius=23, fill="#0a66c2")
+        d.text((100, 543), tag, font=font(size=26), fill="white", anchor="lm")
     d.text((1120, 543), "LarpedIn (parody)", font=font(size=24), fill="#999999", anchor="rm")
     buf = io.BytesIO()
     img.save(buf, "PNG")
@@ -494,19 +496,66 @@ def og_image(post_id):
     return send_file(buf, mimetype="image/png", max_age=300)
 
 
-@app.get("/p/<int:post_id>")
-def permalink(post_id):
-    # Fill link-preview meta tags server-side so iMessage/Slack/Discord previews show the post.
+@app.get("/og/<int:post_id>.png")
+def og_image(post_id):
     with LOCK:
-        post = GALLERY.get(post_id)
-    with open(os.path.join(app.static_folder, "post.html"), encoding="utf-8") as f:
+        post = dict(GALLERY.get(post_id) or {})
+    if not post:
+        return card_png("A LarpedIn Visionary", "Visionary | Professional Larper", "This post went back to being a normal day.", "")
+    return card_png("A LarpedIn Visionary", post["headline"], post["post"],
+                    f"{post['badge']}  |  Cringe {post['score']['overall']}/100")
+
+
+@app.get("/og/u/<int:profile_id>.png")
+def og_profile_image(profile_id):
+    with LOCK:
+        prof = dict(PROFILES.get(profile_id) or {})
+    if not prof:
+        return card_png("A LarpedIn Visionary", "Visionary | Professional Larper", "This profile went back to being a normal person.", "")
+    jobs = "\n".join(f"{x['title']} at {x['company']}" for x in prof["experience"][:4])
+    return card_png(prof["name"], prof["headline"], f"{prof['about']}\n\n{jobs}", f"{prof['followers']:,} followers")
+
+
+def page_with_meta(filename, title, desc, image):
+    # Fill link-preview meta tags server-side so iMessage/Slack/Discord previews show the content.
+    with open(os.path.join(app.static_folder, filename), encoding="utf-8") as f:
         page = f.read()
-    title = f"{post['headline']} on LarpedIn" if post else "LarpedIn"
-    desc = post["post"][:200] if post else "Turn your ordinary day into a LinkedIn masterpiece."
-    image = f"{request.host_url}og/{post_id}.png"
     return (page.replace("{{og_title}}", html.escape(title))
             .replace("{{og_description}}", html.escape(desc))
             .replace("{{og_image}}", html.escape(image)))
+
+
+@app.get("/p/<int:post_id>")
+def permalink(post_id):
+    with LOCK:
+        post = GALLERY.get(post_id)
+    title = f"{post['headline']} on LarpedIn" if post else "LarpedIn"
+    desc = post["post"][:200] if post else "Turn your ordinary day into a LinkedIn masterpiece."
+    return page_with_meta("post.html", title, desc, f"{request.host_url}og/{post_id}.png")
+
+
+@app.get("/profile.html")
+def profile_page():
+    return page_with_meta("profile.html", "Larp your whole profile | LarpedIn",
+                          "Tell us your real life. We will make recruiters weep.", f"{request.host_url}og/u/0.png")
+
+
+@app.get("/u/<int:profile_id>")
+def profile_link(profile_id):
+    with LOCK:
+        prof = PROFILES.get(profile_id)
+    title = f"{prof['name']} | {prof['headline']}" if prof else "LarpedIn profile"
+    desc = prof["about"][:200] if prof else "Tell us your real life. We will make recruiters weep."
+    return page_with_meta("profile.html", title, desc, f"{request.host_url}og/u/{profile_id}.png")
+
+
+@app.get("/api/profile/<int:profile_id>")
+def get_profile(profile_id):
+    with LOCK:
+        prof = PROFILES.get(profile_id)
+        if not prof:
+            return jsonify(error="That profile is gone. Profiles reset when the server restarts."), 404
+        return jsonify(prof)
 
 
 if __name__ == "__main__":

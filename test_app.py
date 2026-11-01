@@ -78,6 +78,12 @@ assert g[0]["id"] == r["id"] and g[0]["level"] == 10 and g[0]["tone"] == "recrui
 p = c.post("/api/profile", json={"name": "Mo", "text": "I wash dishes"}).json
 assert p["name"] == "Mo" and len(p["experience"]) == 4 and p["fallback"] is False
 assert c.post("/api/profile", json={"name": "Mo"}).status_code == 400
+assert c.get(f"/api/profile/{p['id']}").json["name"] == "Mo"
+assert c.get("/api/profile/999").status_code == 404
+for url in (f"/u/{p['id']}", "/u/999", "/profile.html"):
+    assert "{{" not in c.get(url).get_data(as_text=True), url
+assert "Mo | H" in c.get(f"/u/{p['id']}").get_data(as_text=True)
+assert c.get(f"/og/u/{p['id']}.png").mimetype == "image/png" and c.get("/og/u/999.png").mimetype == "image/png"
 assert c.get(f"/api/post/{r['id']}").json["comments"]
 assert c.get("/api/post/99999").status_code == 404
 page = c.get(f"/p/{r['id']}").get_data(as_text=True)

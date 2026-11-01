@@ -77,6 +77,7 @@
   #speech .w { color: rgba(255,255,255,.35); transition: color .15s; }
   #speech .w.said { color: rgba(255,255,255,.85); }
   #speech .w.now { color: #fff; background: #e62b1e; border-radius: 4px; box-shadow: 0 0 0 3px #e62b1e; }
+  #speech .w.chunk { color: #fff; text-decoration: underline 3px #e62b1e; text-underline-offset: 6px; }
   #speech.plain .w { color: #fff; }
   .speaker { position: relative; z-index: 1; margin-top: 18px; font-size: 13px; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: 2px; }
   .ovation { position: absolute; z-index: 3; bottom: 40px; font-size: 34px; animation: rise 3s ease-out forwards; pointer-events: none; }
@@ -240,6 +241,9 @@ function render(p) {
 // ---- TEDx mode ----
 const stage = document.getElementById("stage"), speech = document.getElementById("speech");
 let voice = null, timers = [], utter = null, opener = null;
+// Orpheus (Groq) is preferred; null = untested, false = failed once this session, so skip it.
+let ttsWorks = null, run = 0, audio = null;
+const aborts = new Set();
 function loadVoice() {
   const vs = speechSynthesis.getVoices();
   // Prefer on-device voices: Chrome's network "Google" voices cut out after ~15s and never fire onend.
@@ -247,6 +251,52 @@ function loadVoice() {
   voice = local.find(v => /Daniel|Alex|Samantha/i.test(v.name)) || local.find(v => /^en[-_]US/i.test(v.lang)) || local[0] || en[0] || null;
 }
 if ("speechSynthesis" in window) { loadVoice(); speechSynthesis.addEventListener("voiceschanged", loadVoice); }
+
+// Split into [start, end, text] chunks of at most max chars: at sentence ends, else commas, else spaces.
+function chunks(t, max) {
+  const lastCut = (s, re) => { let k = 0; for (const m of s.matchAll(re)) k = m.index + m[0].length; return k; };
+  const out = [];
+  for (let i = 0; i < t.length;) {
+    let end = t.length;
+    if (end - i > max) {
+      const s = t.slice(i, i + max + 1);
+      end = i + (lastCut(s, /[.!?]+["')]*\s+|\n+/g) || lastCut(s, /,\s+/g) || lastCut(s, /\s+/g) || max);
+    }
+    const c = t.slice(i, end).trim();
+    if (c) out.push([i, end, c]);
+    i = end;
+  }
+  return out;
+}
+
+// POST /api/tts; resolves to a wav Blob, or null on any failure/timeout/abort (never throws).
+async function tts(text, voiceName, ms) {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  aborts.add(ac);
+  try {
+    const r = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, voice: voiceName }), signal: ac.signal });
+    return r.ok ? await r.blob() : null;
+  } catch { return null; }
+  finally { clearTimeout(t); aborts.delete(ac); }
+}
+
+// Plays a blob; resolves true when it ends, false if it can't play.
+function playBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  audio = new Audio(url);
+  return new Promise(res => {
+    audio.onended = () => res(true);
+    audio.onerror = () => res(false);
+    audio.play().catch(() => res(false));
+  }).finally(() => URL.revokeObjectURL(url));
+}
+
+function stopSpeech() {
+  run++;
+  aborts.forEach(a => a.abort());
+  if (audio) { audio.pause(); audio.onended(); audio = null; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+}
 
 function present() {
   const text = post.post || "";
@@ -265,30 +315,65 @@ function present() {
   document.body.style.overflow = "hidden";
   document.getElementById("closeStage").focus();
 
-  speechSynthesis.cancel();
+  stopSpeech();
+  const gen = run;
   // Strip emoji so the voice doesn't read "clapping hands sign"; same length keeps charIndex aligned.
-  // Kept in a global so Chrome doesn't garbage-collect it mid-speech (which drops onboundary/onend).
-  const u = utter = new SpeechSynthesisUtterance(text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length)));
-  u.rate = 0.9; u.pitch = 0.9; u.lang = "en-US";
-  if (voice) u.voice = voice;
+  const clean = text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
   let cur = null;
-  u.onboundary = e => {
-    if (e.name && e.name !== "word") return;
-    speech.classList.remove("plain");
-    let i = words.length - 1;
-    while (i > 0 && words[i][0] > e.charIndex) i--;
-    if (cur) { cur.classList.remove("now"); }
-    for (let j = 0; j <= i; j++) words[j][1].classList.add("said");
-    cur = words[i] && words[i][1];
-    if (cur) { cur.classList.add("now"); cur.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" }); }
-  };
-  u.onend = () => {
-    if (!stage.classList.contains("on")) return;
+  const finish = () => {
+    if (gen !== run || !stage.classList.contains("on")) return;
     if (cur) cur.classList.remove("now");
     speech.classList.add("plain");
     ovation();
   };
-  speechSynthesis.speak(u);
+
+  // Browser voice from char offset `from` to the end (fallback path).
+  const speakFrom = from => {
+    // Kept in a global so Chrome doesn't garbage-collect it mid-speech (which drops onboundary/onend).
+    const u = utter = new SpeechSynthesisUtterance(clean.slice(from));
+    u.rate = 0.9; u.pitch = 0.9; u.lang = "en-US";
+    if (voice) u.voice = voice;
+    u.onboundary = e => {
+      if (e.name && e.name !== "word") return;
+      speech.classList.remove("plain");
+      let i = words.length - 1;
+      while (i > 0 && words[i][0] > e.charIndex + from) i--;
+      if (cur) { cur.classList.remove("now"); }
+      for (let j = 0; j <= i; j++) words[j][1].classList.add("said");
+      cur = words[i] && words[i][1];
+      if (cur) { cur.classList.add("now"); cur.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" }); }
+    };
+    u.onend = finish;
+    speechSynthesis.speak(u);
+  };
+
+  const TAGS = ["[dramatic] ", "[dramatic] ", "[excited] ", "[dramatic] ", "[dramatic] ", "[whisper] "];
+  const parts = chunks(clean, 189); // 200-char API limit minus the longest tag
+  if (ttsWorks === false || !parts.length) return speakFrom(0);
+
+  // Any failure: remember it, drop the prefetch, and let the browser voice finish from this chunk.
+  const fallback = from => { ttsWorks = false; aborts.forEach(a => a.abort()); speakFrom(from); };
+  (async () => {
+    const say = k => tts(TAGS[k % TAGS.length] + parts[k][2], "troy", k ? 15000 : 4000);
+    let next = say(0);
+    for (let k = 0; k < parts.length; k++) {
+      const blob = await next;
+      if (gen !== run) return;
+      const [s, e] = parts[k];
+      if (!blob) return fallback(s);
+      next = k + 1 < parts.length ? say(k + 1) : null; // prefetch while this one plays
+      const mine = words.filter(([i]) => i >= s && i < e).map(w => w[1]);
+      speech.classList.remove("plain");
+      mine.forEach(w => w.classList.add("chunk"));
+      if (mine[0]) mine[0].scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+      const ok = await playBlob(blob);
+      if (gen !== run) return;
+      mine.forEach(w => { w.classList.remove("chunk"); if (ok) w.classList.add("said"); });
+      if (!ok) return fallback(s);
+      ttsWorks = true;
+    }
+    finish();
+  })();
 }
 
 function ovation() {
@@ -307,7 +392,7 @@ function ovation() {
 }
 
 function closeStage() {
-  speechSynthesis.cancel();
+  stopSpeech();
   timers.forEach(clearTimeout); timers = [];
   stage.querySelectorAll(".ovation, .ovation-label").forEach(e => e.remove());
   stage.classList.remove("on");

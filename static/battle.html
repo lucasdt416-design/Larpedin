@@ -71,6 +71,7 @@
   .bubble { position: relative; background: var(--card); border: 2px solid var(--text); border-radius: 14px; padding: 14px 16px; font-size: 1.1rem; min-height: 3em; }
   .bubble::before { content: ""; position: absolute; top: -12px; left: 28px; border: 12px solid transparent; border-top: 0; border-bottom-color: var(--text); }
   .bubble::after { content: ""; position: absolute; top: -8px; left: 31px; border: 9px solid transparent; border-top: 0; border-bottom-color: var(--card); }
+  .judge-name label { display: inline-flex; gap: 4px; align-items: center; margin: 0 0 0 10px; font-size: .8rem; font-weight: 600; color: var(--muted); cursor: pointer; }
   .fallback-note { font-size: .8rem; color: var(--muted); margin-top: 6px; }
   .actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
   .actions button, .swap { font: inherit; font-weight: 700; border-radius: 99px; padding: 8px 18px; cursor: pointer; border: 1px solid var(--blue); color: var(--blue); background: #fff; }
@@ -137,7 +138,7 @@
       <article class="card side-b" id="cardB"></article>
     </div>
     <div class="judge" id="judge">
-      <div class="judge-name">⚖️ The Honorable Judge of LinkedIn</div>
+      <div class="judge-name">⚖️ The Honorable Judge of LinkedIn <label><input type="checkbox" id="judgeVoice" checked> 🔊 Judge voice</label></div>
       <div class="bubble" id="verdict" aria-live="polite"></div>
       <div class="fallback-note" id="fbNote" hidden>The judge's AI is napping, so this is a backup verdict.</div>
     </div>
@@ -161,10 +162,11 @@ function swapSides() {
     const t = $(x).value; $(x).value = $(y).value; $(y).value = t;
   }
 }
-$("swap").addEventListener("click", swapSides);
-$("swap2").addEventListener("click", () => { swapSides(); resetResults(); });
+$("swap").addEventListener("click", () => { stopSpeech(); swapSides(); });
+$("swap2").addEventListener("click", () => { stopSpeech(); swapSides(); resetResults(); });
 
 $("rematch").addEventListener("click", () => {
+  stopSpeech();
   $("textA").value = ""; $("textB").value = "";
   resetResults();
   $("textA").focus();
@@ -266,6 +268,7 @@ async function dramaticWait(fetchPromise) {
 $("form").addEventListener("submit", async e => {
   e.preventDefault();
   if (busy) return;
+  stopSpeech();
   $("error").hidden = true;
   const a = { name: $("nameA").value.trim(), text: $("textA").value.trim() };
   const b = { name: $("nameB").value.trim(), text: $("textB").value.trim() };
@@ -340,6 +343,95 @@ async function reveal(data) {
   // Step 4: verdict
   $("judge").classList.add("show");
   await typeOut($("verdict"), data.verdict || "");
+  speakVerdict(data.verdict || "");
+}
+
+// ---- Judge voice: Orpheus (Groq) first, browser voice as fallback ----
+// ttsWorks: null = untested, false = failed once this session, so skip it.
+let ttsWorks = null, run = 0, audio = null;
+const aborts = new Set();
+$("judgeVoice").checked = localStorage.getItem("larpedin-judge-voice") !== "0";
+$("judgeVoice").addEventListener("change", e => {
+  localStorage.setItem("larpedin-judge-voice", e.target.checked ? "1" : "0");
+  if (!e.target.checked) stopSpeech();
+});
+
+// Split into [start, end, text] chunks of at most max chars: at sentence ends, else commas, else spaces.
+function chunks(t, max) {
+  const lastCut = (s, re) => { let k = 0; for (const m of s.matchAll(re)) k = m.index + m[0].length; return k; };
+  const out = [];
+  for (let i = 0; i < t.length;) {
+    let end = t.length;
+    if (end - i > max) {
+      const s = t.slice(i, i + max + 1);
+      end = i + (lastCut(s, /[.!?]+["')]*\s+|\n+/g) || lastCut(s, /,\s+/g) || lastCut(s, /\s+/g) || max);
+    }
+    const c = t.slice(i, end).trim();
+    if (c) out.push([i, end, c]);
+    i = end;
+  }
+  return out;
+}
+
+// POST /api/tts; resolves to a wav Blob, or null on any failure/timeout/abort (never throws).
+async function tts(text, voiceName, ms) {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  aborts.add(ac);
+  try {
+    const r = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, voice: voiceName }), signal: ac.signal });
+    return r.ok ? await r.blob() : null;
+  } catch { return null; }
+  finally { clearTimeout(t); aborts.delete(ac); }
+}
+
+// Plays a blob; resolves true when it ends, false if it can't play.
+function playBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  audio = new Audio(url);
+  return new Promise(res => {
+    audio.onended = () => res(true);
+    audio.onerror = () => res(false);
+    audio.play().catch(() => res(false));
+  }).finally(() => URL.revokeObjectURL(url));
+}
+
+function stopSpeech() {
+  run++;
+  aborts.forEach(a => a.abort());
+  if (audio) { audio.pause(); audio.onended(); audio = null; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+}
+
+async function speakVerdict(text) {
+  stopSpeech();
+  if (!$("judgeVoice").checked) return;
+  const gen = run;
+  const clean = text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
+  const speakFrom = from => {
+    if (!("speechSynthesis" in window) || !clean.slice(from).trim()) return;
+    const u = new SpeechSynthesisUtterance(clean.slice(from));
+    u.rate = 0.95; u.pitch = 0.8; u.lang = "en-US";
+    // On-device voices: Chrome's network voices cut out after ~15s.
+    const v = speechSynthesis.getVoices().find(v => v.localService && /^en/i.test(v.lang));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  };
+  const parts = chunks(clean, 182); // 200-char API limit minus the tag
+  if (ttsWorks === false || !parts.length) return speakFrom(0);
+
+  const fallback = from => { ttsWorks = false; aborts.forEach(a => a.abort()); speakFrom(from); };
+  const say = k => tts("[authoritatively] " + parts[k][2], "austin", k ? 15000 : 4000);
+  let next = say(0);
+  for (let k = 0; k < parts.length; k++) {
+    const blob = await next;
+    if (gen !== run) return;
+    if (!blob) return fallback(parts[k][0]);
+    next = k + 1 < parts.length ? say(k + 1) : null; // prefetch while this one plays
+    const ok = await playBlob(blob);
+    if (gen !== run) return;
+    if (!ok) return fallback(parts[k][0]);
+    ttsWorks = true;
+  }
 }
 </script>
 </body>

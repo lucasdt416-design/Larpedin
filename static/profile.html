@@ -3,8 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Larp your whole profile · LarpedIn</title>
-<meta name="description" content="Turn your real life into an absurdly inflated professional profile. A parody.">
+<title>{{og_title}}</title>
+<meta name="description" content="{{og_description}}">
+<meta property="og:title" content="{{og_title}}">
+<meta property="og:description" content="{{og_description}}">
+<meta property="og:type" content="profile">
+<meta property="og:image" content="{{og_image}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{og_image}}">
 <style>
   :root {
     --bg: #f4f2ee; --card: #fff; --blue: #0a66c2; --blue-dark: #004182;
@@ -263,6 +271,18 @@
     }
   });
 
+  // Shared link: /u/<id> shows a saved profile instead of the form.
+  const shared = location.pathname.match(/^\/u\/(\d+)/);
+  if (shared) {
+    form.hidden = true;
+    setLoading(true);
+    fetch("/api/profile/" + shared[1])
+      .then((r) => r.json().then((d) => { if (!r.ok) throw new Error(d.error); return d; }))
+      .then((d) => { current = d; render(d); result.hidden = false; })
+      .catch((ex) => { err.textContent = ex.message || "That profile is gone."; form.hidden = false; })
+      .finally(() => setLoading(false));
+  }
+
   function section(title) {
     const c = el("section", "card pad");
     c.append(el("h2", null, title));
@@ -407,16 +427,26 @@
       try { await navigator.clipboard.writeText(asText(current)); toast("Copied. Go paste it somewhere brave."); }
       catch { toast("Couldn't copy. Your browser is gatekeeping."); }
     };
+    const share = el("button", "btn", "🔗 Share profile link");
+    share.type = "button";
+    share.onclick = async () => {
+      const url = location.origin + "/u/" + current.id;
+      try {
+        if (navigator.share && matchMedia("(pointer: coarse)").matches) await navigator.share({ title: current.name + " on LarpedIn", url });
+        else { await navigator.clipboard.writeText(url); toast("Link copied. Send it to a recruiter."); }
+      } catch { /* share sheet dismissed */ }
+    };
     const again = el("button", "btn", "Start over");
     again.type = "button";
     again.onclick = () => {
+      if (location.pathname.startsWith("/u/")) history.replaceState(null, "", "/profile.html");
       result.hidden = true;
       result.replaceChildren();
       form.hidden = false;
       window.scrollTo({ top: 0 });
       textEl.focus();
     };
-    bottom.append(copy, again);
+    bottom.append(copy, ...(current.id ? [share] : []), again);
     result.append(bottom);
   }
 
