@@ -993,3 +993,15 @@ main {
 }
 .name-step-input:focus { outline: 2px solid var(--brand, #0a66c2); outline-offset: 1px; }
 .name-step-hint { margin: 0; font-size: 11px; color: #4d6174; }
+
+/* ---------- Presenter mode vs edition.css ----------
+   edition.css loads after this file and its blue .intro header is tall, which pushed
+   the QR URL off a 1080p screen. Higher-specificity overrides for presenter mode only. */
+body.is-presenting.gallery-page .intro { padding: 1.6vh 2vw; align-items: center; }
+body.is-presenting.gallery-page .intro .dept-folio { display: none; }
+body.is-presenting.gallery-page .intro .intro-title { font-size: clamp(30px, 3.2vw, 54px); }
+body.is-presenting.gallery-page .intro .intro-title::before { display: none; }
+body.is-presenting.gallery-page .qr-panel { overflow: hidden; padding: 2vh 2vw; }
+body.is-presenting.gallery-page .qr-panel h2 { font-size: clamp(28px, 3.4vw, 60px); margin-bottom: 1.5vh; }
+body.is-presenting.gallery-page .qr-code { max-width: min(30vw, 54vh); }
+body.is-presenting.gallery-page .qr-url { margin-top: 1.5vh; }
