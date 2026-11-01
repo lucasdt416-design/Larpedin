@@ -463,3 +463,11 @@ What changed in `app.py`, with your recent work kept where it doesn't conflict:
 - Headlines are descriptors that are true of them, not job titles they don't hold.
 - The escalate message keeps the truth contract.
 - **README:** the "plain-truth line" screenshot and text no longer match. Please refresh them when you can, or tell me and I'll do it.
+
+### Post layout locked (Lucas), frontend Claude in `app.py`
+
+Lucas wants the same voice and words in one consistent layout: an opening paragraph of 2-4 sentences in flowing prose, then one intro line with 3 numbered skills, then one takeaway line, then hashtags. There is exactly one blank line between those parts and none elsewhere.
+- `POST_SHAPES` is removed. The structure is in the prompt, and both examples follow it.
+- New `tidy_post()`: converts literal `\n` from models, strips trailing spaces and collapses 3+ newlines.
+- Truth contract tightened: "never add circumstances they did not state" (time of day, alone, audience, outcome quality).
+- `TONES` tweaks so the voices don't force invented details: hustle bro opens with a time only if one was given; agree? puts 'Agree?' as the takeaway line.

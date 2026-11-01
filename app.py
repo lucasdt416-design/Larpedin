@@ -32,8 +32,8 @@ MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
 TONES = {
     "thought leader": "a thought leader. Open with a contrarian hook (for example 'Unpopular opinion:', 'Nobody talks about this, but', 'Hot take:' or 'Here is what 99% of people get wrong:'; pick one at random). Turn the event into a principle and preach it to the reader.",
     "humble brag": "a humble-bragger. Open with fake reluctance such as 'I don't usually post about myself, but' and slip in prestige while pretending it is no big deal.",
-    "hustle bro": "a hustle bro. Open with a time stamp that fits the event (before sunrise unless the event itself happened later, for example '4:58 AM.' or '11:00 AM. While you slept in, I...'). Short punchy fragments. Everything is discipline, grind and closing.",
-    "agree?": "an engagement farmer. Short one-line paragraphs, a bold claim built from the event, and the very last line before the hashtags is exactly 'Agree?'.",
+    "hustle bro": "a hustle bro. Open with a time stamp only if they mentioned a time; otherwise open with a short punchy fragment ('While you were scrolling, I executed.'). Punchy sentences. Everything is discipline, grind and closing.",
+    "agree?": "an engagement farmer. Open with a bold claim built from the event, and make the takeaway line exactly 'Agree?'.",
     "laid off but grateful": "someone recently laid off and aggressively grateful. Open with 'Some personal news.' Frame the event as proof that the layoff was a gift. Mention being #OpenToWork.",
     "AI influencer": "an AI influencer. Explain how the event is basically what AI does, warn that people who don't get it will be left behind, and offer a 'framework' in numbered steps.",
     "founder who failed 3 startups": "a founder whose three startups failed. Open by mentioning the three failures, then present the event as the lesson none of them taught. Investors are 'welcome to reach out'.",
@@ -72,31 +72,40 @@ GENERATE_PROMPT = (
     "- Never admit it was ordinary: no 'it may sound small', no 'technically it was', no plain-truth confession.\n"
     "- Pick the details that sound impressive and leave out the rest. Let the reader infer the importance.\n"
     "- Prestige that is actually true may be named (a well-known university, a city).\n"
-    "SHAPE: the voice's opening and structure come first. If the voice doesn't dictate one, use this shape: {shape}. "
-    "Do not default to 'I'm thrilled to announce' plus three lessons.\n"
+    "- Never add circumstances they did not state: no time of day, no 'alone' or 'without help', no audience, "
+    "no network, no outcome quality.\n"
     "- At levels 9-10 go all the way on what it means (legacy, 'they will teach this one day', a keynote you are "
     "'considering'), still about the same disguised event and still true.\n"
-    "- Numbered lessons are optional; if you use them, 2 or 3 short lines, introduced by one line.\n"
-    "- No surreal or cosmic metaphors, no talking objects, no section labels.\n"
-    "- Every sentence on its own line. Plain text, no markdown. End with 2 to 4 hashtags on the last line.\n"
+    "- No surreal or cosmic metaphors, no talking objects, no section labels, no markdown.\n"
+    "STRUCTURE (always exactly these four parts, in this order, separated by exactly one blank line, with no other "
+    "blank lines anywhere):\n"
+    "1. An opening paragraph of 2 to 4 sentences, written as flowing prose on one line (not one sentence per line). "
+    "The voice's hook goes at the start of it.\n"
+    "2. One short line introducing the skills (for example 'What it sharpened:'), followed directly by 3 numbered "
+    "lines, each a real career skill and how the moment showed it.\n"
+    "3. One takeaway sentence. If the voice has a signature ending ('Agree?', 'We're hiring!'), it goes here.\n"
+    "4. 2 to 4 hashtags on one line.\n"
     "Before the post, fill real_event (the plain truth), true_details (the facts you may use) and disguise "
     "(how you will describe it without naming it). After the post, fill claims_check: list any sentence in the "
     "post that claims something not supported by true_details. It must be an empty string.\n"
-    "Two examples of the style (different topics; never reuse their wording):\n"
+    "Two examples of the style and structure (different topics; never reuse their wording):\n"
     "What they did: 'I made coffee'. Post:\n"
-    "Some personal news.\n"
-    "Before 8 AM today I owned an end-to-end process, start to finish, with nobody to delegate to.\n"
-    "Sourcing. Precise measurement. Heat. Timing.\n"
-    "Then I delivered, on schedule.\n"
-    "Most people never see the work that happens before everyone else logs on.\n"
-    "That's where the day is decided.\n"
-    "#Ownership #Execution #MorningRoutine\n"
+    "Some personal news. Today I owned an end-to-end process from sourcing to delivery, with every variable on me: "
+    "precise measurement, heat and timing. And I delivered.\n\n"
+    "What it sharpened:\n"
+    "1. Ownership: no handoffs, no excuses.\n"
+    "2. Precision: small measurements decide the outcome.\n"
+    "3. Execution: a plan only matters once it ships.\n\n"
+    "Most people never see the work that happens before the result.\n\n"
+    "#Ownership #Execution #Precision\n"
     "What they did: 'I returned a library book'. Post:\n"
-    "I don't usually post about this, but today I closed out a long-running commitment.\n"
-    "It had a hard deadline. I met it.\n"
-    "No extensions, no excuses, no reminders needed.\n"
-    "Reliability isn't glamorous. Nobody claps when you deliver on time.\n"
-    "But people remember who did.\n"
+    "I don't usually post about this, but today I closed out a long-running commitment. It had a hard deadline, "
+    "and I met it with no extensions and no excuses.\n\n"
+    "What it reinforced:\n"
+    "1. Accountability: a deadline is a promise.\n"
+    "2. Follow-through: finishing is a skill.\n"
+    "3. Integrity: doing what you said you'd do, even when nobody is checking.\n\n"
+    "Reliability isn't glamorous, but people remember who delivered.\n\n"
     "#Accountability #Integrity #FollowThrough\n"
     "Also write the author's LinkedIn headline: 2 or 3 impressive descriptors separated by pipes, or a short "
     "mission statement, that are true of them given the event (descriptors, never job titles they don't hold). "
@@ -111,16 +120,6 @@ GENERATE_PROMPT = (
     "A level {level}/10 post should usually rate around {pct} overall."
 )
 
-# Larp by omission: posts never name the ordinary thing. A random shape keeps posts from
-# sharing one template when the voice doesn't dictate its own structure.
-POST_SHAPES = [
-    "the announcement: 'Some personal news...', short and confident",
-    "the cliffhanger story: open in the middle of the moment ('This morning I had about 90 seconds to make a call.')",
-    "the contrarian take: 'Unpopular opinion: ...', then defend it with the event",
-    "'I don't usually post, but...': a humble, reflective post",
-    "the one-liner thread: 5 to 7 punchy single lines that build, no numbered list",
-    "the lesson list: one line about the moment, then 'Here is what it taught me about leadership:' and 3 numbered lessons",
-]
 
 DELARP_PROMPT = (
     "You translate LinkedIn posts into the brutally honest, funny truth, in the first person, as the author. "
@@ -285,6 +284,13 @@ def llm(messages, temperature, schema=None, fast=False):
         return content
 
 
+def tidy_post(text):
+    # Some models emit a literal backslash-n or stack blank lines; keep at most one blank line between parts.
+    text = str(text).replace("\\n", "\n")
+    lines = [line.rstrip() for line in text.strip().split("\n")]
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(lines))
+
+
 def badge(overall):
     if overall >= 85:
         return "Certified Lunatic"
@@ -332,8 +338,7 @@ def generate():
     except (TypeError, ValueError):
         level = 5
 
-    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10,
-                                    shape=random.choice(POST_SHAPES))
+    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10)
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
@@ -353,7 +358,7 @@ def generate():
                 break
             app.logger.info("claims_check flagged %r, retrying", flagged[:120])
         result = {
-            "post": str(out["post"]).strip(),
+            "post": tidy_post(out["post"]),
             "headline": str(out["headline"]).strip(),
             "comments": [
                 {k: str(c.get(k, "")) for k in ["name", "title", "text"]}
