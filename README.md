@@ -17,14 +17,14 @@ Live demo: https://larpedin-p1fd.onrender.com
 - **LarpedIn Jobs:** you describe who you really are, and the app shows absurd job listings that "match" you. Easy Apply instantly reveals an offer or a very grateful rejection letter.
 - **Hall of Larp:** a live gallery of everyone's posts with upvotes and a QR code, so a whole room can join from their phones.
 - **Delarp extension:** a Chrome extension. You select text on any page, right-click, and choose "Delarp this". See `extension/README.md`.
-- **Post to real LinkedIn:** you sign in with LinkedIn and post your larp for real. A confirmation window always shows the exact text first, and you can edit it. Without LinkedIn keys, the button opens the LinkedIn share box instead.
+- **Copy + open LinkedIn:** copies your post and opens LinkedIn's own composer. You decide whether to paste and post it. LarpedIn never connects to your LinkedIn account and never posts for you.
 - **Install it:** on a phone, choose "Add to Home Screen" and LarpedIn opens like an app. There is also a native iOS app in `ios/` (see `ios/README.md`).
 - **Extras:** voice input, image download of a post card, fake notifications, and a LarpedIn Premium offer for $0 forever.
 
 ## How it works
 
 - The backend is one Flask file, `app.py`. The frontend is plain HTML, CSS and JavaScript in `static/`, with no build step.
-- Text comes from Kimi K2 on Featherless for posts, delarp and battles, and from the free Groq API for everything else. Each request uses a strict JSON schema, so the model always returns the exact fields that the page needs. One call returns the post, headline, comments and scores together.
+- Text comes from the free Groq API (`gpt-oss-120b` first). The code can also route posts, delarp and battles to Kimi K2 on Featherless when `FEATHERLESS_API_KEY` is set. The live demo runs on Groq. Each request uses a strict JSON schema, so the model always returns the exact fields that the page needs. One call returns the post, headline, comments and scores together.
 - Reliability: if a model is busy, hits its rate limit or fails, the request moves to the next model (Kimi K2, then Groq's `gpt-oss-120b`, `gpt-oss-20b` and `qwen3.8-27b`). If all three fail, the user still gets a canned post, never an error page. A burst of 12 requests at once all returned real posts in 3 to 5 seconds.
 - Link preview images are drawn on the server with Pillow.
 - The gallery, profiles and stats live in memory. A restart clears them. This keeps the app free to run with no database.
