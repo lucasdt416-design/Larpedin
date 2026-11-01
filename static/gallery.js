@@ -121,7 +121,26 @@ function buildCard(p) {
   return card;
 }
 
-function render(posts) {
+// "top" keeps the server order (votes); "new" puts the latest posts first so
+// audience posts show up on the projector instead of under the seeded ones.
+let sortMode = "top";
+let lastPosts = [];
+
+function setSort(mode) {
+  sortMode = mode;
+  document.querySelectorAll(".sort-btn").forEach((b) => {
+    const active = b.dataset.sort === mode;
+    b.classList.toggle("is-active", active);
+    b.setAttribute("aria-pressed", String(active));
+  });
+  if (!firstLoad) render(lastPosts); // before the first poll there is nothing to re-sort
+}
+
+document.querySelectorAll(".sort-btn").forEach((b) => b.addEventListener("click", () => setSort(b.dataset.sort)));
+
+function render(allPosts) {
+  lastPosts = allPosts;
+  const posts = sortMode === "new" ? [...allPosts].sort((a, b) => b.id - a.id) : allPosts;
   const feed = $("feed");
   const seen = new Set();
 
@@ -208,6 +227,7 @@ function setPresenting(on) {
   document.body.classList.toggle("is-presenting", on);
   $("present").setAttribute("aria-pressed", String(on));
   $("present").textContent = on ? "✕ Exit presenter mode" : "📽️ Presenter mode";
+  setSort(on ? "new" : "top");
 }
 
 $("present").addEventListener("click", async () => {

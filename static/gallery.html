@@ -21,6 +21,8 @@
     .qr-panel          "Scan to post" box
     .qr-code           element the QR image is drawn into
     .qr-url            the URL printed under the QR
+    .sort-toggle       Top / New switch above the feed (presenter mode starts on New)
+    .sort-btn          one option; .is-active = current sort
     .gallery-feed      list of gallery posts (most votes first)
     .gallery-empty     shown when there are no posts yet
     .gallery-card      one post; .is-new briefly when it first appears
@@ -66,6 +68,10 @@
         <ol class="leaderboard-list" id="leaderboard-list"></ol>
       </section>
       <p class="gallery-empty" id="empty" hidden>No posts yet. Scan the code and be the first to larp.</p>
+      <div class="sort-toggle" role="group" aria-label="Sort posts">
+        <button type="button" class="sort-btn is-active" data-sort="top" aria-pressed="true">🔥 Top</button>
+        <button type="button" class="sort-btn" data-sort="new" aria-pressed="false">🆕 New</button>
+      </div>
       <ol class="gallery-feed" id="feed" aria-live="polite"></ol>
     </section>
     </div>

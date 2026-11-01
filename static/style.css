@@ -956,3 +956,10 @@ main {
 }
 .is-presenting .leaderboard { font-size: clamp(15px, 1.3vw, 24px); }
 .is-presenting .leaderboard-title { font-size: 1.3em; }
+
+/* ---------- Sort toggle (FRONTEND MINIMAL — designer may replace) ---------- */
+
+.sort-toggle { display: inline-flex; padding: 3px; margin-bottom: 12px; border-radius: var(--pill); background: var(--card); box-shadow: var(--shadow); }
+.sort-btn { padding: 6px 14px; border-radius: var(--pill); font-size: 14px; font-weight: 600; color: var(--muted); }
+.sort-btn:hover:not(.is-active) { color: var(--text); }
+.sort-btn.is-active { background: var(--blue); color: #fff; }
