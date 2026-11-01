@@ -1006,9 +1006,9 @@ body.is-presenting.gallery-page .qr-panel h2 { font-size: clamp(28px, 3.4vw, 60p
 body.is-presenting.gallery-page .qr-code { max-width: min(30vw, 54vh); }
 body.is-presenting.gallery-page .qr-url { margin-top: 1.5vh; }
 
-/* ---------- Real posting vs gags ----------
-   .share-btn is the only control that can reach real LinkedIn posting, so it gets the
-   edition primary look (solid brand, 5px corners) to stand apart from gag actions. */
+/* ---------- Real LinkedIn vs gags ----------
+   .share-btn is the only control that leads to real LinkedIn (copy + open composer), so
+   it gets the edition primary look (solid brand, 5px corners) to stand apart from gags. */
 .post-actions .share-btn {
   background: var(--brand, #0a66c2);
   color: #fff;

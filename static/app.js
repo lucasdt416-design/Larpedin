@@ -621,7 +621,7 @@ function renderCard(data, slot, req) {
   send.title = "Copy a link to send";
   send.addEventListener("click", () => copyText(shareUrl, "Post link copied."));
   // The action bar is part of the fake post (a gag), so Repost only bumps the fake
-  // count. Real LinkedIn posting is reachable only from the labelled .share-btn below.
+  // count. Only the labelled .share-btn below leads to real LinkedIn.
   const repost = q('[data-action="repost"]');
   repost.setAttribute("aria-pressed", "false");
   repost.addEventListener("click", () => {
@@ -821,14 +821,14 @@ function shareToX(post, url) {
   window.open(`https://x.com/intent/tweet?${params}`, "_blank", "noopener");
 }
 
-// Real posting via linkedin.js when the server has LinkedIn configured (it shows a
-// confirm dialog with the exact text); otherwise fall back to the share box.
+// Copy-paste only: we never post for anyone. Copy the text and open LinkedIn's own
+// composer; the user decides whether to paste and post it there.
 async function shareToLinkedIn(post) {
-  if (window.LarpedInLinkedIn && (await window.LarpedInLinkedIn.share(post))) return;
   try {
     await navigator.clipboard.writeText(post);
+    showToast("Copied! Paste it into LinkedIn.");
   } catch {
-    // Clipboard can be blocked; still open the share page with the text prefilled.
+    // Clipboard can be blocked; the share box below is still prefilled with the text.
   }
   window.open(
     "https://www.linkedin.com/feed/?shareActive=true&text=" + encodeURIComponent(post),

@@ -96,10 +96,10 @@
     .truth-original    the pasted post, quoted and clamped to 3 lines
     .truth-label       "What actually happened"
     .truth-text        the honest one-liner
-    .post-actions      real buttons under the card (Post to LinkedIn…, Copy, ...)
-    .share-btn         "Post to LinkedIn…": the ONLY control that can reach real
-                       LinkedIn posting (confirm dialog via linkedin.js, else the
-                       share box). Fake-card buttons must never call it.
+    .post-actions      real buttons under the card (Copy + open LinkedIn, Copy, ...)
+    .share-btn         "Copy + open LinkedIn": the ONLY control that leads to real
+                       LinkedIn (copies the text, opens LinkedIn's composer; the
+                       user posts it themselves). Fake-card buttons must never call it.
     .escalate-btn      rewrite this post one cringe level higher, in place
     .copy-btn          copy the post text only
     .link-btn          copy a shareable /p/<id> link (hidden if no id)
@@ -276,7 +276,7 @@
         <ul class="post-comments" hidden></ul>
       </article>
       <div class="post-actions">
-        <button type="button" class="share-btn" title="Real LinkedIn. You will see the exact text and confirm before anything is posted.">Post to LinkedIn…</button>
+        <button type="button" class="share-btn" title="Copies the post and opens LinkedIn. Nothing is posted unless you paste and post it there yourself.">Copy + open LinkedIn</button>
         <button type="button" class="escalate-btn">Escalate</button>
         <button type="button" class="copy-btn">Copy</button>
         <button type="button" class="link-btn" hidden>Share link</button>
@@ -290,7 +290,6 @@
   </template>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
   <script src="nav.js" defer></script>
-  <script src="/linkedin.js" defer></script>
   <script src="app.js"></script>
 </body>
 </html>

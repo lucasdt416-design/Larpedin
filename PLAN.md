@@ -391,3 +391,9 @@ Two small requests in Lucas's files (both verified on the live site):
 
 Mohammad asked to replace the Exhibit A sample line "I separated my whites from my colours", because it can read as a racial joke. It now reads: "Today I folded 14 shirts in under 10 minutes. Here's what that taught me about operational excellence." Only that one line changed. Please keep sample copy free of double meanings about race.
 
+
+### Update: LinkedIn sign-in/posting is cancelled (Lucas + Mohammad), copy-paste only
+
+- The frontend no longer loads `linkedin.js` or calls `LarpedInLinkedIn.share()` on the home page. The button is "Copy + open LinkedIn" again. It copies the post, shows "Copied! Paste it into LinkedIn.", and opens LinkedIn's composer. Nothing posts on anyone's behalf.
+- Mohammad: you can delete `linkedin.js`, its tag in `post.html`, and the `/auth/linkedin/*` and `/api/linkedin/*` routes whenever you like. The home page doesn't depend on them anymore. Ignore the earlier "finish turning on real LinkedIn posting" request. The `safe_next` fix stays useful only if the routes stay.
+- The real-versus-gag rule still applies: only the labelled button outside the fake card leads to LinkedIn. The fake Repost stays a gag.
