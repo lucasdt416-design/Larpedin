@@ -168,6 +168,10 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const form = $("form"), nameEl = $("name"), textEl = $("text"), levelEl = $("level");
+  // Same saved name as the home page (larpedin.profile), so one identity runs through every page.
+  const savedProfile = () => { try { return JSON.parse(localStorage.getItem("larpedin.profile")) || {}; } catch { return {}; } };
+  const savedName = savedProfile().name;
+  if (savedName && savedName !== "Your Name" && !nameEl.value) nameEl.value = savedName;
   const go = $("go"), err = $("err"), loading = $("loading"), statusEl = $("status"), result = $("result");
 
   const LEVEL_LABELS = [
@@ -256,6 +260,9 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nameEl.value.trim(), text: textEl.value.trim(), level: +levelEl.value }),
       });
+      if (nameEl.value.trim()) {
+        try { localStorage.setItem("larpedin.profile", JSON.stringify({ ...savedProfile(), name: nameEl.value.trim() })); } catch {}
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "The hustle server tripped. Try again.");
       current = data;
@@ -276,9 +283,9 @@
   if (shared) {
     form.hidden = true;
     setLoading(true);
-    fetch("/api/profile/" + shared[1])
+    fetch("/api/profile/" + shared[1] + location.search)
       .then((r) => r.json().then((d) => { if (!r.ok) throw new Error(d.error); return d; }))
-      .then((d) => { current = d; render(d); result.hidden = false; })
+      .then((d) => { current = { ...d, share_url: location.pathname + location.search }; render(current); result.hidden = false; })
       .catch((ex) => { err.textContent = ex.message || "That profile is gone."; form.hidden = false; })
       .finally(() => setLoading(false));
   }
@@ -430,7 +437,7 @@
     const share = el("button", "btn", "🔗 Share profile link");
     share.type = "button";
     share.onclick = async () => {
-      const url = location.origin + "/u/" + current.id;
+      const url = location.origin + (current.share_url || "/u/" + current.id);
       try {
         if (navigator.share && matchMedia("(pointer: coarse)").matches) await navigator.share({ title: current.name + " on LarpedIn", url });
         else { await navigator.clipboard.writeText(url); toast("Link copied. Send it to a recruiter."); }
@@ -446,7 +453,7 @@
       window.scrollTo({ top: 0 });
       textEl.focus();
     };
-    bottom.append(copy, ...(current.id ? [share] : []), again);
+    bottom.append(copy, ...(current.share_url ? [share] : []), again);
     result.append(bottom);
   }
 

@@ -3,7 +3,10 @@ import itertools
 import json
 import os
 import random
+import re
 import threading
+import zlib
+import base64
 
 import io
 import textwrap
@@ -50,7 +53,11 @@ GENERATE_PROMPT = (
     "Use short one-line paragraphs, a fake life lesson, a numbered list of 3 takeaways, "
     "a few emojis, and 3-5 hashtags at the end. Keep it under 200 words. "
     "The post is plain text with no markdown or asterisks. "
-    "Also write an absurd LinkedIn headline for the author, like 'Visionary | Grass Toucher | Ex-Unemployed', "
+    "Also write an absurd LinkedIn headline for the author that is specific to what they did and to the voice. "
+    "Vary the format: pipes, a job title with a fake company, or a grandiose mission statement. "
+    "Do not start with 'Visionary' and do not use the words 'Whisperer' or 'Ex-Unemployed'. "
+    "Styles to imitate, not copy: 'Chief Hydration Officer @ My Kitchen | Forbes 30 Under 30 (pending)', "
+    "'Helping 0 people find their purpose', 'Founder, CEO, and only employee of Nap Labs'. "
     "and 2 or 3 comments from fake connections with silly names and job titles. "
     "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
     "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
@@ -103,7 +110,37 @@ GENERATE_SCHEMA = {
 FALLBACK_POSTS = [
     "I did something today.\n\n{text}.\n\nMost people would call it ordinary.\n\nI call it a masterclass in leadership.\n\n3 takeaways:\n1. Show up.\n2. Stay humble.\n3. Post about it.\n\n#Growth #Leadership #Grateful",
     "Unpopular opinion:\n\n{text} taught me more than my MBA.\n\nI will not be taking questions. 🙏\n\nAgree?\n\n#Mindset #Hustle #Journey",
+    "5:00 AM. Cold shower. Then I did this:\n\n{text}.\n\nWhile you were sleeping, I was compounding. 📈\n\nThe grind does not care about your feelings.\n\n#Grindset #5AMClub #NoDaysOff",
+    "I almost didn't share this.\n\nBut vulnerability is leadership. 🥹\n\nToday, {text}.\n\nI cried. My team cried. The intern is still crying.\n\nGrateful for this journey.\n\n#Authenticity #Grateful #Leadership",
+    "Everyone asks me how I stay so productive.\n\nThe secret? {text}.\n\nThat's it. That's the post.\n\n(DM me for my $499 course on it.) 💼\n\n#Productivity #Founder #Mindset",
+    "My 4-year-old asked me: 'Why do you work so hard?'\n\nI didn't answer. I just showed her: {text}.\n\nShe understood. Now she is a VP.\n\n#Parenting #Leadership #Legacy",
+    "Hot take 🔥\n\n{text} is the new MBA.\n\nI said what I said.\n\nRepost if you agree. ♻️\n\n#Disruption #FutureOfWork #Agree",
+    "Today I learned that {text} is basically B2B sales.\n\nYou show up. You add value. You follow up.\n\nHumbled. Honored. Hiring.\n\n#Sales #Growth #Hiring",
 ]
+
+FALLBACK_HEADLINES = [
+    "Founder, CEO, and only employee of Vibes Inc.",
+    "Helping 0 people find their purpose | Keynote speaker (at home)",
+    "Chief Synergy Officer @ My Bedroom | Forbes 30 Under 30 (pending)",
+    "Thought Leader | Podcast host (2 episodes) | Open to board seats",
+]
+
+FALLBACK_COMMENTS = [
+    {"name": "Chad Synergy", "title": "VP of Vibes at Disruptr", "text": "Congrats on this journey! 🙌"},
+    {"name": "Brenda Bandwidth", "title": "Chief Alignment Officer", "text": "This. So much this."},
+    {"name": "Kyle Kpi", "title": "Growth Hacker | Ex-Intern", "text": "Love this! Let's circle back offline. 🚀"},
+    {"name": "Recruiter Rita", "title": "Talent Ninja at Hooli", "text": "Hi! Are you open to a role that pays in exposure?"},
+]
+
+# ponytail: tiny blocklist so slurs and sexual content never reach the projector wall; a real moderation API if this grows.
+BLOCKED = re.compile(
+    r"\b(n[i1]gg\w*|f[a@]gg?ots?|retards?|tr[a@]nn(y|ies)|k[i1]kes?|sp[i1]cs?|ch[i1]nks?|wetbacks?|c[u*]nts?|"
+    r"wh[o0]res?|sl[u*]ts?|rap(e|ed|es|ist|ing)|porn\w*|nudes?|dicks?|cocks?|pussy|tits|cum|nazis?|hitler|kys|"
+    r"kill (yo)?ur ?self)\b", re.I)
+
+
+def is_clean(*texts):
+    return not any(BLOCKED.search(t or "") for t in texts)
 
 # ponytail: in-memory gallery, cleared on redeploy/sleep; needs one gunicorn worker so all requests share it.
 GALLERY = {}
@@ -111,6 +148,17 @@ NEXT_ID = itertools.count(1)
 PROFILES = {}
 NEXT_PROFILE_ID = itertools.count(1)
 LOCK = threading.Lock()
+def load_seeds():
+    # Fill the Hall with good posts on every start, so the wall is never empty after a Render restart.
+    path = os.path.join(os.path.dirname(__file__), "seed_posts.json")
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as f:
+        for i, p in enumerate(json.load(f)):
+            pid = next(NEXT_ID)
+            GALLERY[pid] = {**clean_post(p), "id": pid, "votes": p.get("votes", 0), "fallback": False}
+
+
 STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0, "jobs": 0, "tokens": 0, "by_model": {}}
 
 
@@ -172,6 +220,9 @@ def text_from_request(limit):
     return data, str(data.get("text", "")).strip()[:limit]
 
 
+load_seeds()
+
+
 @app.get("/")
 def index():
     return send_from_directory("static", "index.html")
@@ -191,6 +242,7 @@ def generate():
     if not text:
         return jsonify(error="Tell us what you did first."), 400
     tone = data.get("tone") if data.get("tone") in TONES else "thought leader"
+    name = str(data.get("name", "")).strip()[:60]
     try:
         level = max(1, min(10, int(data.get("level", 5))))
     except (TypeError, ValueError):
@@ -222,20 +274,23 @@ def generate():
     except Exception:
         app.logger.exception("Groq generate failed, sending fallback")
         result = {
-            "post": random.choice(FALLBACK_POSTS).format(text=text),
-            "headline": "Visionary | Professional Larper | Open to Synergy",
-            "comments": [{"name": "Chad Synergy", "title": "VP of Vibes", "text": "Congrats on this journey! 🙌"}],
-            "score": {"buzzwords": 70, "emojis": 40, "humblebrag": 80, "overall": 75},
+            "post": random.choice(FALLBACK_POSTS).format(text=text.rstrip(".!?")),
+            "headline": random.choice(FALLBACK_HEADLINES),
+            "comments": random.sample(FALLBACK_COMMENTS, 3),
+            "score": {k: random.randint(55, 95) for k in SCORE_KEYS},
             "fallback": True,
         }
     result["badge"] = badge(result["score"]["overall"])
 
+    result["name"] = name
     with LOCK:
         STATS["posts"] += 1
         result["id"] = next(NEXT_ID)
-        GALLERY[result["id"]] = {"text": text, "tone": tone, "level": level, "votes": 0, **result}
+        if is_clean(text, name, result["post"], result["headline"]):  # anything flagged never reaches the wall
+            GALLERY[result["id"]] = {"text": text, "tone": tone, "level": level, "votes": 0, **result}
         for old in sorted(GALLERY)[:-50]:
             del GALLERY[old]
+    result["share_url"] = f"/p/{result['id']}?d=" + pack(clean_post({**result, "text": text, "tone": tone, "level": level}))
     return jsonify(result)
 
 
@@ -290,7 +345,7 @@ def stats():
 
 @app.get("/api/gallery")
 def gallery():
-    keys = ["id", "text", "tone", "level", "post", "headline", "comments", "score", "badge", "votes"]
+    keys = ["id", "name", "text", "tone", "level", "post", "headline", "comments", "score", "badge", "votes"]
     with LOCK:
         posts = sorted(GALLERY.values(), key=lambda p: (p["votes"], p["id"]), reverse=True)
         return jsonify([{k: p[k] for k in keys} for p in posts])
@@ -398,6 +453,7 @@ def profile():
         PROFILES[out["id"]] = out
         for old in sorted(PROFILES)[:-50]:
             del PROFILES[old]
+    out = {**out, "share_url": f"/u/{out['id']}?d=" + pack(clean_profile(out))}
     return jsonify(out)
 
 
@@ -525,13 +581,95 @@ def jobs():
     return jsonify(jobs=listings, fallback=fallback)
 
 
-@app.get("/api/post/<int:post_id>")
-def get_post(post_id):
+# Share links carry the data itself (zlib + base64url in ?d=), so they still work after Render
+# restarts and wipes the in-memory GALLERY/PROFILES.
+def pack(obj):
+    raw = zlib.compress(json.dumps(obj, separators=(",", ":")).encode(), 9)
+    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+def unpack(token):
+    try:
+        if not token or len(token) > 12000:
+            return None
+        raw = base64.urlsafe_b64decode(token + "=" * (-len(token) % 4))
+        d = zlib.decompressobj()
+        data = json.loads(d.decompress(raw, 60000))
+        return data if isinstance(data, dict) else None
+    except (ValueError, zlib.error, TypeError):
+        return None
+
+
+def s_(v, limit):
+    return str(v if v is not None else "")[:limit]
+
+
+def clean_post(d):
+    score = d.get("score") if isinstance(d.get("score"), dict) else {}
+    out = {
+        "post": s_(d.get("post"), 4000), "headline": s_(d.get("headline"), 300),
+        "name": s_(d.get("name"), 60), "text": s_(d.get("text"), 500), "tone": s_(d.get("tone"), 60),
+        "comments": [{k: s_(c.get(k), 600) for k in ("name", "title", "text")}
+                     for c in (d.get("comments") if isinstance(d.get("comments"), list) else [])[:3] if isinstance(c, dict)],
+        "score": {k: clamp_score(score.get(k)) for k in SCORE_KEYS},
+    }
+    try:
+        out["level"] = max(1, min(10, int(d.get("level", 5))))
+    except (TypeError, ValueError):
+        out["level"] = 5
+    out["badge"] = s_(d.get("badge"), 60) or badge(out["score"]["overall"])
+    return out
+
+
+def clean_profile(d):
+    def items(key, fields, n):
+        lst = d.get(key) if isinstance(d.get(key), list) else []
+        return [{f: (x.get(f) if f in ("endorsements",) else s_(x.get(f), 600)) for f in fields}
+                for x in lst[:n] if isinstance(x, dict)]
+    out = {k: s_(d.get(k), 1200) for k in ("name", "headline", "location", "about", "open_to")}
+    try:
+        out["followers"] = max(0, int(d.get("followers", 0)))
+    except (TypeError, ValueError):
+        out["followers"] = 0
+    out["experience"] = [{**x, "bullets": [s_(b, 400) for b in (src.get("bullets") if isinstance(src.get("bullets"), list) else [])[:4]]}
+                         for x, src in zip(items("experience", ("title", "company", "dates", "location"), 4),
+                                           [e for e in (d.get("experience") or [])[:4] if isinstance(e, dict)])]
+    out["education"] = items("education", ("school", "degree", "dates"), 2)
+    out["skills"] = [{**x, "endorsements": max(0, int(x["endorsements"])) if isinstance(x["endorsements"], int) else 0}
+                     for x in items("skills", ("name", "endorsements"), 8)]
+    out["recommendations"] = items("recommendations", ("name", "title", "relation", "text"), 3)
+    return out
+
+
+def load_post(post_id):
     with LOCK:
         post = GALLERY.get(post_id)
-        if not post:
-            return jsonify(error="That post is gone. Posts reset when the server restarts."), 404
-        return jsonify(dict(post))
+        if post:
+            return dict(post)
+    data = unpack(request.args.get("d"))
+    return {**clean_post(data), "id": post_id, "votes": 0, "expired": True} if data else None
+
+
+def load_profile(profile_id):
+    with LOCK:
+        prof = PROFILES.get(profile_id)
+        if prof:
+            return dict(prof)
+    data = unpack(request.args.get("d"))
+    return {**clean_profile(data), "id": profile_id, "fallback": False} if data else None
+
+
+def with_d(url):
+    d = request.args.get("d")
+    return f"{url}?d={d}" if d else url
+
+
+@app.get("/api/post/<int:post_id>")
+def get_post(post_id):
+    post = load_post(post_id)
+    if not post:
+        return jsonify(error="That post is gone. Posts reset when the server restarts."), 404
+    return jsonify(post)
 
 
 def no_emoji(text):
@@ -573,18 +711,16 @@ def card_png(name, headline, body, tag):
 
 @app.get("/og/<int:post_id>.png")
 def og_image(post_id):
-    with LOCK:
-        post = dict(GALLERY.get(post_id) or {})
+    post = load_post(post_id)
     if not post:
         return card_png("A LarpedIn Visionary", "Visionary | Professional Larper", "This post went back to being a normal day.", "")
-    return card_png("A LarpedIn Visionary", post["headline"], post["post"],
+    return card_png(post.get("name") or "A LarpedIn Visionary", post["headline"], post["post"],
                     f"{post['badge']}  |  Cringe {post['score']['overall']}/100")
 
 
 @app.get("/og/u/<int:profile_id>.png")
 def og_profile_image(profile_id):
-    with LOCK:
-        prof = dict(PROFILES.get(profile_id) or {})
+    prof = load_profile(profile_id)
     if not prof:
         return card_png("A LarpedIn Visionary", "Visionary | Professional Larper", "This profile went back to being a normal person.", "")
     jobs = "\n".join(f"{x['title']} at {x['company']}" for x in prof["experience"][:4])
@@ -602,11 +738,10 @@ def page_with_meta(filename, title, desc, image):
 
 @app.get("/p/<int:post_id>")
 def permalink(post_id):
-    with LOCK:
-        post = GALLERY.get(post_id)
+    post = load_post(post_id)
     title = f"{post['headline']} on LarpedIn" if post else "LarpedIn"
     desc = post["post"][:200] if post else "Turn your ordinary day into a LinkedIn masterpiece."
-    return page_with_meta("post.html", title, desc, f"{request.host_url}og/{post_id}.png")
+    return page_with_meta("post.html", title, desc, with_d(f"{request.host_url}og/{post_id}.png"))
 
 
 @app.get("/profile.html")
@@ -617,20 +752,18 @@ def profile_page():
 
 @app.get("/u/<int:profile_id>")
 def profile_link(profile_id):
-    with LOCK:
-        prof = PROFILES.get(profile_id)
+    prof = load_profile(profile_id)
     title = f"{prof['name']} | {prof['headline']}" if prof else "LarpedIn profile"
     desc = prof["about"][:200] if prof else "Tell us your real life. We will make recruiters weep."
-    return page_with_meta("profile.html", title, desc, f"{request.host_url}og/u/{profile_id}.png")
+    return page_with_meta("profile.html", title, desc, with_d(f"{request.host_url}og/u/{profile_id}.png"))
 
 
 @app.get("/api/profile/<int:profile_id>")
 def get_profile(profile_id):
-    with LOCK:
-        prof = PROFILES.get(profile_id)
-        if not prof:
-            return jsonify(error="That profile is gone. Profiles reset when the server restarts."), 404
-        return jsonify(prof)
+    prof = load_profile(profile_id)
+    if not prof:
+        return jsonify(error="That profile is gone. Profiles reset when the server restarts."), 404
+    return jsonify(prof)
 
 
 if __name__ == "__main__":

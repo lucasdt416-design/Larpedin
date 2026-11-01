@@ -130,6 +130,14 @@ Lucas styles `index.html` and `gallery.html`. The new pages (`/p/<id>`, `/profil
 
 ## Requests for Lucas (small, in your files)
 
+Council changes (please do these first):
+- Share links: `/api/generate` now returns `share_url` (for example `/p/12?d=...`). The link carries the post, so it still works after Render restarts. Use `location.origin + data.share_url` for "Share link" instead of `/p/<id>`. `/api/profile` returns `share_url` too.
+- Send `name` (the saved profile name) in the `/api/generate` request, so the gallery and share pages show who posted.
+- Phone pass: open the QR code on a real phone and run generate, share and upvote. Fix every layout bug.
+- Home clarity: one subtitle line ("Turn boring things you did into LinkedIn posts, or decode someone else's"), and show a few Hall posts below the form so the page is never empty.
+- Gallery room mode: a "Most cringe in the room" leaderboard (sort by `score.overall`) and a "Battle the top two" button that opens `/battle.html?a=<id>&b=<id>`. Mohammad's battle page will read those ids.
+- The Hall now starts with 12 seed posts after every restart, and flagged words never reach the wall.
+
 Bugs found by the review (both verified):
 - gallery.js: votes saved in localStorage stay attached to post ids after a server restart, so new posts show as already voted. `/api/health` now returns `{"ok": true, "boot": <number>}`. The number changes on every restart. Save it next to the voted set and clear the set when it changes.
 - app.js `run()`: when a Regenerate fails, the old card is deleted. Put the old card back (`slots[i].replaceWith(replaceItem)`) and show the error.

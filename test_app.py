@@ -117,6 +117,31 @@ j = c.post("/api/jobs", json={"text": "student"}).json
 assert len(j["jobs"]) == 4 and j["jobs"][0]["applicants"] == 0 and len(j["jobs"][0]["requirements"]) == 4 and not j["fallback"]
 assert c.post("/api/jobs", json={}).status_code == 400
 
+# Share links still work after a restart (memory wiped), using the ?d= payload.
+r3 = c.post("/api/generate", json={"text": "made tea", "name": "Mo"}).json
+assert r3["name"] == "Mo" and r3["share_url"].startswith(f"/p/{r3['id']}?d=")
+p3 = c.post("/api/profile", json={"name": "Mo", "text": "I sleep"}).json
+assert p3["share_url"].startswith(f"/u/{p3['id']}?d=")
+saved_g, saved_p = dict(app.GALLERY), dict(app.PROFILES)
+app.GALLERY.clear(); app.PROFILES.clear()
+q = r3["share_url"].split("?", 1)[1]
+got = c.get(f"/api/post/{r3['id']}?{q}").json
+assert got["post"] == r3["post"] and got["name"] == "Mo" and got["expired"] and got["comments"] == r3["comments"]
+assert c.get(f"/api/post/{r3['id']}").status_code == 404
+page = c.get(f"/p/{r3['id']}?{q}").get_data(as_text=True)
+assert "Visionary on LarpedIn" in page and f"og/{r3['id']}.png?d=" in page
+assert c.get(f"/og/{r3['id']}.png?{q}").mimetype == "image/png"
+qp = p3["share_url"].split("?", 1)[1]
+gp = c.get(f"/api/profile/{p3['id']}?{qp}").json
+assert gp["name"] == "Mo" and len(gp["experience"]) == 4 and gp["experience"][0]["bullets"] == ["b"]
+assert "Mo | H" in c.get(f"/u/{p3['id']}?{qp}").get_data(as_text=True)
+for bad in ("d=!!!", "d=" + "A" * 13000, "d=eJwrSS0uAQAEXQHB"):  # junk, too long, valid zlib of a non-dict
+    assert c.get(f"/api/post/1?{bad}").status_code == 404, bad
+app.GALLERY.update(saved_g); app.PROFILES.update(saved_p)
+
+bad = c.post("/api/generate", json={"text": "my boss is a nazi"}).json
+assert bad["post"] and bad["id"] not in [x["id"] for x in c.get("/api/gallery").json]
+
 def boom(*a, **k):
     raise RuntimeError("groq down")
 app.groq = boom
@@ -132,5 +157,5 @@ for _ in range(60):
 assert len(c.get("/api/gallery").json) == 50
 
 st = c.get("/api/stats").json
-assert st["posts"] >= 60 and st["profiles"] == 2 and st["battles"] == 2 and st["delarps"] == 2 and st["jobs"] == 2, st
+assert st["posts"] >= 60 and st["profiles"] == 3 and st["battles"] == 2 and st["delarps"] == 2 and st["jobs"] == 2, st
 print("all good")

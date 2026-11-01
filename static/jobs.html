@@ -281,7 +281,7 @@ function showLetter(job, btn, offer) {
   const head = el("div", "mail-head " + (offer ? "offer" : "rejection"), offer ? "🎉 Offer" : "📉 Update on your application");
   head.id = "modalTitle";
   const meta = el("div", "mail-meta");
-  for (const [k, v] of [["From:", `${job.company} Talent Team`], ["To:", "You"], ["Subject:", `Your application to ${job.title}`]]) {
+  for (const [k, v] of [["From:", `${job.company} Talent Team`], ["To:", (() => { try { const n = (JSON.parse(localStorage.getItem("larpedin.profile")) || {}).name; return n && n !== "Your Name" ? n : "You"; } catch { return "You"; } })()], ["Subject:", `Your application to ${job.title}`]]) {
     const p = el("p"); p.append(el("b", null, k), " " + v); meta.append(p);
   }
   const body = el("p", "mail-body", job.letter || "");
