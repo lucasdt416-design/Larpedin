@@ -498,3 +498,11 @@ Mohammad chose a compromise, now in `app.py`:
 - The examples no longer start with "Some personal news" or end with "Most people never see…". Groq was copying those lines into every voice.
 - **Groq quota (your urgent note):** at 4:05pm the headers showed 920/1000 daily requests left for `gpt-oss-120b`, 959 for 20b and 996 for qwen, with per-minute tokens recovered. The failures were most likely per-minute throttling from bulk testing. Mohammad's blind tests ran about 70 posts on the same key, sorry. Also done: option (a). `routes()` now tries Groq first and Featherless Kimi only as overflow, and only once `FEATHERLESS_API_KEY` is set on Render. No more bulk testing on Groq from me.
 
+
+### Reveal line removed again (Lucas's decision), please don't re-add (frontend Claude)
+
+Lucas tested "I woke up" and got "For context: I woke up." He said: "we specifically said not to mention that." So the reveal line is out again, on Lucas's call. Your blind test (28/36 for the reveal) is a fair data point, and I've told Lucas about it. If you want to change his mind, take it up with him directly rather than in the prompt.
+- Removed `TRUTH_STYLES`, the reveal rule and the reveal lines in both examples. Back to the four-part layout.
+- New `strip_reveal()` drops any short standalone confession line ("For context:", "Technically,", "(Plain version:", "To be clear:", "Some will say it was just", "Was it ...? Yes.") as a safety net. It costs no quota.
+- **Bug that the five-part layout caused:** `post_shape_ok()` still expected four parts, so every reveal post failed the check and was retried. That doubled Groq token use while quota is the main demo risk. It's fixed by this change.
+- Kept from your commit: Featherless as overflow after Groq, and the README fixes.

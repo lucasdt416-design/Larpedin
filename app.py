@@ -59,16 +59,7 @@ LEVELS = [
 # Blind A/B (3 judges, 12 inputs): this vibe-first prompt won 34 of 36 judgments over the template prompt.
 # About half of posts get a couple of emojis, like real LinkedIn; kept out of the skills and hashtag lines
 # so post_shape_ok() still sees "1." and "#" at the start of those lines.
-# Compromise (Mohammad + Lucas): Lucas's truth contract, plus one deadpan reveal line. Blind tests: the reveal
-# version beat "larp by omission" 28/36. The style is random per post because the model copies any single example.
-TRUTH_STYLES = [
-    "'For context: <event>.'",
-    "'Technically, <event>.'",
-    "'(Plain version: <event>.)'",
-    "'To be clear: <event>.'",
-    "'Some will say it was just <event>.'",
-    "a rhetorical question answered in one word: 'Was it <event>? Yes.'",
-]
+# Lucas's call: no reveal line. The post never names the ordinary event; Delarp is where the truth comes out.
 
 EMOJI_RULES = [
     "none in this post.",
@@ -86,35 +77,31 @@ GENERATE_PROMPT = (
     "- Never invent titles, employers, teams, clients, people, results, numbers or outcomes they did not state (no 'flawless', 'first try', 'promoted', 'my team', 'mentors'). "
     "Numbers only if they follow from what they said.\n"
     "THE LARP:\n"
-    "- Apart from the one reveal line (below), never name the ordinary object or activity. "
+    "- Never name the ordinary object or activity, anywhere in the post. "
     "Describe it only through true but impressive-sounding abstractions, so a reader assumes it was something big. "
     "'flipped a pancake' -> 'executed a time-critical maneuver in a high-heat environment'. "
     "'took a nap' -> 'blocked a deliberate offline window to reset'.\n"
-    "- THE REVEAL: exactly one short, deadpan line that names the plain truth, alone on its own line right after the opening paragraph. "
-    "Write it in this style, replacing <event> with what they really did in plain words: {truth}. "
-    "It is true, so it keeps the truth contract, and it is the punchline: the reader sees the gap between the grand claim and reality. "
-    "Never apologize for it or explain it, and never name the event anywhere else.\n"
+    "- Never admit or reveal what it really was: no 'for context', no 'technically', no 'plain version', no "
+    "'some will say it was just', no confession line of any kind.\n"
     "- Pick the details that sound impressive and leave out the rest. "
     "Let the reader infer the importance.\n"
     "- Prestige that is actually true may be named (a well-known university, a city).\n"
     "- Never add circumstances they did not state: no time of day, no 'alone' or 'without help', no audience or anyone's reaction, no network. "
     "Never describe how good the result was (no perfect, flawless, golden, impressed).\n"
-    "- Outside the reveal line, also avoid the obvious related words that would give it away (for a pancake: no kitchen, batter, flip, pan).\n"
+    "- Also avoid the obvious related words that would give it away (for a pancake: no kitchen, batter, flip, pan).\n"
     "- At levels 9-10 go all the way on what it means (legacy, 'they will teach this one day', a keynote you are 'considering'), still about the same disguised event and still true.\n"
     "- No surreal or cosmic metaphors, no talking objects, no section labels, no markdown.\n"
     "- Emojis: {emoji}\n"
-    "STRUCTURE (always exactly these five parts, in this order, separated by exactly one blank line, with no other blank lines anywhere):\n"
+    "STRUCTURE (always exactly these four parts, in this order, separated by exactly one blank line, with no other blank lines anywhere):\n"
     "1. "
     "An opening paragraph of 2 to 4 sentences, written as flowing prose on one line (not one sentence per line). "
     "The voice's hook goes at the start of it.\n"
     "2. "
-    "The reveal line, alone.\n"
-    "3. "
     "One short line introducing the skills (for example 'What it sharpened:'), followed directly by 3 numbered lines, each a real career skill and how the moment showed it.\n"
-    "4. "
+    "3. "
     "One takeaway sentence. "
     "If the voice has a signature ending ('Agree?', 'We're hiring!'), it goes here.\n"
-    "5. "
+    "4. "
     "2 to 4 hashtags on one line.\n"
     "Before the post, fill real_event (the plain truth), true_details (the facts you may use) and disguise (how you will describe it without naming it). "
     "After the post, fill claims_check: list any sentence in the post that claims something not supported by true_details. "
@@ -125,8 +112,6 @@ GENERATE_PROMPT = (
     "Post:\n"
     "Today I owned an end-to-end process from sourcing to delivery, with every variable on me: precise measurement, heat and timing. "
     "And I delivered.\n"
-    "\n"
-    "For context: I made coffee.\n"
     "\n"
     "What it sharpened:\n"
     "1. "
@@ -143,8 +128,6 @@ GENERATE_PROMPT = (
     "Post:\n"
     "I don't usually post about this, but today I closed out a long-running commitment. "
     "It had a hard deadline, and I met it with no extensions and no excuses.\n"
-    "\n"
-    "Technically, I returned a library book.\n"
     "\n"
     "What it reinforced:\n"
     "1. "
@@ -340,6 +323,17 @@ def post_shape_ok(text):
     return len(re.findall(r"^\s*\d+[.)]", text, re.M)) == 3 and last.startswith("#") and text.count("\n\n") == 3
 
 
+REVEAL_LINE = re.compile(
+    r"^\(?\s*(for context|technically|plain version|to be clear|some will say it was just|in reality|"
+    r"in plain words|was it .{1,60}\? yes)\b", re.I)
+
+
+def strip_reveal(text):
+    # Lucas's rule: never name the real event. Drop a short standalone confession line if a model still writes one.
+    lines = str(text).replace("\\n", "\n").split("\n")
+    return "\n".join(l for l in lines if not (len(l.strip()) < 140 and REVEAL_LINE.match(l.strip())))
+
+
 def tidy_post(text):
     # Some models emit a literal backslash-n or stack blank lines; keep at most one blank line between parts.
     text = str(text).replace("\\n", "\n")
@@ -395,7 +389,7 @@ def generate():
         level = 5
 
     system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10,
-                                    emoji=random.choice(EMOJI_RULES), truth=random.choice(TRUTH_STYLES))
+                                    emoji=random.choice(EMOJI_RULES))
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
@@ -411,11 +405,11 @@ def generate():
                 temperature=min(0.85, 0.55 + 0.03 * level),
                 schema=GENERATE_SCHEMA,
             ))
-            if post_shape_ok(str(out.get("post", ""))):
+            if post_shape_ok(strip_reveal(out.get("post", ""))):
                 break
             app.logger.info("retrying post: layout off (claims_check=%r)", str(out.get("claims_check", ""))[:80])
         result = {
-            "post": tidy_post(out["post"]),
+            "post": tidy_post(strip_reveal(out["post"])),
             "headline": str(out["headline"]).strip(),
             "comments": [
                 {k: str(c.get(k, "")) for k in ["name", "title", "text"]}
