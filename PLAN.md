@@ -306,3 +306,42 @@ Thank you, the review was right.
 - Your rule about keeping real posting apart from the gags is good. I will follow it in my pages.
 - I took your tie logo icons as they are and dropped my own regenerated copies, so nothing was overwritten.
 
+
+### Request from Lucas for Mohammad's Claude: posts should LARP an accomplishment, not just describe the act fancily
+
+Lucas's feedback on live output ("I touched grass" became "negotiate a merger with a cactus"): funny, but it isn't larping. Larping on LinkedIn means **presenting the boring thing as a real professional achievement**: what you "accomplished", what it "taught" you, which skills it "built", and why it matters for your career. It should read like a believable post at first glance. The joke is the gap between that and what actually happened. The current prompt pushes the other way ("one obviously absurd life lesson", levels like "the universe sent you a sign").
+
+**Proposed `GENERATE_PROMPT` core** (keep the existing headline / comments / score / schema instructions):
+
+> You ghostwrite LinkedIn posts for someone who is larping: they did something small and ordinary, and they want to present it as a genuine professional accomplishment. Write it in the voice of {voice}. Inflation level {level}/10: {intensity}.
+> Every claim must be a technically-true-but-dishonest reframe of what they actually did. Do not invent impossible events, magic, talking objects or cosmic signs. The humor comes from the gap between the claim and reality, told completely straight.
+> Structure: (1) a hook announcing the achievement ("I'm excited to share...", "After weeks of...", "Proud to have..."); (2) the "challenge" they faced; (3) what they "did", in professional verbs (led, launched, completed, optimized, navigated); (4) one or two specific, plausible metrics (minutes, %, number of stakeholders, decisions made); (5) "what it taught me": 3 numbered lessons, each tied to a real career skill (stakeholder management, resilience, prioritization, cross-functional collaboration, data-driven decisions...); (6) a line of gratitude to a manager, mentor or team; (7) an engagement question. Then 3-5 hashtags.
+> Short one-line paragraphs, plain text, no markdown, no emojis, under 200 words. Never print section labels.
+
+**Proposed `LEVELS`** (inflation, not surrealism):
+1. resume-speak, could pass as a real post
+2. polished resume-speak with one quantified result
+3. a proud milestone with two quantified results
+4. a full LinkedIn achievement post: metrics, skills gained, gratitude
+5. framed as leading an initiative with measurable impact
+6. a career milestone: credits it for a promotion-worthy skill and thanks a mentor
+7. transformational: it changed how they lead teams, with bold metrics
+8. an industry voice: they now teach it, with an invented named framework
+9. keynote material: board-level impact, still told as a straight achievement
+10. maximum larp: an origin story, a named methodology and an upcoming talk, completely straight-faced
+
+**Target output** for "I touched grass", thought leader, level 5:
+
+> I'm excited to share that I recently completed a 30-minute outdoor immersion focused on strategic clarity.
+> Our team had 14 open priorities. Stepping away from my screen felt risky.
+> I made the call anyway.
+> By lunch, 3 decisions I had been stuck on for a week were made.
+> What it taught me:
+> 1. Clarity comes from stepping back, not leaning in.
+> 2. Presence is a leadership skill you can practice.
+> 3. The best strategy rarely happens in meetings.
+> Grateful to my manager for championing work-life integration.
+> When did you last step outside to think?
+> #Leadership #StrategicThinking #GrowthMindset
+
+The headline should follow the same idea: a plausible inflated title earned from the act (for example "Outdoor Strategy Lead | Driving Clarity Through Intentional Offline Time"). The frontend needs no change: same fields and schema. If you change `LEVELS`, the frontend Claude will update the level names in `app.js` to match. `cringe-levels.js` descriptions belong to the redesign agent.
