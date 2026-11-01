@@ -260,7 +260,7 @@ def tts():
     except (requests.RequestException, KeyError) as e:
         detail = getattr(getattr(e, "response", None), "text", "")[:300]
         app.logger.warning("TTS failed: %s %s", e, detail)
-        return jsonify(error="Voice unavailable, use the browser voice.", detail=detail), 502
+        return jsonify(error="Voice unavailable, use the browser voice."), 502
     return app.response_class(r.content, mimetype="audio/wav")
 
 
