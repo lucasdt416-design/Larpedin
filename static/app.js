@@ -151,7 +151,7 @@ async function warmUp() {
   const deadline = Date.now() + 75000;
   while (Date.now() < deadline) {
     try {
-      const res = await fetch("/api/health", { cache: "no-store" });
+      const res = await fetch("/api/health", { cache: "no-store", signal: AbortSignal.timeout(60000) });
       if (res.ok) break;
     } catch {
       // Server still waking up or offline; retry below.
@@ -197,23 +197,31 @@ async function copyText(text, message) {
 
 // ---------- Generate ----------
 
-async function generate(text, tone, level) {
-  const res = await fetch("/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, tone, level }),
-  });
-  let data = {};
+const REQUEST_TIMEOUT_MS = 60000;
+
+// POST JSON and return the parsed body. Throws with the backend's error message,
+// or a friendly one on timeout / network failure, so the UI never hangs.
+async function postJSON(url, body, requiredField) {
+  let res;
   try {
-    data = await res.json();
-  } catch {
-    // Non-JSON response (e.g. server crashed); fall through to generic error.
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    if (err.name === "TimeoutError") throw new Error("The thought leaders took too long. Try again.");
+    throw new Error("Can't reach the server. Check your connection and try again.");
   }
-  if (!res.ok || !data.post) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data[requiredField]) {
     throw new Error(data.error || `Something went wrong (${res.status}).`);
   }
   return data;
 }
+
+const generate = (text, tone, level) => postJSON("/api/generate", { text, tone, level }, "post");
 
 const STATUS_LINES = [
   "Synergizing...",
@@ -250,18 +258,7 @@ function setBusy(busy) {
   $("result").setAttribute("aria-busy", String(busy));
 }
 
-async function delarp(text) {
-  const res = await fetch("/api/delarp", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.truth) {
-    throw new Error(data.error || `Something went wrong (${res.status}).`);
-  }
-  return data.truth;
-}
+const delarp = async (text) => (await postJSON("/api/delarp", { text }, "truth")).truth;
 
 function renderTruth(truth, slot) {
   const item = $("truth-card-template").content.firstElementChild.cloneNode(true);

@@ -65,7 +65,7 @@ async function vote(id, card) {
   if (voted.has(id)) return;
   btn.disabled = true;
   try {
-    const res = await fetch(`/api/gallery/${id}/vote`, { method: "POST" });
+    const res = await fetch(`/api/gallery/${id}/vote`, { method: "POST", signal: AbortSignal.timeout(10000) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Vote failed (${res.status}).`);
     voted.add(id);
@@ -155,7 +155,7 @@ function render(posts) {
 
 async function poll() {
   try {
-    const res = await fetch("/api/gallery", { cache: "no-store" });
+    const res = await fetch("/api/gallery", { cache: "no-store", signal: AbortSignal.timeout(10000) });
     if (!res.ok) throw new Error(`Gallery error (${res.status})`);
     render(await res.json());
     showError("");
