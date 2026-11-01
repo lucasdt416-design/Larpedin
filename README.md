@@ -4,6 +4,8 @@ LarpedIn is a parody professional network. You type something ordinary that you 
 
 Live demo: https://larpedin-p1fd.onrender.com
 
+![LarpedIn: a post card, Larp Battle, a generated profile and LarpedIn Jobs](docs/overview.png)
+
 ## Features
 
 - **Larp a post:** you type "I touched grass" and pick one of 9 vibes, for example hustle bro or Gen Z intern. Then you set a cringe level from 1 to 10. The app writes a full LinkedIn-style post card with an absurd headline, fake comments from fake connections, reaction counts and a cringe score.
