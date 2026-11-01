@@ -45,7 +45,9 @@ GENERATE_PROMPT = (
     "The post is plain text with no markdown or asterisks. "
     "Also write an absurd LinkedIn headline for the author, like 'Visionary | Grass Toucher | Ex-Unemployed', "
     "and 2 or 3 comments from fake connections with silly names and job titles. "
-    "Finally, score the post from 0 to 100 for buzzwords, emojis, humblebrag and overall cringe."
+    "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
+    "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
+    "A cringe level {level}/10 post should usually rate around {pct} overall."
 )
 
 DELARP_PROMPT = (
@@ -154,7 +156,7 @@ def generate():
     except (TypeError, ValueError):
         level = 5
 
-    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1])
+    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10)
     try:
         out = json.loads(groq(
             [{"role": "system", "content": system}, {"role": "user", "content": text}],
