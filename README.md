@@ -2,7 +2,10 @@
 
 **LarpedIn is a parody professional network.** You type the most ordinary thing you did today. LarpedIn turns it into the post, headline and comment section of someone who is very sure they are a thought leader.
 
-Hackathon theme: *something to help people larp*. LinkedIn is already a larp. We made it easier.
+**Hackathon theme: help people larp.** To *larp* (from live-action role-play) means to act like someone you are not. LinkedIn is already full of larping. LarpedIn makes it easier, and **Delarp** does the opposite: it translates a real LinkedIn post back into what actually happened.
+
+> **Real input to Delarp:** "Excited to share I've completed my Google Project Management Certificate! Never stop learning."
+> **LarpedIn's answer:** "I bought a cheap badge to sound competent because I still can't manage a real project."
 
 **Live demo: https://larpedin-p1fd.onrender.com**. It works on phones too, and you can install it with "Add to Home Screen".
 
@@ -20,7 +23,7 @@ Hackathon theme: *something to help people larp*. LinkedIn is already a larp. We
 <td width="50%"><img src="docs/tedx.png" alt="TEDx mode: the post on a dark stage with a spotlight"><br><sub><b>Present at TEDx.</b> Any post goes on a dark stage, is read aloud word by word, and ends in applause.</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/battle.png" alt="Larp Battle: two posts, delusion scores and the judge's verdict"><br><sub><b>Larp Battle.</b> Two people, two posts and a delusion score each. An AI judge reads the roast aloud.</sub></td>
+<td width="50%"><img src="docs/battle.png" alt="Larp Battle: two posts, delusion scores and the judge's verdict"><br><sub><b>Larp Battle.</b> Two people, two posts and a "delusion score" each. Higher means more over the top, and the higher score wins. The loser gets a "RATIO'D" stamp (internet slang for "you lost"). An AI judge reads the roast aloud.</sub></td>
 <td width="50%"><img src="docs/preview.png" alt="Link preview image of a shared post"><br><sub><b>Share links.</b> When you paste a link in iMessage, Slack or Discord, the preview shows the post card.</sub></td>
 </tr>
 </table>
@@ -29,14 +32,14 @@ Hackathon theme: *something to help people larp*. LinkedIn is already a larp. We
 
 | | |
 |---|---|
-| **Write a post** | 9 voices (thought leader, hustle bro, Gen Z intern, laid off but grateful and more) and a cringe level from 1 to 10. Each voice has its own opener and style. |
-| **Delarp a post** | Paste a real LinkedIn post and get what actually happened. One real result: "Excited to share I've completed my Google Project Management Certificate!" became "I bought a cheap badge to sound competent because I still can't manage a real project." |
+| **Write a post** | 9 voices that copy common LinkedIn personas, for example the thought leader, the hustle bro (always up at 5 AM) and the Gen Z intern. A cringe level from 1 to 10 sets how over the top it gets. |
+| **Delarp a post** | Paste a real LinkedIn post and get what actually happened, in one blunt sentence (see the example at the top). |
 | **Larp Battle** | Two people compete. The AI writes both posts, scores who is more delusional, crowns a winner and roasts both. |
 | **Present at TEDx** | A stage mode with a spotlight, the post read aloud, words highlighted, and applause at the end. |
 | **Hall of Larp** | A live wall of everyone's posts, with upvotes, a "most cringe in the room" leaderboard, a QR code and a projector mode. |
 | **Larp your profile** | Describe your real life and get a full fake profile: job history, skills, endorsements and recommendations. |
 | **LarpedIn Jobs** | Absurd job listings that "match" you. Easy Apply instantly gets you an offer or a very grateful rejection. |
-| **Copy + open LinkedIn** | Copies your post and opens LinkedIn's own composer. You decide whether to post. LarpedIn never connects to your account. |
+| **Copy + open LinkedIn** | Copies your post and opens LinkedIn's own composer. You decide whether to post. The live demo never connects to your LinkedIn account. (`app.py` also has an optional "Sign in with LinkedIn" posting flow. It stays off unless `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET` are set.) |
 | **Also** | Voice input, post image download and share links that survive restarts. A Chrome extension delarps any selected text (`extension/`). A native iOS app wraps the site (`ios/`). |
 
 ## How it works
@@ -44,10 +47,10 @@ Hackathon theme: *something to help people larp*. LinkedIn is already a larp. We
 - **Small stack.** The backend is one Flask file (`app.py`). The frontend is plain HTML, CSS and JavaScript in `static/`, with no build step. It is deployed on Render's free plan from `render.yaml`.
 - **One AI call per card.** The app sends one request to Groq's free API (`gpt-oss-120b`) with a strict JSON schema. It returns the post, headline, comments and scores together, in about 1 to 2 seconds.
 - **The prompt was tested.** We ran 12 identical inputs through two prompt versions. Three AI judges scored them blind: a comedy writer, a LinkedIn power user and a hackathon judge. The current prompt won 34 of 36 judgments. It scored higher on "funny" (6.8 vs 4.1 out of 10) and on "sounds like the chosen voice" (7.8 vs 2.9).
-- **It fails gracefully.** The models form a chain: `gpt-oss-120b`, then `gpt-oss-20b`, then `qwen3.8-27b`. If one fails, the request moves to the next. If all of them fail, the user gets a canned post, never an error page. With `FEATHERLESS_API_KEY` set, the code also routes posts to Kimi K2 on Featherless. The live demo does not need it.
+- **It fails gracefully.** The models form a chain: `gpt-oss-120b`, then `gpt-oss-20b`, then `qwen3.8-27b`. If one fails, the request moves to the next. If all of them fail, the user gets a canned post, never an error page. Optional: with `FEATHERLESS_API_KEY` set, posts, delarp and battles try Kimi K2 on Featherless first. It writes well but takes about 30 seconds. The live demo does not set it.
 - **No database.** Posts and votes live in memory. Share links carry the post itself in the URL (compressed), so they still work after the free server restarts. Link preview images are drawn on the server with Pillow.
 - **Safe for a projector.** A word filter keeps slurs off the public wall. A GitHub Actions job pings the server every 10 minutes, so it does not fall asleep before a demo.
-- **Cost:** $0.
+- **Cost:** $0 for the live demo (free Render and Groq plans).
 
 ## Run it locally
 
@@ -65,10 +68,10 @@ You need Python 3.11 or newer.
 
    ```
    set -a; . ./.env; set +a
-   flask --app app run
+   flask --app app run --port 5001
    ```
 
-4. Open http://localhost:5000.
+4. Open http://127.0.0.1:5001. On macOS, port 5000 is taken by AirPlay.
 
 Without a key, the app still runs and shows canned posts.
 
@@ -78,7 +81,7 @@ Without a key, the app still runs and shows canned posts.
 .venv/bin/python test_app.py
 ```
 
-The tests replace the AI with a fake, so they need no key. They cover every endpoint, the model fallback chain, share links that survive a restart, the word filter, input limits and the redirect safety checks.
+It prints `all good`. The tests replace the AI with a fake, so they need no key. They call every endpoint and check the model fallback chain, share links that survive a restart, the word filter, input limits and the redirect safety checks.
 
 ## Repository map
 

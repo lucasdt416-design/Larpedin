@@ -59,6 +59,17 @@ LEVELS = [
 # Blind A/B (3 judges, 12 inputs): this vibe-first prompt won 34 of 36 judgments over the template prompt.
 # About half of posts get a couple of emojis, like real LinkedIn; kept out of the skills and hashtag lines
 # so post_shape_ok() still sees "1." and "#" at the start of those lines.
+# Compromise (Mohammad + Lucas): Lucas's truth contract, plus one deadpan reveal line. Blind tests: the reveal
+# version beat "larp by omission" 28/36. The style is random per post because the model copies any single example.
+TRUTH_STYLES = [
+    "'For context: <event>.'",
+    "'Technically, <event>.'",
+    "'(Plain version: <event>.)'",
+    "'To be clear: <event>.'",
+    "'Some will say it was just <event>.'",
+    "a rhetorical question answered in one word: 'Was it <event>? Yes.'",
+]
+
 EMOJI_RULES = [
     "none in this post.",
     "use 1 or 2 emojis a real LinkedIn poster would use (for example 🚀 ✅ 💡 🙌 📈 👇), only in the opening "
@@ -66,65 +77,91 @@ EMOJI_RULES = [
 ]
 
 GENERATE_PROMPT = (
-    "You ghostwrite LinkedIn posts for someone who is LARPING: making something ordinary they did sound "
-    "impressive WITHOUT lying. Write in the first person as {voice}\n"
-    "Grandness level {level}/10: {intensity}. Follow that word range.\n"
+    "You ghostwrite LinkedIn posts for someone who is LARPING: making something ordinary they did sound impressive WITHOUT lying. "
+    "Write in the first person as {voice}\n"
+    "Grandness level {level}/10: {intensity}. "
+    "Follow that word range.\n"
     "THE TRUTH CONTRACT (never break it):\n"
     "- Every sentence must be literally true of what they told you.\n"
-    "- Never invent titles, employers, teams, clients, people, results, numbers or outcomes they did not state "
-    "(no 'flawless', 'first try', 'promoted', 'my team', 'mentors'). Numbers only if they follow from what they said.\n"
+    "- Never invent titles, employers, teams, clients, people, results, numbers or outcomes they did not state (no 'flawless', 'first try', 'promoted', 'my team', 'mentors'). "
+    "Numbers only if they follow from what they said.\n"
     "THE LARP:\n"
-    "- Never name the ordinary object or activity. Describe it only through true but impressive-sounding "
-    "abstractions, so a reader assumes it was something big. 'flipped a pancake' -> 'executed a time-critical "
-    "maneuver in a high-heat environment'. 'took a nap' -> 'blocked a deliberate offline window to reset'.\n"
-    "- Never admit it was ordinary: no 'it may sound small', no 'technically it was', no plain-truth confession.\n"
-    "- Pick the details that sound impressive and leave out the rest. Let the reader infer the importance.\n"
+    "- Apart from the one reveal line (below), never name the ordinary object or activity. "
+    "Describe it only through true but impressive-sounding abstractions, so a reader assumes it was something big. "
+    "'flipped a pancake' -> 'executed a time-critical maneuver in a high-heat environment'. "
+    "'took a nap' -> 'blocked a deliberate offline window to reset'.\n"
+    "- THE REVEAL: exactly one short, deadpan line that names the plain truth, alone on its own line right after the opening paragraph. "
+    "Write it in this style, replacing <event> with what they really did in plain words: {truth}. "
+    "It is true, so it keeps the truth contract, and it is the punchline: the reader sees the gap between the grand claim and reality. "
+    "Never apologize for it or explain it, and never name the event anywhere else.\n"
+    "- Pick the details that sound impressive and leave out the rest. "
+    "Let the reader infer the importance.\n"
     "- Prestige that is actually true may be named (a well-known university, a city).\n"
-    "- Never add circumstances they did not state: no time of day, no 'alone' or 'without help', no audience or "
-    "anyone's reaction, no network. Never describe how good the result was (no perfect, flawless, golden, impressed).\n"
-    "- Also avoid the obvious related words that would give it away (for a pancake: no kitchen, batter, flip, pan).\n"
-    "- At levels 9-10 go all the way on what it means (legacy, 'they will teach this one day', a keynote you are "
-    "'considering'), still about the same disguised event and still true.\n"
+    "- Never add circumstances they did not state: no time of day, no 'alone' or 'without help', no audience or anyone's reaction, no network. "
+    "Never describe how good the result was (no perfect, flawless, golden, impressed).\n"
+    "- Outside the reveal line, also avoid the obvious related words that would give it away (for a pancake: no kitchen, batter, flip, pan).\n"
+    "- At levels 9-10 go all the way on what it means (legacy, 'they will teach this one day', a keynote you are 'considering'), still about the same disguised event and still true.\n"
     "- No surreal or cosmic metaphors, no talking objects, no section labels, no markdown.\n"
     "- Emojis: {emoji}\n"
-    "STRUCTURE (always exactly these four parts, in this order, separated by exactly one blank line, with no other "
-    "blank lines anywhere):\n"
-    "1. An opening paragraph of 2 to 4 sentences, written as flowing prose on one line (not one sentence per line). "
+    "STRUCTURE (always exactly these five parts, in this order, separated by exactly one blank line, with no other blank lines anywhere):\n"
+    "1. "
+    "An opening paragraph of 2 to 4 sentences, written as flowing prose on one line (not one sentence per line). "
     "The voice's hook goes at the start of it.\n"
-    "2. One short line introducing the skills (for example 'What it sharpened:'), followed directly by 3 numbered "
-    "lines, each a real career skill and how the moment showed it.\n"
-    "3. One takeaway sentence. If the voice has a signature ending ('Agree?', 'We're hiring!'), it goes here.\n"
-    "4. 2 to 4 hashtags on one line.\n"
-    "Before the post, fill real_event (the plain truth), true_details (the facts you may use) and disguise "
-    "(how you will describe it without naming it). After the post, fill claims_check: list any sentence in the "
-    "post that claims something not supported by true_details. It must be an empty string.\n"
-    "Two examples of the style and structure (different topics; never reuse their wording):\n"
-    "What they did: 'I made coffee'. Post:\n"
-    "Some personal news. Today I owned an end-to-end process from sourcing to delivery, with every variable on me: "
-    "precise measurement, heat and timing. And I delivered.\n\n"
+    "2. "
+    "The reveal line, alone.\n"
+    "3. "
+    "One short line introducing the skills (for example 'What it sharpened:'), followed directly by 3 numbered lines, each a real career skill and how the moment showed it.\n"
+    "4. "
+    "One takeaway sentence. "
+    "If the voice has a signature ending ('Agree?', 'We're hiring!'), it goes here.\n"
+    "5. "
+    "2 to 4 hashtags on one line.\n"
+    "Before the post, fill real_event (the plain truth), true_details (the facts you may use) and disguise (how you will describe it without naming it). "
+    "After the post, fill claims_check: list any sentence in the post that claims something not supported by true_details. "
+    "It must be an empty string.\n"
+    "Two examples of the structure only (different topics and voices). "
+    "Never reuse their sentences, openers or closers; the voice decides the opener:\n"
+    "What they did: 'I made coffee'. "
+    "Post:\n"
+    "Today I owned an end-to-end process from sourcing to delivery, with every variable on me: precise measurement, heat and timing. "
+    "And I delivered.\n"
+    "\n"
+    "For context: I made coffee.\n"
+    "\n"
     "What it sharpened:\n"
-    "1. Ownership: no handoffs, no excuses.\n"
-    "2. Precision: small measurements decide the outcome.\n"
-    "3. Execution: a plan only matters once it ships.\n\n"
-    "Most people never see the work that happens before the result.\n\n"
+    "1. "
+    "Ownership: no handoffs, no excuses.\n"
+    "2. "
+    "Precision: small measurements decide the outcome.\n"
+    "3. "
+    "Execution: a plan only matters once it ships.\n"
+    "\n"
+    "Ownership starts before anyone is watching.\n"
+    "\n"
     "#Ownership #Execution #Precision\n"
-    "What they did: 'I returned a library book'. Post:\n"
-    "I don't usually post about this, but today I closed out a long-running commitment. It had a hard deadline, "
-    "and I met it with no extensions and no excuses.\n\n"
+    "What they did: 'I returned a library book'. "
+    "Post:\n"
+    "I don't usually post about this, but today I closed out a long-running commitment. "
+    "It had a hard deadline, and I met it with no extensions and no excuses.\n"
+    "\n"
+    "Technically, I returned a library book.\n"
+    "\n"
     "What it reinforced:\n"
-    "1. Accountability: a deadline is a promise.\n"
-    "2. Follow-through: finishing is a skill.\n"
-    "3. Integrity: doing what you said you'd do, even when nobody is checking.\n\n"
-    "Reliability isn't glamorous, but people remember who delivered.\n\n"
+    "1. "
+    "Accountability: a deadline is a promise.\n"
+    "2. "
+    "Follow-through: finishing is a skill.\n"
+    "3. "
+    "Integrity: doing what you said you'd do, even when nobody is checking.\n"
+    "\n"
+    "Reliability isn't glamorous, but people remember who delivered.\n"
+    "\n"
     "#Accountability #Integrity #FollowThrough\n"
-    "Also write the author's LinkedIn headline: 2 or 3 impressive descriptors separated by pipes, or a short "
-    "mission statement, that are true of them given the event (descriptors, never job titles they don't hold). "
+    "Also write the author's LinkedIn headline: 2 or 3 impressive descriptors separated by pipes, or a short mission statement, that are true of them given the event (descriptors, never job titles they don't hold). "
     "No company names; do not start with 'Visionary' or 'Chief'; never use 'Whisperer'.\n"
-    "Also write 3 comments from fake connections with realistic, varied names and job titles (never Alex Rivera, "
-    "Alex Chen, Priya Sharma, Maya Patel or Jordan, and never the author's own name; commenters never address themselves). "
-    "Mix the reactions: always one humblebrag that one-ups the author, plus two of these at random: sincere "
-    "congratulations, 'This.', someone tagging a friend, a recruiter or coach pitching something, someone asking "
-    "for the template. Never label a comment with its type (no 'Humblebrag:' or 'Recruiter:').\n"
+    "Also write 3 comments from fake connections with realistic, varied names and job titles (never Alex Rivera, Alex Chen, Priya Sharma, Maya Patel or Jordan, and never the author's own name; commenters never address themselves). "
+    "Mix the reactions: always one humblebrag that one-ups the author, plus two of these at random: sincere congratulations, 'This.', someone tagging a friend, a recruiter or coach pitching something, someone asking for the template. "
+    "Never label a comment with its type (no 'Humblebrag:' or 'Recruiter:').\n"
     "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
     "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
     "A level {level}/10 post should usually rate around {pct} overall."
@@ -241,9 +278,11 @@ def count(kind):
 
 def routes(fast=False):
     # (url, api key env var, model, supports strict json_schema); providers without a key are skipped.
-    # fast=True skips Featherless: Kimi needs ~65-90 s for the long profile/jobs JSON, too slow on stage.
-    out = [] if fast else [(FEATHERLESS_URL, "FEATHERLESS_API_KEY", m, False) for m in FEATHERLESS_MODELS]
-    out += [(GROQ_URL, "GROQ_API_KEY", m, True) for m in MODELS]
+    # Groq first (about 1-2 s). Featherless Kimi only as overflow when every Groq model is rate limited:
+    # about 30 s, but better than a canned post. fast=True skips it (Kimi needs 65-90 s for profile/jobs).
+    out = [(GROQ_URL, "GROQ_API_KEY", m, True) for m in MODELS]
+    if not fast:
+        out += [(FEATHERLESS_URL, "FEATHERLESS_API_KEY", m, False) for m in FEATHERLESS_MODELS]
     return [r for r in out if os.environ.get(r[1])]
 
 
@@ -356,7 +395,7 @@ def generate():
         level = 5
 
     system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10,
-                                    emoji=random.choice(EMOJI_RULES))
+                                    emoji=random.choice(EMOJI_RULES), truth=random.choice(TRUTH_STYLES))
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"

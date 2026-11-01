@@ -55,30 +55,40 @@ def bad_then_good(url, headers, json, timeout):
     return Resp(200, "not json" if len(calls) == 1 else '{"a": 1}')
 app.requests.post = bad_then_good
 assert app.llm([], 0.5, schema={"name": "x", "schema": {"required": ["a"]}}) == '{"a": 1}' and len(calls) == 2
-# Featherless first: fenced JSON is accepted, a 429 (one request at a time on the $25 plan) spills to Groq.
+# Featherless is overflow only: used after every Groq model is rate limited; it accepts fenced JSON.
 os.environ["FEATHERLESS_API_KEY"] = "fl"
 SCH = {"name": "t", "schema": {"required": ["a"]}}
 hits = []
-def fl_then(url, headers, json, timeout):
-    hits.append((url, json["model"]))
+def groq_busy(url, headers, json, timeout):
+    hits.append(url)
     if url == app.FEATHERLESS_URL:
         assert "response_format" not in json and "JSON Schema" in json["messages"][-1]["content"]
         return Resp(200, 'Sure! ```json\n{"a": 1}\n```')
-    return Resp(200, '{"a": 2}')
-app.requests.post = fl_then
-assert app.llm([], 0.5, schema=SCH) == '{"a": 1}' and hits[0][0] == app.FEATHERLESS_URL
+    return Resp(429)
+app.requests.post = groq_busy
+assert app.llm([], 0.5, schema=SCH) == '{"a": 1}'
+assert hits == [app.GROQ_URL] * len(app.MODELS) + [app.FEATHERLESS_URL]
 hits.clear()
-def fl_busy(url, headers, json, timeout):
+def groq_ok(url, headers, json, timeout):
     hits.append(url)
-    return Resp(429) if url == app.FEATHERLESS_URL else Resp(200, '{"a": 2}')
-app.requests.post = fl_busy
-assert app.llm([], 0.5, schema=SCH) == '{"a": 2}' and hits == [app.FEATHERLESS_URL, app.GROQ_URL]
+    return Resp(200, '{"a": 2}')
+app.requests.post = groq_ok
+assert app.llm([], 0.5, schema=SCH) == '{"a": 2}' and hits == [app.GROQ_URL]  # healthy Groq: Kimi never called
+hits.clear(); app.requests.post = groq_busy
+try:
+    app.llm([], 0.5, schema=SCH, fast=True)  # fast skips Kimi, so all-Groq-busy means an error (canned fallback)
+    raise AssertionError("expected HTTPError")
+except app.requests.HTTPError:
+    pass
+assert app.FEATHERLESS_URL not in hits
 def fl_missing(url, headers, json, timeout):
-    return Resp(200, '{"b": 1}') if url == app.FEATHERLESS_URL else Resp(200, '{"a": 3}')
+    return Resp(429) if url == app.GROQ_URL else Resp(200, '{"b": 1}')
 app.requests.post = fl_missing
-assert app.llm([], 0.5, schema=SCH) == '{"a": 3}'  # missing required key -> next model
-hits.clear(); app.requests.post = fl_busy
-assert app.llm([], 0.5, schema=SCH, fast=True) == '{"a": 2}' and hits == [app.GROQ_URL]  # fast skips Featherless
+try:
+    app.llm([], 0.5, schema=SCH)  # Kimi answer missing a required key is rejected too
+    raise AssertionError("expected ValueError")
+except ValueError:
+    pass
 del os.environ["FEATHERLESS_API_KEY"]
 app.requests.post = real_post
 

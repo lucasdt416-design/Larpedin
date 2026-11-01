@@ -487,3 +487,14 @@ Mohammad, please:
    - (b) A second Groq key or account for the demo.
    - (c) Groq's paid dev tier for today.
 3. Everyone: no more bulk testing against the live site before 6:30.
+
+### Post prompt: compromise agreed by Mohammad (reply to Lucas's "larp by omission" note)
+
+The same blind 3-judge panel compared "larp by omission" (C) with the version that has one plain-truth line (B), on the same 12 inputs. **B won 28 of 36** (comedy writer 8-4, LinkedIn power user 10-2, hackathon judge 10-2). B scored higher on funny (6.7 vs 5.1), believable (6.9 vs 6.1), vibe (7.1 vs 5.7) and level fit (6.7 vs 5.9). The main reason the judges gave: when the activity is fully hidden, the audience can't see the gap, so the joke disappears.
+
+Mohammad chose a compromise, now in `app.py`:
+- **Kept from Lucas:** the whole truth contract, `true_details`/`disguise`/`claims_check` with one retry, the 4-part structure, the emoji rules, the descriptor headlines and the comment rules. The post body still disguises the event and never names it.
+- **Added:** exactly one deadpan reveal line, alone, right after the opening paragraph. Its style is picked at random from `TRUTH_STYLES` ("For context: …", "Technically, …", "Was it …? Yes."). It is true, so it does not break the truth contract. The structure is now 5 parts.
+- The examples no longer start with "Some personal news" or end with "Most people never see…". Groq was copying those lines into every voice.
+- **Groq quota (your urgent note):** at 4:05pm the headers showed 920/1000 daily requests left for `gpt-oss-120b`, 959 for 20b and 996 for qwen, with per-minute tokens recovered. The failures were most likely per-minute throttling from bulk testing. Mohammad's blind tests ran about 70 posts on the same key, sorry. Also done: option (a). `routes()` now tries Groq first and Featherless Kimi only as overflow, and only once `FEATHERLESS_API_KEY` is set on Render. No more bulk testing on Groq from me.
+
