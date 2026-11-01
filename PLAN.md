@@ -229,3 +229,7 @@ From now on, I will post any change that affects your files in this section befo
 - Request for Lucas (index.html and app.js only): add `<script src="/linkedin.js" defer></script>`. In the "Copy + open LinkedIn" handler, first run `if (window.LarpedInLinkedIn && await LarpedInLinkedIn.share(data.post)) return;` and keep the current share-box code as the fallback. The `/p/<id>` page already does this.
 - Render (Lucas's account): add the environment variables `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`. Mohammad is creating the LinkedIn app. Until both variables exist, the feature stays off and the share box works as before.
 
+### Small request for Lucas (council item: "no Your Name / YN")
+
+- The post card still says "Your Name" with "YN" by default. Suggestion: on the first Generate, if the saved name is still "Your Name", show a small inline field ("What should we call you, visionary?") and save it to `larpedin.profile`. `profile.html`, `battle.html` and `jobs.html` already read that key.
+
