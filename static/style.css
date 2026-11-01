@@ -787,3 +787,75 @@ main {
 }
 
 .result-item, .skeleton { scroll-margin-top: 72px; }
+
+/* ---------- Gallery toolbar + presenter mode ---------- */
+
+.gallery-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 12px; }
+.gallery-stats { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gallery-stats:empty { display: none; }
+.present-btn {
+  margin-left: auto;
+  padding: 8px 14px;
+  border-radius: var(--pill);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  background: var(--card);
+}
+.present-btn:hover { color: var(--text); background: var(--hover); }
+
+.gallery-flash {
+  position: fixed;
+  left: 50%;
+  bottom: 4vh;
+  transform: translateX(-50%);
+  z-index: 1300;
+  max-width: min(900px, calc(100vw - 32px));
+  padding: 14px 24px;
+  border-radius: var(--pill);
+  background: var(--blue);
+  color: #fff;
+  font-size: clamp(18px, 2.4vw, 32px);
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(10, 102, 194, 0.45);
+  animation: flash-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes flash-in { from { transform: translate(-50%, 30px) scale(0.9); opacity: 0; } }
+
+/* Projector view: giant QR on the left, live feed on the right, no site chrome. */
+.is-presenting .lnav,
+.is-presenting .tagline { display: none !important; }
+.is-presenting main { max-width: none; padding: 2vh 3vw; height: 100vh; display: flex; flex-direction: column; }
+.is-presenting .intro { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin: 0 0 2vh; }
+.is-presenting .intro-title { font-size: clamp(32px, 4vw, 64px); }
+.is-presenting .gallery-toolbar { margin: 0; }
+.is-presenting .gallery-stats { font-size: clamp(18px, 2vw, 32px); }
+.is-presenting .gallery-layout {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(320px, 40vw) 1fr;
+  gap: 3vw;
+  align-items: stretch;
+}
+.is-presenting .qr-panel {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 3vh 2vw;
+}
+.is-presenting .qr-panel h2 { font-size: clamp(32px, 4vw, 72px); margin: 0 0 2vh; grid-column: auto; }
+.is-presenting .qr-code { max-width: min(34vw, 62vh); padding: 16px; grid-column: auto; }
+.is-presenting .qr-url { font-size: clamp(18px, 2vw, 34px); margin-top: 2vh; grid-column: auto; }
+.is-presenting .gallery-layout > section { min-height: 0; overflow: hidden; }
+.is-presenting .gallery-feed { gap: 2vh; }
+.is-presenting .gallery-card { font-size: clamp(15px, 1.25vw, 22px); }
+.is-presenting .gallery-card .post-body { font-size: 1em; }
+.is-presenting .gallery-card .post-headline,
+.is-presenting .gallery-card .post-meta,
+.is-presenting .gallery-original { font-size: 0.8em; }
+.is-presenting .gallery-card .see-more { display: none; }

@@ -5,7 +5,12 @@
   .post-author, .post-headline, .post-meta, .parody-label, .post-body,
   .see-more, .badge with index.html. Top bar comes from nav.js.
 
-    .gallery-page      <body> class for this page
+    .gallery-page      <body> class for this page; .is-presenting in presenter mode
+                       (fullscreen projector view, also via gallery.html?present)
+    .gallery-toolbar   row with live stats + presenter button
+    .gallery-stats     "🔥 23 larps · 5 delarps · 2 battles" from /api/stats
+    .present-btn       toggles presenter mode
+    .gallery-flash     big "New larp just dropped" banner (presenter mode)
     .gallery-layout    two columns: QR panel + feed
     .qr-panel          "Scan to post" box
     .qr-code           element the QR image is drawn into
@@ -32,11 +37,15 @@
     <section class="intro">
       <h1 class="intro-title">Hall of Larp</h1>
       <p class="tagline">The most delusional posts, live, voted by you. <a class="intro-link" href="/">Make your own →</a></p>
+      <div class="gallery-toolbar">
+        <p class="gallery-stats" id="stats" aria-live="polite"></p>
+        <button type="button" class="present-btn" id="present" aria-pressed="false">📽️ Presenter mode</button>
+      </div>
     </section>
 
     <div class="gallery-layout">
     <aside class="qr-panel" aria-label="Scan to post">
-      <h2>Scan to post</h2>
+      <h2>Scan to LARP</h2>
       <div class="qr-code" id="qr" role="img" aria-label="QR code to open LarpedIn"></div>
       <p class="qr-url" id="qr-url"></p>
     </aside>
@@ -48,6 +57,8 @@
     </section>
     </div>
   </main>
+
+  <div class="gallery-flash" id="flash" role="status" hidden></div>
 
   <template id="gallery-card-template">
     <li class="gallery-card">

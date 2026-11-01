@@ -131,6 +131,7 @@ function render(posts) {
       if (!firstLoad) {
         card.classList.add("is-new");
         setTimeout(() => card.classList.remove("is-new"), 4000);
+        announce(p);
       }
     }
     setVotes(card, p.id, p.votes);
@@ -164,12 +165,65 @@ function focusLinkedPost() {
   setTimeout(() => card.classList.remove("is-new"), 4000);
 }
 
+// ---------- Presenter mode ----------
+
+function setPresenting(on) {
+  document.body.classList.toggle("is-presenting", on);
+  $("present").setAttribute("aria-pressed", String(on));
+  $("present").textContent = on ? "✕ Exit presenter mode" : "📽️ Presenter mode";
+}
+
+$("present").addEventListener("click", async () => {
+  const on = !document.body.classList.contains("is-presenting");
+  setPresenting(on);
+  try {
+    if (on && !document.fullscreenElement) await document.documentElement.requestFullscreen();
+    if (!on && document.fullscreenElement) await document.exitFullscreen();
+  } catch {
+    // Fullscreen refused (iframe, iOS); presenter layout still works.
+  }
+});
+
+// Leaving fullscreen with Esc also leaves presenter mode.
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement) setPresenting(false);
+});
+
+if (new URLSearchParams(location.search).has("present")) setPresenting(true);
+
+let flashTimer;
+function announce(p) {
+  if (!document.body.classList.contains("is-presenting")) return;
+  $("flash").textContent = `🎉 New larp just dropped: "${p.text}"`;
+  $("flash").hidden = false;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => ($("flash").hidden = true), 5000);
+}
+
+// ---------- Stats ----------
+
+async function loadStats() {
+  try {
+    const res = await fetch("/api/stats", { cache: "no-store", signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return;
+    const s = await res.json();
+    const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+    const parts = [`🔥 ${plural(s.posts || 0, "larp")} posted`];
+    if (s.delarps) parts.push(plural(s.delarps, "delarp"));
+    if (s.battles) parts.push(plural(s.battles, "battle"));
+    $("stats").textContent = parts.join(" · ");
+  } catch {
+    // Stats are a nice-to-have; keep the last value.
+  }
+}
+
 async function poll() {
   try {
     const res = await fetch("/api/gallery", { cache: "no-store", signal: AbortSignal.timeout(10000) });
     if (!res.ok) throw new Error(`Gallery error (${res.status})`);
     render(await res.json());
     showError("");
+    loadStats();
   } catch {
     showError("Can't reach the server. Retrying...");
   } finally {
