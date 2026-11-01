@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jobs · LarpedIn</title>
+<script src="nav.js" defer></script>
+<style>
+  :root {
+    --bg: #f4f2ee; --card: #fff; --blue: #0a66c2; --blue-dark: #004182;
+    --text: rgba(0,0,0,.9); --muted: rgba(0,0,0,.6); --line: rgba(0,0,0,.08);
+    --green: #057642; --shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 16px 12px 48px; }
+  .card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); margin-bottom: 10px; overflow: hidden; }
+  .pad { padding: 18px 20px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 8px; }
+  .parody { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); border: 1px solid #c8c6c2; border-radius: 999px; padding: 2px 8px; }
+  label.f { display: block; font-weight: 600; font-size: 14px; margin: 14px 0 6px; }
+  textarea { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid rgba(0,0,0,.4);
+    border-radius: 6px; background: #fff; color: inherit; min-height: 110px; resize: vertical; }
+  textarea:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn { font: inherit; font-weight: 600; border-radius: 999px; padding: 8px 18px; cursor: pointer;
+    border: 1px solid var(--blue); background: #fff; color: var(--blue); transition: background .15s, box-shadow .15s; }
+  .btn:hover { background: rgba(10,102,194,.08); box-shadow: inset 0 0 0 1px var(--blue); }
+  .btn.primary { background: var(--blue); color: #fff; }
+  .btn.primary:hover { background: var(--blue-dark); }
+  .btn.ghost { border-color: rgba(0,0,0,.6); color: var(--muted); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  .go { width: 100%; margin-top: 18px; padding: 12px; font-size: 16px; }
+  .err { background: #fde8e8; color: #9b1c1c; border-radius: 8px; padding: 10px 14px; margin: 12px 0 0; }
+  .err:empty { display: none; }
+  .note { background: #eef3f8; color: var(--muted); font-size: 13px; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; }
+  [hidden] { display: none !important; }
+  #results { scroll-margin-top: 64px; }
+
+  /* Loading */
+  .status { text-align: center; font-weight: 600; color: var(--blue); padding: 14px; }
+  .sk { background: linear-gradient(90deg, #eee 25%, #f6f6f6 50%, #eee 75%); background-size: 200% 100%;
+    animation: shimmer 1.2s infinite linear; border-radius: 6px; }
+  .sk-row { display: flex; gap: 12px; }
+  .sk-logo { flex: 0 0 56px; height: 56px; border-radius: 4px; }
+  .sk-lines { flex: 1; }
+  .sk-line { height: 14px; margin: 4px 0 10px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* Job cards */
+  .job { display: flex; gap: 12px; }
+  .logo { flex: 0 0 56px; width: 56px; height: 56px; border-radius: 4px; display: grid; place-items: center;
+    color: #fff; font-weight: 800; font-size: 19px; letter-spacing: -.5px; }
+  .job-body { flex: 1; min-width: 0; }
+  .job h2 { font-size: 17px; margin: 0; color: var(--blue); }
+  .co { margin: 2px 0 0; font-size: 14px; }
+  .dim { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+  .salary { margin: 6px 0 0; font-size: 14px; font-weight: 600; }
+  .posted { color: var(--green); font-weight: 600; }
+  .job ul { margin: 10px 0 0; padding-left: 18px; font-size: 14px; }
+  .job li { margin: 3px 0; }
+  .perks { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+  .job-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .btn.applied { background: #e7f3ec; border-color: var(--green); color: var(--green); }
+  .btn.applied.rejected { background: #f1f1f1; border-color: rgba(0,0,0,.4); color: var(--muted); }
+  .save[aria-pressed=true] { background: var(--blue); color: #fff; }
+
+  /* Modal */
+  dialog { border: 0; padding: 0; border-radius: 12px; width: calc(100% - 24px); max-width: 520px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35); color: var(--text); overflow: hidden; }
+  dialog::backdrop { background: rgba(0,0,0,.55); }
+  .progress { padding: 24px 20px; text-align: center; }
+  .progress p { margin: 0 0 14px; font-weight: 600; }
+  .bar { height: 10px; background: #e8e8e8; border-radius: 999px; overflow: hidden; }
+  .bar span { display: block; height: 100%; width: 0; background: var(--blue); border-radius: 999px; }
+  .bar span.fill { width: 100%; transition: width 1.5s cubic-bezier(.3,.7,.5,1); }
+  .mail-head { padding: 16px 20px; color: #fff; font-size: 20px; font-weight: 800; }
+  .mail-head.offer { background: var(--green); }
+  .mail-head.rejection { background: #6b6b6b; }
+  .mail-meta { padding: 12px 20px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .mail-meta p { margin: 2px 0; }
+  .mail-meta b { display: inline-block; min-width: 64px; color: var(--muted); font-weight: 600; }
+  .mail-body { padding: 16px 20px; white-space: pre-wrap; margin: 0; max-height: 45vh; overflow: auto; }
+  .trombone { text-align: center; font-size: 13px; color: var(--muted); padding: 0 20px; margin: 0; }
+  .mail-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; padding: 12px 20px 18px; }
+  .burst { position: fixed; pointer-events: none; font-size: 1.8rem; z-index: 2000; animation: fly 1.4s ease-out forwards; }
+  .burst.sad { animation: sink 1.8s ease-in forwards; }
+  @keyframes fly { to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
+  @keyframes sink { to { transform: translate(var(--dx), 70vh) rotate(var(--rot)); opacity: 0; } }
+
+  @media (min-width: 640px) {
+    .wrap { padding: 24px 16px 60px; }
+    .pad { padding: 22px 24px; }
+    h1 { font-size: 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="card pad">
+    <h1>💼 Jobs picked for you</h1>
+    <p class="sub">Our AI matched your vibe with roles you are deeply unqualified for</p>
+    <span class="parody">Parody · not affiliated with LinkedIn</span>
+    <form id="form" novalidate>
+      <label class="f" for="who">Who are you, really?</label>
+      <textarea id="who" maxlength="500" placeholder="I'm a CS student with 3 unfinished side projects"></textarea>
+      <button type="submit" class="btn primary go" id="go">Find my dream job</button>
+      <p class="err" id="err" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="loading" hidden aria-busy="true">
+    <p class="status" id="status" aria-live="polite"></p>
+    <div id="skeletons"></div>
+  </section>
+
+  <section id="results" hidden aria-label="Job results">
+    <p class="note" id="fbNote" hidden>Our AI recruiter is on PTO, so here is a backup listing.</p>
+    <div id="list"></div>
+  </section>
+</main>
+
+<dialog id="modal" aria-labelledby="modalTitle">
+  <div id="modalContent"></div>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+const initials = s => (String(s).match(/[\p{L}\p{N}]+/gu) || ["?"]).slice(0, 2).map(w => w[0].toUpperCase()).join("");
+function color(s) {
+  let h = 0;
+  for (const c of String(s)) h = (h * 31 + c.codePointAt(0)) >>> 0;
+  return `hsl(${h % 360} 55% 42%)`;
+}
+const fmt = n => Number(n || 0).toLocaleString("en-US");
+const arr = a => (Array.isArray(a) ? a : []);
+
+// Rotating placeholders (only while the box is empty and not focused).
+const placeholders = ["I'm a CS student with 3 unfinished side projects", "I work retail and watch YouTube at 2x speed",
+  "I make spreadsheets nobody opens", "I once fixed the office printer"];
+let ph = 0;
+setInterval(() => {
+  const t = $("who");
+  if (document.activeElement === t || t.value) return;
+  t.placeholder = placeholders[++ph % placeholders.length];
+}, 3000);
+
+// Skeleton cards.
+for (let i = 0; i < 3; i++) {
+  const c = el("div", "card pad");
+  c.setAttribute("aria-hidden", "true");
+  const row = el("div", "sk-row"), lines = el("div", "sk-lines");
+  row.append(el("div", "sk sk-logo"), lines);
+  for (const w of ["70%", "45%", "55%", "90%", "80%"]) {
+    const l = el("div", "sk sk-line"); l.style.width = w; lines.append(l);
+  }
+  c.append(row);
+  $("skeletons").append(c);
+}
+
+const statusLines = ["Scanning 0 openings...", "Adding 'rockstar' to job titles...", "Lowering salary expectations...",
+  "Requiring 10 years of experience for entry level...", "Calling it a family..."];
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const text = $("who").value.trim();
+  $("err").textContent = "";
+  if (!text) { $("err").textContent = "Tell us who you are first."; $("who").focus(); return; }
+  $("go").disabled = true;
+  $("results").hidden = true;
+  $("loading").hidden = false;
+  let i = 0;
+  $("status").textContent = statusLines[0];
+  const timer = setInterval(() => { $("status").textContent = statusLines[++i % statusLines.length]; }, 1200);
+  try {
+    const r = await fetch("/api/jobs", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `Server error (${r.status}).`);
+    render(data);
+  } catch (err) {
+    $("err").textContent = err.message === "Failed to fetch" ? "Could not reach the server. Try again." : err.message;
+  } finally {
+    clearInterval(timer);
+    $("loading").hidden = true;
+    $("go").disabled = false;
+  }
+});
+
+function render(data) {
+  $("fbNote").hidden = !data.fallback;
+  $("list").replaceChildren(...arr(data.jobs).map(card));
+  $("results").hidden = false;
+  $("results").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+}
+
+function card(job) {
+  const c = el("article", "card pad job");
+  const logo = el("div", "logo", initials(job.company));
+  logo.style.background = color(job.company);
+  logo.setAttribute("aria-hidden", "true");
+  const b = el("div", "job-body");
+  const meta = el("p", "dim");
+  meta.append(el("span", "posted", "Posted 2h ago"), ` · ${fmt(job.applicants)} applicants`);
+  b.append(el("h2", null, job.title), el("p", "co", job.company), el("p", "dim", job.location),
+    el("p", "salary", job.salary), meta);
+  const ul = el("ul");
+  for (const r of arr(job.requirements)) ul.append(el("li", null, r));
+  b.append(ul, el("p", "perks", "Perks: " + (job.perks || "")));
+
+  const apply = el("button", "btn primary", "Easy Apply");
+  apply.type = "button";
+  apply.addEventListener("click", () => easyApply(job, apply));
+  const save = el("button", "btn save", "🔖 Save");
+  save.type = "button";
+  save.setAttribute("aria-pressed", "false");
+  save.addEventListener("click", () => {
+    const on = save.getAttribute("aria-pressed") !== "true";
+    save.setAttribute("aria-pressed", on);
+    save.textContent = on ? "🔖 Saved" : "🔖 Save";
+  });
+  const acts = el("div", "job-actions");
+  acts.append(apply, save);
+  b.append(acts);
+  c.append(logo, b);
+  return c;
+}
+
+// ---- Modal ----
+const modal = $("modal");
+let opener = null, submitting = false;
+modal.addEventListener("cancel", e => { if (submitting) e.preventDefault(); });
+modal.addEventListener("close", () => { submitting = false; if (opener) opener.focus(); });
+function openModal(btn, ...nodes) {
+  opener = btn;
+  $("modalContent").replaceChildren(...nodes);
+  if (!modal.open) modal.showModal();
+}
+
+async function easyApply(job, btn) {
+  const offer = job.outcome === "offer";
+  if (!btn.dataset.applied) {
+    const bar = el("span");
+    const box = el("div", "progress");
+    const barWrap = el("div", "bar"); barWrap.append(bar);
+    barWrap.setAttribute("role", "progressbar");
+    barWrap.setAttribute("aria-label", "Submitting application");
+    box.append(el("p", null, "Submitting your 1-page resume to 9 ATS systems..."), barWrap);
+    box.firstChild.id = "modalTitle";
+    submitting = true;
+    openModal(btn, box);
+    void bar.offsetWidth; // force layout so the width transition runs
+    bar.classList.add("fill");
+    await wait(reduced ? 300 : 1600);
+    if (!modal.open) return; // closed mid-submit: not applied
+    submitting = false;
+    btn.dataset.applied = "1";
+    btn.textContent = offer ? "Applied ✓ (offer)" : "Applied ✓ (rejected)";
+    btn.classList.add("applied");
+    btn.classList.toggle("rejected", !offer);
+    btn.setAttribute("aria-label", btn.textContent + ", view letter");
+  }
+  showLetter(job, btn, offer);
+}
+
+function showLetter(job, btn, offer) {
+  const head = el("div", "mail-head " + (offer ? "offer" : "rejection"), offer ? "🎉 Offer" : "📉 Update on your application");
+  head.id = "modalTitle";
+  const meta = el("div", "mail-meta");
+  for (const [k, v] of [["From:", `${job.company} Talent Team`], ["To:", "You"], ["Subject:", `Your application to ${job.title}`]]) {
+    const p = el("p"); p.append(el("b", null, k), " " + v); meta.append(p);
+  }
+  const body = el("p", "mail-body", job.letter || "");
+  const close = el("button", "btn ghost", "Close"); close.type = "button";
+  close.addEventListener("click", () => modal.close());
+  const another = el("button", "btn primary", "Apply to another"); another.type = "button";
+  another.addEventListener("click", () => {
+    const next = [...document.querySelectorAll("#list .btn.primary")].find(b => !b.dataset.applied);
+    if (next) opener = next;
+    modal.close();
+    opener.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+  });
+  const acts = el("div", "mail-actions"); acts.append(close, another);
+  const nodes = [head, meta, body];
+  if (!offer) nodes.push(el("p", "trombone", "🎺 wah wah wahhh"));
+  openModal(btn, ...nodes, acts);
+  close.focus();
+  burst(head, offer);
+}
+
+function burst(anchor, offer) {
+  if (reduced) return;
+  const r = anchor.getBoundingClientRect();
+  const emojis = offer ? ["🎉", "🎊", "✨", "💼", "🚀", "🥳"] : ["📉", "📉", "😔", "🎺"];
+  for (let i = 0; i < (offer ? 28 : 14); i++) {
+    const s = el("span", offer ? "burst" : "burst sad", emojis[i % emojis.length]);
+    s.setAttribute("aria-hidden", "true");
+    s.style.left = (r.left + Math.random() * r.width) + "px";
+    s.style.top = (r.top + 10) + "px";
+    s.style.setProperty("--dx", (Math.random() * 300 - 150) + "px");
+    s.style.setProperty("--dy", (Math.random() * -240 - 20) + "px");
+    s.style.setProperty("--rot", (Math.random() * 360 - 180) + "deg");
+    // Put inside the dialog so it renders above the top layer.
+    modal.append(s);
+    setTimeout(() => s.remove(), 1900);
+  }
+}
+</script>
+</body>
+</html>

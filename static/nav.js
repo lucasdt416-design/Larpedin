@@ -25,6 +25,7 @@
     ".lnav-link[aria-current=page]{color:#000;border-bottom-color:#000;font-weight:600;}",
     "@media (max-width:480px){.lnav-in{padding:4px 8px;gap:6px;height:48px}.lnav-brand{font-size:17px}.lnav-chip{font-size:9px;padding:2px 5px}.lnav-link{min-width:44px;padding:0 4px;font-size:10px}.lnav-ico{font-size:16px}}",
     "@media (max-width:360px){.lnav-txt{display:none}.lnav-chip-long{display:none}}",
+    "@media (max-width:340px){.lnav-chip{display:none}}",
     "@media (prefers-reduced-motion:reduce){.lnav-link{transition:none}}",
     ".lnav-toast{position:fixed;left:16px;bottom:16px;z-index:1500;max-width:min(360px,calc(100vw - 32px));display:flex;gap:10px;align-items:flex-start;background:#fff;color:#191919;border-radius:8px;padding:12px 14px;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.18);font:14px/1.35 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;animation:lnav-in .35s ease-out;}",
     ".lnav-toast b{display:block;font-size:12px;color:#666;font-weight:600;margin-bottom:2px;}",
@@ -80,7 +81,8 @@
     ["/", "📝", "Post"],
     ["/profile.html", "👤", "Profile"],
     ["/battle.html", "⚔️", "Battle"],
-    ["/gallery.html", "🏆", "Hall of Larp"]
+    ["/jobs.html", "💼", "Jobs"],
+    ["/gallery.html", "🏆", "Hall"]
   ].forEach(function (l) {
     var a = el("a", "lnav-link");
     a.href = l[0];

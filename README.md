@@ -12,6 +12,7 @@ Live demo: https://larpedin-p1fd.onrender.com
 - **Larp Battle:** two people type what they did. The app writes both posts, scores who is more delusional, crowns a winner and has an AI judge roast both of them out loud.
 - **Present at TEDx:** any post can be performed on a dark stage with a spotlight. The text is read aloud while each word lights up.
 - **Share links:** every post (`/p/<id>`) and profile (`/u/<id>`) has its own link. When you paste a link into iMessage, Slack or Discord, the preview shows an image of the card.
+- **LarpedIn Jobs:** you describe who you really are, and the app shows absurd job listings that "match" you. Easy Apply instantly reveals an offer or a very grateful rejection letter.
 - **Hall of Larp:** a live gallery of everyone's posts with upvotes and a QR code, so a whole room can join from their phones.
 - **Delarp extension:** a Chrome extension. You select text on any page, right-click, and choose "Delarp this". See `extension/README.md`.
 - **Extras:** voice input, image download of a post card, fake notifications, and a LarpedIn Premium offer for $0 forever.
