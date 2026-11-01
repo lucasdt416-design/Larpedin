@@ -5,6 +5,9 @@ import os
 
 import app
 
+assert len(app.GALLERY) == 12 and all(p["post"] and p["headline"] for p in app.GALLERY.values())  # seed_posts.json loaded
+app.GALLERY.clear()
+
 # groq(): a 429 on the first model falls through to the next model.
 class Resp:
     def __init__(self, code, content=""):

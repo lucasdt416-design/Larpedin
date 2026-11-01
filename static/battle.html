@@ -269,6 +269,7 @@ $("form").addEventListener("submit", async e => {
   e.preventDefault();
   if (busy) return;
   stopSpeech();
+  unlockAudio();
   $("error").hidden = true;
   const a = { name: $("nameA").value.trim(), text: $("textA").value.trim() };
   const b = { name: $("nameB").value.trim(), text: $("textB").value.trim() };
@@ -385,9 +386,22 @@ async function tts(text, voiceName, ms) {
 }
 
 // Plays a blob; resolves true when it ends, false if it can't play.
+// iOS/Safari only let audio start within ~1s of a tap, so unlockAudio() runs inside the click
+// handler: it primes one shared <audio> (silent wav) and speechSynthesis; later plays reuse them.
+const SILENT_WAV = "data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAACAgICAgICAgA==";
+function unlockAudio() {
+  if (!audio) { audio = new Audio(SILENT_WAV); audio.play().catch(() => {}); }
+  if ("speechSynthesis" in window) {
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    speechSynthesis.speak(u);
+  }
+}
+
 function playBlob(blob) {
   const url = URL.createObjectURL(blob);
-  audio = new Audio(url);
+  if (!audio) audio = new Audio();
+  audio.src = url;
   return new Promise(res => {
     audio.onended = () => res(true);
     audio.onerror = () => res(false);
@@ -398,7 +412,12 @@ function playBlob(blob) {
 function stopSpeech() {
   run++;
   aborts.forEach(a => a.abort());
-  if (audio) { audio.pause(); audio.onended(); audio = null; }
+  if (audio) {
+    const end = audio.onended; // resolves a pending playBlob
+    audio.onended = audio.onerror = null;
+    audio.pause(); audio.removeAttribute("src"); audio.load();
+    if (end) end();
+  }
   if ("speechSynthesis" in window) speechSynthesis.cancel();
 }
 

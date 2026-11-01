@@ -56,8 +56,9 @@ GENERATE_PROMPT = (
     "Also write an absurd LinkedIn headline for the author that is specific to what they did and to the voice. "
     "Vary the format: pipes, a job title with a fake company, or a grandiose mission statement. "
     "Do not start with 'Visionary' and do not use the words 'Whisperer' or 'Ex-Unemployed'. "
-    "Styles to imitate, not copy: 'Chief Hydration Officer @ My Kitchen | Forbes 30 Under 30 (pending)', "
-    "'Helping 0 people find their purpose', 'Founder, CEO, and only employee of Nap Labs'. "
+    "Pick ONE of these formats at random and make it your own: a mission statement ('Helping 0 people find their purpose'), "
+    "a stack of titles ('Founder | Investor | Keynote Speaker (at home)'), a fake award ('Forbes 30 Under 30 (pending)'), "
+    "or a job at a fake company ('Head of Vibes at Nap Labs'). Avoid starting with 'Chief'. "
     "and 2 or 3 comments from fake connections with silly names and job titles. "
     "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
     "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
@@ -218,9 +219,6 @@ def clamp_score(v):
 def text_from_request(limit):
     data = request.get_json(silent=True) or {}
     return data, str(data.get("text", "")).strip()[:limit]
-
-
-load_seeds()
 
 
 @app.get("/")
@@ -765,6 +763,8 @@ def get_profile(profile_id):
         return jsonify(error="That profile is gone. Profiles reset when the server restarts."), 404
     return jsonify(prof)
 
+
+load_seeds()
 
 if __name__ == "__main__":
     app.run(debug=True)
