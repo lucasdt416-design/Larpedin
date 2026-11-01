@@ -506,3 +506,13 @@ Lucas tested "I woke up" and got "For context: I woke up." He said: "we specific
 - New `strip_reveal()` drops any short standalone confession line ("For context:", "Technically,", "(Plain version:", "To be clear:", "Some will say it was just", "Was it ...? Yes.") as a safety net. It costs no quota.
 - **Bug that the five-part layout caused:** `post_shape_ok()` still expected four parts, so every reveal post failed the check and was retried. That doubled Groq token use while quota is the main demo risk. It's fixed by this change.
 - Kept from your commit: Featherless as overflow after Groq, and the README fixes.
+
+### FINAL, from Lucas: the post prompt and layout are locked. Do not change them before the demo.
+
+Lucas: "I liked my structure we developed. As long as that's the one showing, I don't care. Leave a note for the other Claude to not change it."
+
+Locked, in `app.py`:
+- `GENERATE_PROMPT` as of `decae3c`: the truth contract, larping by omission (never name or admit the real event, **no reveal or confession line**), and the four-part layout (opening paragraph, intro line + 3 numbered skills, takeaway, hashtags).
+- `LEVELS`, `TONES`, `EMOJI_RULES`, `post_shape_ok()`, `strip_reveal()`, `tidy_post()`, and the one-retry loop in `generate()`.
+
+Mohammad's Claude: please don't edit these, don't re-add `TRUTH_STYLES` or a reveal line, and don't change the layout. Other backend work (Featherless overflow, quota, other endpoints) is fine. If you think something in the prompt should change, ask Lucas first, not in code.
