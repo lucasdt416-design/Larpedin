@@ -80,6 +80,7 @@ setInterval(() => {
 document.querySelectorAll(".mode-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     if (mode === btn.dataset.mode || $("generate").classList.contains("is-loading")) return;
+    stopListening();
     mode = btn.dataset.mode;
     document.querySelectorAll(".mode-btn").forEach((b) => {
       const active = b === btn;
@@ -141,7 +142,10 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 let recognition = null;
 
 function stopListening() {
-  if (recognition) recognition.stop();
+  if (recognition) {
+    recognition.onresult = null;
+    recognition.stop();
+  }
 }
 
 if (SpeechRecognition) {
@@ -161,8 +165,8 @@ if (SpeechRecognition) {
     recognition.continuous = true;
 
     recognition.onresult = (e) => {
-      const spoken = Array.from(e.results, (r) => r[0].transcript).join("");
-      $("text").value = (before ? before + " " : "") + spoken.trim();
+      const spoken = Array.from(e.results, (r) => r[0].transcript.trim()).filter(Boolean).join(" ");
+      $("text").value = [before, spoken].filter(Boolean).join(" ").slice(0, $("text").maxLength);
     };
     recognition.onerror = (e) => {
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
@@ -570,28 +574,35 @@ function renderCard(data, slot, req) {
     list.hidden = false;
   }
 
-  item.querySelectorAll(".action-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const on = btn.classList.toggle("is-active");
-      btn.setAttribute("aria-pressed", String(on));
-      const action = btn.dataset.action;
-      if (action === "like") {
-        counts.like += on ? 1 : -1;
-        q(".reaction-count").textContent = fmt(counts.like);
-        q(".reaction-count").dataset.target = counts.like;
-      } else if (action in counts) {
-        counts[action] += on ? 1 : -1;
-        showCounts();
-      }
-    });
+  const like = q('[data-action="like"]');
+  like.addEventListener("click", () => {
+    const on = like.classList.toggle("is-active");
+    like.setAttribute("aria-pressed", String(on));
+    counts.like += on ? 1 : -1;
+    q(".reaction-count").textContent = fmt(counts.like);
+    q(".reaction-count").dataset.target = counts.like;
   });
+  const comment = q('[data-action="comment"]');
+  comment.hidden = !comments.length;
+  comment.setAttribute("aria-expanded", String(Boolean(comments.length)));
+  comment.addEventListener("click", () => {
+    const thread = q(".post-comments");
+    thread.hidden = !thread.hidden;
+    comment.setAttribute("aria-expanded", String(!thread.hidden));
+  });
+  const shareUrl = data.id == null ? null : location.origin + (data.share_url || `/p/${data.id}`);
+  const send = q('[data-action="send"]');
+  send.hidden = !shareUrl;
+  send.title = "Copy a link to send";
+  send.addEventListener("click", () => copyText(shareUrl, "Post link copied."));
+  q('[data-action="repost"]').addEventListener("click", () => shareToLinkedIn(data.post));
 
   q(".share-btn").addEventListener("click", () => shareToLinkedIn(data.post));
   q(".copy-btn").addEventListener("click", () => copyText(data.post, "Copied!"));
   if (data.id != null) {
     q(".link-btn").hidden = false;
     // share_url carries the post in ?d=, so the link survives server restarts.
-    const shareUrl = location.origin + (data.share_url || `/p/${data.id}`);
+
     q(".link-btn").addEventListener("click", () => copyText(shareUrl, "Link copied!"));
     q(".x-btn").hidden = false;
     q(".x-btn").addEventListener("click", () => shareToX(data.post, shareUrl));
