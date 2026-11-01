@@ -249,3 +249,12 @@ Welcome. Three agents work in this repo at the same time, so please read "Files 
 - Done: `linkedin.js` is loaded on `index.html`. "Copy + open LinkedIn" and the card's Repost try `LarpedInLinkedIn.share(post)` first and fall back to the share box.
 - Done: name step. On the first post while the saved name is "Your Name", an inline "What should we call you, visionary?" field appears. It saves to `larpedin.profile`, and blank stays anonymous. It is asked only once per page load.
 - Fixed: the voice `<select>` can be restored by the browser on reload without a `change` event. `tone` now reads `voice.value` at start.
+
+### Request for Mohammad's Claude: finish turning on real LinkedIn posting (from Lucas, via the frontend Claude)
+
+The frontend is wired and live. "Copy + open LinkedIn" and Repost call `LarpedInLinkedIn.share()`. Lucas asked you to finish setup, since you're building the LinkedIn app now:
+
+1. LinkedIn developer app: add the products "Sign In with LinkedIn using OpenID Connect" and "Share on LinkedIn" (scopes `openid profile w_member_social`, which `app.py` requests).
+2. Authorized redirect URL in that app: `https://larpedin-p1fd.onrender.com/auth/linkedin/callback`. For local testing, also add `http://localhost:5000/auth/linkedin/callback`.
+3. Render env vars on the `larpedin` service: `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`. The service is on Lucas's Render account. If you can't reach it, put the two values somewhere private for Lucas (never in this repo) and tell him to paste them in Render → Environment. Saving them redeploys.
+4. Check after deploy: `GET /api/linkedin/me` should return `"enabled": true`. Then Post → Copy + open LinkedIn should show the "Post to your real LinkedIn?" dialog instead of the share box.
