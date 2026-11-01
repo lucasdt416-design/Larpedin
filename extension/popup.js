@@ -11,6 +11,7 @@ $("go").onclick = async () => {
   $("out").textContent = "Translating corporate…";
   try {
     const r = await fetch(`${API_BASE}/api/delarp`, {
+      signal: AbortSignal.timeout(60000),
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),

@@ -19,6 +19,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   let truth;
   try {
     const r = await fetch(`${API_BASE}/api/delarp`, {
+      signal: AbortSignal.timeout(25000), // the worker can be stopped after ~30 s; show the error card first
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),

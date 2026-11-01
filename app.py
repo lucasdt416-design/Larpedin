@@ -134,7 +134,9 @@ def groq(messages, temperature, schema=None):
             )
             r.raise_for_status()
             data = r.json()
-            content = data["choices"][0]["message"]["content"].strip()
+            content = (data["choices"][0]["message"].get("content") or "").strip()
+            if not content:
+                raise ValueError("empty content")
             if schema:
                 json.loads(content)  # bad JSON from this model: try the next one
         except (requests.RequestException, ValueError, KeyError, IndexError) as e:
@@ -175,9 +177,12 @@ def index():
     return send_from_directory("static", "index.html")
 
 
+BOOT_ID = random.randrange(1 << 30)  # changes on every restart, so clients can drop stale post ids (votes)
+
+
 @app.get("/api/health")
 def health():
-    return jsonify(ok=True)
+    return jsonify(ok=True, boot=BOOT_ID)
 
 
 @app.post("/api/generate")

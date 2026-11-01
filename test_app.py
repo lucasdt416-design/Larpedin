@@ -30,6 +30,17 @@ try:
     raise AssertionError("expected HTTPError when every model is rate limited")
 except app.requests.HTTPError:
     pass
+# null content (reasoning ran out) falls through too
+calls.clear()
+def null_then_good(url, headers, json, timeout):
+    calls.append(json["model"])
+    r = Resp(200, "fine")
+    if len(calls) == 1:
+        r.json = lambda: {"choices": [{"message": {"content": None}}]}
+    return r
+app.requests.post = null_then_good
+assert app.groq([], 0.5) == "fine" and len(calls) == 2
+
 # bad JSON from one model with a schema also falls through
 calls.clear()
 def bad_then_good(url, headers, json, timeout):
@@ -66,7 +77,7 @@ def fake_groq(messages, temperature, schema=None):
 app.groq = fake_groq
 c = app.app.test_client()
 
-assert c.get("/api/health").json == {"ok": True}
+assert c.get("/api/health").json == {"ok": True, "boot": app.BOOT_ID}
 assert c.post("/api/generate", json={"text": " "}).status_code == 400
 
 r = c.post("/api/generate", json={"text": "touched grass", "tone": "recruiter", "level": 99}).json

@@ -130,6 +130,11 @@ Lucas styles `index.html` and `gallery.html`. The new pages (`/p/<id>`, `/profil
 
 ## Requests for Lucas (small, in your files)
 
+Bugs found by the review (both verified):
+- gallery.js: votes saved in localStorage stay attached to post ids after a server restart, so new posts show as already voted. `/api/health` now returns `{"ok": true, "boot": <number>}`. The number changes on every restart. Save it next to the voted set and clear the set when it changes.
+- app.js `run()`: when a Regenerate fails, the old card is deleted. Put the old card back (`slots[i].replaceWith(replaceItem)`) and show the error.
+
+
 - Escalate button (the demo script uses it): after a post is generated, a "📈 Escalate" button sends `{text, tone, level: min(level + 1, 10), previous: data.post}` to `/api/generate`, moves the slider up one, and renders the new card in place.
 - Comment avatars are empty circles. Show the commenter's initials, like the post avatar.
 
