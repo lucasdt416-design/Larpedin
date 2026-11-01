@@ -1,12 +1,21 @@
 const $ = (id) => document.getElementById(id);
 
-const PLACEHOLDERS = [
-  "I touched grass",
-  "I microwaved leftovers",
-  "I lost 3 games of Valorant",
-];
+const PLACEHOLDERS = {
+  larp: ["I touched grass", "I microwaved leftovers", "I lost 3 games of Valorant"],
+  delarp: [
+    "Thrilled to announce I'm starting a new chapter...",
+    "After 147 rejections, I'm humbled to share...",
+    "I don't usually post, but...",
+  ],
+};
+
+const MODES = {
+  larp: { label: "What did you do today?", button: "Generate post", empty: "Tell us what you did first.", maxLength: 500 },
+  delarp: { label: "Paste a LinkedIn post", button: "Delarp it", empty: "Paste a LinkedIn post first.", maxLength: 3000 },
+};
 
 let tone = "thought leader";
+let mode = "larp";
 
 // ---------- Composer ----------
 
@@ -14,9 +23,31 @@ let tone = "thought leader";
 let placeholderIndex = 0;
 setInterval(() => {
   if ($("text").value) return;
-  placeholderIndex = (placeholderIndex + 1) % PLACEHOLDERS.length;
-  $("text").placeholder = PLACEHOLDERS[placeholderIndex];
+  placeholderIndex = (placeholderIndex + 1) % PLACEHOLDERS[mode].length;
+  $("text").placeholder = PLACEHOLDERS[mode][placeholderIndex];
 }, 3000);
+
+document.querySelectorAll(".mode-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (mode === btn.dataset.mode || $("generate").classList.contains("is-loading")) return;
+    mode = btn.dataset.mode;
+    document.querySelectorAll(".mode-btn").forEach((b) => {
+      const active = b === btn;
+      b.classList.toggle("is-active", active);
+      b.setAttribute("aria-pressed", String(active));
+    });
+    const m = MODES[mode];
+    $("composer").classList.toggle("is-delarp", mode === "delarp");
+    $("larp-options").hidden = mode === "delarp";
+    $("text-label").textContent = m.label;
+    $("text").maxLength = m.maxLength;
+    $("text").rows = mode === "delarp" ? 6 : 3;
+    placeholderIndex = 0;
+    $("text").placeholder = PLACEHOLDERS[mode][0];
+    if (!$("generate").disabled) $("generate").textContent = m.button;
+    clearError();
+  });
+});
 
 document.querySelectorAll(".vibe-pill").forEach((pill) => {
   pill.addEventListener("click", () => {
@@ -128,7 +159,7 @@ async function warmUp() {
   }
   btn.classList.remove("is-warming");
   btn.disabled = false;
-  btn.textContent = "Generate post";
+  btn.textContent = MODES[mode].button;
 }
 
 warmUp();
@@ -193,18 +224,37 @@ function setBusy(busy) {
   const btn = $("generate");
   btn.disabled = busy;
   btn.classList.toggle("is-loading", busy);
-  btn.textContent = busy ? "Larping..." : "Generate post";
+  btn.textContent = busy ? (mode === "delarp" ? "Delarping..." : "Larping...") : MODES[mode].button;
   $("result").classList.toggle("is-loading", busy);
   $("result").setAttribute("aria-busy", String(busy));
 }
 
-// One request per tone, in parallel. Each gets a skeleton that its card replaces.
-async function run(text, tones, level) {
+async function delarp(text) {
+  const res = await fetch("/api/delarp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.truth) {
+    throw new Error(data.error || `Something went wrong (${res.status}).`);
+  }
+  return data.truth;
+}
+
+function renderTruth(truth, slot) {
+  const item = $("truth-card-template").content.firstElementChild.cloneNode(true);
+  item.querySelector(".truth-text").textContent = truth;
+  slot.replaceWith(item);
+}
+
+// Runs tasks in parallel. Each task gets a skeleton slot that it replaces with its card.
+async function run(text, tasks) {
   if ($("generate").disabled) return;
   stopListening();
   clearError();
   if (!text.trim()) {
-    showError("Tell us what you did first.");
+    showError(MODES[mode].empty);
     $("text").focus();
     return;
   }
@@ -212,15 +262,15 @@ async function run(text, tones, level) {
   const stopStatus = startStatusLines();
   $("results").replaceChildren();
   $("result").hidden = false;
-  const slots = tones.map(() => {
+  const slots = tasks.map(() => {
     const slot = $("skeleton-template").content.firstElementChild.cloneNode(true);
     $("results").append(slot);
     return slot;
   });
   try {
-    await Promise.all(tones.map(async (t, i) => {
+    await Promise.all(tasks.map(async (task, i) => {
       try {
-        renderCard(await generate(text, t, level), slots[i]);
+        await task(slots[i]);
       } catch (err) {
         slots[i].remove();
         showError(err.message);
@@ -235,7 +285,13 @@ async function run(text, tones, level) {
 
 $("composer").addEventListener("submit", (e) => {
   e.preventDefault();
-  run($("text").value, [tone], Number($("level").value));
+  const text = $("text").value;
+  if (mode === "delarp") {
+    run(text, [async (slot) => renderTruth(await delarp(text), slot)]);
+  } else {
+    const level = Number($("level").value);
+    run(text, [async (slot) => renderCard(await generate(text, tone, level), slot)]);
+  }
 });
 
 // ---------- Profile (name + headline, saved locally) ----------

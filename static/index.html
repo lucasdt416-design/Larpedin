@@ -10,7 +10,10 @@
     .nav-link          link to the live gallery (gallery.html)
 
   COMPOSER
-    .composer          the input card (form)
+    .composer          the input card (form); .is-delarp in Delarp mode
+    .mode-toggle       LARP / Delarp switch
+    .mode-btn          one mode button; .is-active = current mode
+    .larp-options      vibe pills + cringe slider (hidden in Delarp mode)
     .composer-label    label above the textarea
     .composer-input    textarea; placeholder rotates through examples
     .composer-field    wraps the textarea + mic button
@@ -66,6 +69,9 @@
     .action-btn        one action; .is-active when toggled on
     .post-comments     list of fake comments (only if backend sends them)
     .comment / .comment-author / .comment-title / .comment-text
+    .truth-card        Delarp result card
+    .truth-label       "What actually happened"
+    .truth-text        the honest one-liner
     .post-actions      real buttons under the card (Copy + open LinkedIn)
     .share-btn         "Copy + open LinkedIn"
 -->
@@ -86,12 +92,18 @@
 
   <main>
     <form class="composer" id="composer">
-      <label class="composer-label" for="text">What did you do today?</label>
+      <div class="mode-toggle" role="group" aria-label="Mode">
+        <button type="button" class="mode-btn is-active" data-mode="larp" aria-pressed="true"><span aria-hidden="true">🎭</span> LARP it</button>
+        <button type="button" class="mode-btn" data-mode="delarp" aria-pressed="false"><span aria-hidden="true">🔍</span> Delarp a post</button>
+      </div>
+
+      <label class="composer-label" for="text" id="text-label">What did you do today?</label>
       <div class="composer-field">
         <textarea class="composer-input" id="text" rows="3" maxlength="500" placeholder="I touched grass"></textarea>
         <button type="button" class="mic-btn" id="mic" aria-pressed="false" aria-label="Speak instead of typing" hidden><span aria-hidden="true">🎤</span></button>
       </div>
 
+      <div class="larp-options" id="larp-options">
       <span class="vibe-label" id="vibe-label">Pick a vibe</span>
       <div class="vibe-pills" role="group" aria-labelledby="vibe-label">
         <button type="button" class="vibe-pill is-active" data-tone="thought leader" aria-pressed="true"><span class="vibe-emoji" aria-hidden="true">🧠</span> Thought leader</button>
@@ -109,6 +121,7 @@
         <label class="cringe-label" for="level">Cringe level</label>
         <input type="range" class="cringe-slider" id="level" min="1" max="10" value="5">
         <output class="cringe-value" id="level-value" for="level">Level 5: Dramatic</output>
+      </div>
       </div>
 
       <button type="submit" class="generate-btn is-warming" id="generate" disabled>Warming up the hustle...</button>
@@ -133,6 +146,15 @@
       <span class="skeleton-line"></span>
       <span class="skeleton-line"></span>
       <span class="skeleton-line is-short"></span>
+    </div>
+  </template>
+
+  <template id="truth-card-template">
+    <div class="result-item">
+      <article class="truth-card">
+        <span class="truth-label">What actually happened</span>
+        <p class="truth-text"></p>
+      </article>
     </div>
   </template>
 
