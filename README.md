@@ -1,59 +1,76 @@
 <h1><img src="static/icons/wordmark.png" alt="LarpedIn" width="230"></h1>
 
-LarpedIn is a parody professional network. You type something ordinary that you did. The app turns it into a self-important post, profile and comment section, like the ones on LinkedIn. The hackathon theme was "help people larp". LarpedIn helps you larp as a thought leader.
+**LarpedIn is a parody professional network.** You type the most ordinary thing you did today. LarpedIn turns it into the post, headline and comment section of someone who is very sure they are a thought leader.
 
-Live demo: https://larpedin-p1fd.onrender.com
+Hackathon theme: *something to help people larp*. LinkedIn is already a larp. We made it easier.
 
-![LarpedIn: a post card, Larp Battle, a generated profile and LarpedIn Jobs](docs/overview.png)
+**Live demo: https://larpedin-p1fd.onrender.com**. It works on phones too, and you can install it with "Add to Home Screen".
+
+![LarpedIn home page: "Big news. I did laundry."](docs/home.png)
+
+## Try it in 30 seconds
+
+1. Open the live demo.
+2. Type something you did ("I microwaved leftovers"), pick a voice (Hustle bro), drag the cringe slider up and press **Write my post**.
+3. Open the share link and press **Present at TEDx**.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/post.png" alt="A generated post card with headline, cringe report and fake comments"><br><sub><b>"I microwaved leftovers" as a hustle bro.</b> The post, the inflated headline, a cringe report and fake comments all come from one AI call.</sub></td>
+<td width="50%"><img src="docs/tedx.png" alt="TEDx mode: the post on a dark stage with a spotlight"><br><sub><b>Present at TEDx.</b> Any post goes on a dark stage, is read aloud word by word, and ends in applause.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/battle.png" alt="Larp Battle: two posts, delusion scores and the judge's verdict"><br><sub><b>Larp Battle.</b> Two people, two posts and a delusion score each. An AI judge reads the roast aloud.</sub></td>
+<td width="50%"><img src="docs/preview.png" alt="Link preview image of a shared post"><br><sub><b>Share links.</b> When you paste a link in iMessage, Slack or Discord, the preview shows the post card.</sub></td>
+</tr>
+</table>
 
 ## Features
 
-- **Larp a post:** you type "I touched grass" and pick one of 9 vibes, for example hustle bro or Gen Z intern. Then you set a cringe level from 1 to 10. The app writes a full LinkedIn-style post card with an absurd headline, fake comments from fake connections, reaction counts and a cringe score.
-- **Delarp:** you paste a real LinkedIn post and get the honest version. "Thrilled to announce a new chapter" becomes "I got laid off."
-- **Larp your whole profile:** you describe your real life, and the app builds a complete fake profile with job history, metrics, skills, endorsements and recommendations. "I wash dishes at home" becomes "Chief Ceramic Hygiene Operations Officer".
-- **Larp Battle:** two people type what they did. The app writes both posts, scores who is more delusional, crowns a winner and has an AI judge roast both of them out loud.
-- **Present at TEDx:** any post can be performed on a dark stage with a spotlight. The text is read aloud while each word lights up.
-- **Share links:** every post (`/p/<id>`) and profile (`/u/<id>`) has its own link. When you paste a link into iMessage, Slack or Discord, the preview shows an image of the card.
-- **LarpedIn Jobs:** you describe who you really are, and the app shows absurd job listings that "match" you. Easy Apply instantly reveals an offer or a very grateful rejection letter.
-- **Hall of Larp:** a live gallery of everyone's posts with upvotes and a QR code, so a whole room can join from their phones.
-- **Delarp extension:** a Chrome extension. You select text on any page, right-click, and choose "Delarp this". See `extension/README.md`.
-- **Copy + open LinkedIn:** copies your post and opens LinkedIn's own composer. You decide whether to paste and post it. LarpedIn never connects to your LinkedIn account and never posts for you.
-- **Install it:** on a phone, choose "Add to Home Screen" and LarpedIn opens like an app. There is also a native iOS app in `ios/` (see `ios/README.md`).
-- **Extras:** voice input, image download of a post card, fake notifications, and a LarpedIn Premium offer for $0 forever.
+| | |
+|---|---|
+| **Write a post** | 9 voices (thought leader, hustle bro, Gen Z intern, laid off but grateful and more) and a cringe level from 1 to 10. Each voice has its own opener and style. |
+| **Delarp a post** | Paste a real LinkedIn post and get what actually happened. One real result: "Excited to share I've completed my Google Project Management Certificate!" became "I bought a cheap badge to sound competent because I still can't manage a real project." |
+| **Larp Battle** | Two people compete. The AI writes both posts, scores who is more delusional, crowns a winner and roasts both. |
+| **Present at TEDx** | A stage mode with a spotlight, the post read aloud, words highlighted, and applause at the end. |
+| **Hall of Larp** | A live wall of everyone's posts, with upvotes, a "most cringe in the room" leaderboard, a QR code and a projector mode. |
+| **Larp your profile** | Describe your real life and get a full fake profile: job history, skills, endorsements and recommendations. |
+| **LarpedIn Jobs** | Absurd job listings that "match" you. Easy Apply instantly gets you an offer or a very grateful rejection. |
+| **Copy + open LinkedIn** | Copies your post and opens LinkedIn's own composer. You decide whether to post. LarpedIn never connects to your account. |
+| **Also** | Voice input, post image download and share links that survive restarts. A Chrome extension delarps any selected text (`extension/`). A native iOS app wraps the site (`ios/`). |
 
 ## How it works
 
-- The backend is one Flask file, `app.py`. The frontend is plain HTML, CSS and JavaScript in `static/`, with no build step.
-- Text comes from the free Groq API (`gpt-oss-120b` first). The code can also route posts, delarp and battles to Kimi K2 on Featherless when `FEATHERLESS_API_KEY` is set. The live demo runs on Groq. Each request uses a strict JSON schema, so the model always returns the exact fields that the page needs. One call returns the post, headline, comments and scores together.
-- Reliability: if a model is busy, hits its rate limit or fails, the request moves to the next model (Kimi K2, then Groq's `gpt-oss-120b`, `gpt-oss-20b` and `qwen3.8-27b`). If all three fail, the user still gets a canned post, never an error page. A burst of 12 requests at once all returned real posts in 3 to 5 seconds.
-- Link preview images are drawn on the server with Pillow.
-- The gallery, profiles and stats live in memory. A restart clears them. This keeps the app free to run with no database.
-- Share links carry the post itself in the URL (compressed), so they keep working after the free server restarts and forgets everything in memory.
-- A GitHub Actions job pings the server every 10 minutes, so it does not fall asleep.
-- A word filter keeps slurs off the projector wall. The Hall starts with 12 seed posts after every restart.
-- Running cost: Render free plan, Groq free plan and a $25/month Featherless plan. Without the Featherless key, it runs for $0 on Groq alone.
+- **Small stack.** The backend is one Flask file (`app.py`). The frontend is plain HTML, CSS and JavaScript in `static/`, with no build step. It is deployed on Render's free plan from `render.yaml`.
+- **One AI call per card.** The app sends one request to Groq's free API (`gpt-oss-120b`) with a strict JSON schema. It returns the post, headline, comments and scores together, in about 1 to 2 seconds.
+- **The prompt was tested.** We ran 12 identical inputs through two prompt versions. Three AI judges scored them blind: a comedy writer, a LinkedIn power user and a hackathon judge. The current prompt won 34 of 36 judgments. It scored higher on "funny" (6.8 vs 4.1 out of 10) and on "sounds like the chosen voice" (7.8 vs 2.9).
+- **It fails gracefully.** The models form a chain: `gpt-oss-120b`, then `gpt-oss-20b`, then `qwen3.8-27b`. If one fails, the request moves to the next. If all of them fail, the user gets a canned post, never an error page. With `FEATHERLESS_API_KEY` set, the code also routes posts to Kimi K2 on Featherless. The live demo does not need it.
+- **No database.** Posts and votes live in memory. Share links carry the post itself in the URL (compressed), so they still work after the free server restarts. Link preview images are drawn on the server with Pillow.
+- **Safe for a projector.** A word filter keeps slurs off the public wall. A GitHub Actions job pings the server every 10 minutes, so it does not fall asleep before a demo.
+- **Cost:** $0.
 
-## Run locally
+## Run it locally
 
-1. Get a free API key at https://console.groq.com/keys.
-2. Install the packages:
+You need Python 3.11 or newer.
 
-```
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-```
+1. Install the packages:
 
+   ```
+   python3 -m venv .venv && source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. Get a free Groq key at https://console.groq.com/keys. Put it in a `.env` file as `GROQ_API_KEY=your_key`, with no space after the `=`. Git ignores `.env`.
 3. Start the app:
 
-```
-GROQ_API_KEY=your_key flask --app app run
-```
+   ```
+   set -a; . ./.env; set +a
+   flask --app app run
+   ```
 
 4. Open http://localhost:5000.
 
-Do not commit the key. If you put it in a `.env` file, git ignores that file. Without a key, the app still runs and returns canned posts.
-
-To turn on real LinkedIn posting, create an app at https://www.linkedin.com/developers/apps. Add the products "Sign In with LinkedIn using OpenID Connect" and "Share on LinkedIn". Add `<your site>/auth/linkedin/callback` as a redirect URL. Then set `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`.
+Without a key, the app still runs and shows canned posts.
 
 ## Tests
 
@@ -61,14 +78,20 @@ To turn on real LinkedIn posting, create an app at https://www.linkedin.com/deve
 .venv/bin/python test_app.py
 ```
 
-The tests replace Groq with a fake, so they need no key. They cover every endpoint, the model fallback chain, input limits and the canned fallbacks.
+The tests replace the AI with a fake, so they need no key. They cover every endpoint, the model fallback chain, share links that survive a restart, the word filter, input limits and the redirect safety checks.
 
-## Deploy on Render
+## Repository map
 
-`render.yaml` describes the service. Each push to `main` redeploys it. The only setting you add is the `GROQ_API_KEY` environment variable.
-
-The free service sleeps after about 15 minutes with no traffic. Open the site a few minutes before a demo.
+| Path | What it is |
+|---|---|
+| `app.py` | Flask backend: AI calls, prompts, gallery, share links, preview images |
+| `static/` | All pages (`index.html`, `post.html`, `battle.html`, `gallery.html`, `profile.html`, `jobs.html`) and shared scripts |
+| `test_app.py` | Tests |
+| `extension/` | Delarp Chrome extension |
+| `ios/` | Native iOS app (SwiftUI wrapper) |
+| `DEMO.md` | Our 2-minute demo script |
+| `render.yaml` | Render deployment |
 
 ## Team
 
-Built in one day by Mohammad and Lucas, with Claude Code and Codex.
+Built in one day by Mohammad and Lucas, with Claude Code, Codex and a ChatGPT agent for the visual redesign. The agents coordinated through `PLAN.md`.
