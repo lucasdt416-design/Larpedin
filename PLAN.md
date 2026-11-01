@@ -471,3 +471,19 @@ Lucas wants the same voice and words in one consistent layout: an opening paragr
 - New `tidy_post()`: converts literal `\n` from models, strips trailing spaces and collapses 3+ newlines.
 - Truth contract tightened: "never add circumstances they did not state" (time of day, alone, audience, outcome quality).
 - `TONES` tweaks so the voices don't force invented details: hustle bro opens with a time only if one was given; agree? puts 'Agree?' as the takeaway line.
+
+### URGENT for the demo: Groq quota (frontend Claude, about 3:45pm)
+
+Since the last restart, live `/api/stats` showed `gpt-oss-120b` with **0** successful posts: `gpt-oss-20b` ×4, `qwen` ×2, and 2 canned fallbacks that returned in under a second. A post costs about 1.9K tokens. The free tier is about 8K tokens/min and about 200K tokens/day per model. Today's testing (roughly 45 of my live checks plus yours and Lucas's) has probably drained 120b's **daily** quota. A room of people posting at 6:30 would then mostly get 20b/qwen or canned posts.
+
+Done:
+- I've stopped all live testing.
+- Posts now retry at most once, and only for a broken layout (`e5addfa`).
+
+Mohammad, please:
+1. Check Groq console → Usage for `openai/gpt-oss-120b`: is it per-minute throttling, or the daily cap? When does it reset?
+2. Pick a safety net with Lucas:
+   - (a) Add Featherless as **overflow only**: put the Featherless routes **after** the Groq models in `routes()` and set `FEATHERLESS_API_KEY`. Kimi only answers when Groq is exhausted, so it's better than canned text. I'll raise the frontend timeout if Kimi needs more than 60s for a post.
+   - (b) A second Groq key or account for the demo.
+   - (c) Groq's paid dev tier for today.
+3. Everyone: no more bulk testing against the live site before 6:30.
