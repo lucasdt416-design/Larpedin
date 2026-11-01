@@ -1,4 +1,4 @@
-<h1><img src="static/icons/wordmark.png" alt="LarpedIn" width="230"></h1>
+<h1><img src="static/icons/wordmark.png" alt="LarpedIn" width="320"></h1>
 
 **LarpedIn is a parody professional network.** You type the most ordinary thing you did today. LarpedIn turns it into the post, headline and comment section of someone who is very sure they are a thought leader.
 
@@ -19,8 +19,8 @@
 
 <table>
 <tr>
-<td width="50%"><img src="docs/post.png" alt="A generated post card with headline, cringe report and fake comments"><br><sub><b>"I microwaved leftovers" as a hustle bro.</b> The post, the inflated headline, a cringe report and fake comments all come from one AI call.</sub></td>
-<td width="50%"><img src="docs/tedx.png" alt="TEDx mode: the post on a dark stage with a spotlight"><br><sub><b>Present at TEDx.</b> Any post goes on a dark stage, is read aloud word by word, and ends in applause.</sub></td>
+<td width="50%"><img src="docs/post.png" alt="A generated post card with headline, cringe report and fake comments"><br><sub><b>"I microwaved leftovers" as a hustle bro.</b> The post, its one-line reveal, the inflated headline and the fake comments all come from one AI call.</sub></td>
+<td width="50%"><img src="docs/tedx.png" alt="TEDx mode: the post on a dark stage with a spotlight"><br><sub><b>Present at TEDx.</b> The same post on a dark stage, read aloud with each word lit up, ending in applause.</sub></td>
 </tr>
 <tr>
 <td width="50%"><img src="docs/battle.png" alt="Larp Battle: two posts, delusion scores and the judge's verdict"><br><sub><b>Larp Battle.</b> Two people, two posts and a "delusion score" each. Higher means more over the top, and the higher score wins. The loser gets a "RATIO'D" stamp (internet slang for "you lost"). An AI judge reads the roast aloud.</sub></td>
@@ -46,7 +46,7 @@
 
 - **Small stack.** The backend is one Flask file (`app.py`). The frontend is plain HTML, CSS and JavaScript in `static/`, with no build step. It is deployed on Render's free plan from `render.yaml`.
 - **One AI call per card.** The app sends one request to Groq's free API (`gpt-oss-120b`) with a strict JSON schema. It returns the post, headline, comments and scores together, in about 1 to 2 seconds.
-- **The prompt was tested.** We ran 12 identical inputs through two prompt versions. Three AI judges scored them blind: a comedy writer, a LinkedIn power user and a hackathon judge. The current prompt won 34 of 36 judgments. It scored higher on "funny" (6.8 vs 4.1 out of 10) and on "sounds like the chosen voice" (7.8 vs 2.9).
+- **The prompt was tested.** Three AI judge agents (a comedy writer, a LinkedIn power user and a hackathon judge) compared prompt versions blind, on the same 12 inputs. A version with a distinct voice per persona beat our first generic template in 34 of 36 judgments (funny 6.8 vs 4.1 out of 10). A version with one deadpan "reveal" line ("For context: I microwaved leftovers.") beat a version that never admits the truth in 28 of 36. The live prompt combines both winners with a truth contract: every sentence must be literally true, and the model lists any unsupported claim in a `claims_check` field, which triggers one retry. The judges were AI agents, not people, so treat the numbers as a strong hint, not proof.
 - **It fails gracefully.** The models form a chain: `gpt-oss-120b`, then `gpt-oss-20b`, then `qwen3.8-27b`. If one fails, the request moves to the next. If all of them fail, the user gets a canned post, never an error page. Optional: with `FEATHERLESS_API_KEY` set, posts, delarp and battles try Kimi K2 on Featherless first. It writes well but takes about 30 seconds. The live demo does not set it.
 - **No database.** Posts and votes live in memory. Share links carry the post itself in the URL (compressed), so they still work after the free server restarts. Link preview images are drawn on the server with Pillow.
 - **Safe for a projector.** A word filter keeps slurs off the public wall. A GitHub Actions job pings the server every 10 minutes, so it does not fall asleep before a demo.
