@@ -744,6 +744,7 @@ main {
   transition: background-color 0.15s;
 }
 .inspo-chip:hover { background: #e9e6df; }
+.inspo-chip { text-align: left; }
 
 .gallery-link {
   display: inline-flex;
@@ -886,3 +887,35 @@ main {
   font-weight: 600;
   text-align: center;
 }
+
+/* ---------- Hall preview (FRONTEND MINIMAL — designer may replace) ---------- */
+
+.hall-preview { margin-top: 32px; }
+.hall-preview-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 4px 10px; }
+.hall-preview-title { margin: 0; font-size: 18px; font-weight: 800; }
+.hall-preview-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.hall-preview-item a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-weight: 400;
+}
+.hall-preview-item a:hover { text-decoration: none; box-shadow: var(--shadow-lift); }
+.hall-preview-author { font-weight: 700; }
+.hall-preview-headline { color: var(--muted); font-size: 13px; }
+.hall-preview-text {
+  margin-top: 6px;
+  font-size: 14px;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+.hall-preview-meta { margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 600; }

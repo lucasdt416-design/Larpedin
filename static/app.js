@@ -370,6 +370,7 @@ async function run(text, tasks, replaceItem = null) {
     stopStatus();
     if (!$("results").children.length) $("result").hidden = true;
     setBusy(false);
+    loadHallPreview();
   }
 }
 
@@ -673,6 +674,43 @@ function burst(anchor) {
     document.body.append(piece);
   }
 }
+
+// ---------- Hall preview ----------
+
+async function loadHallPreview() {
+  try {
+    const res = await fetch("/api/gallery", { cache: "no-store", signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return;
+    const posts = (await res.json()).slice(0, 3);
+    if (!posts.length) return;
+    $("hall-preview-list").replaceChildren(...posts.map((p) => {
+      const li = document.createElement("li");
+      li.className = "hall-preview-item";
+      const a = document.createElement("a");
+      a.href = `gallery.html#post-${p.id}`;
+      const span = (cls, text) => {
+        const el = document.createElement("span");
+        el.className = cls;
+        el.textContent = text;
+        return el;
+      };
+      const votes = `▲ ${p.votes} vote${p.votes === 1 ? "" : "s"}`;
+      a.append(
+        span("hall-preview-author", p.name || "Anonymous Visionary"),
+        span("hall-preview-headline", p.headline || ""),
+        span("hall-preview-text", p.post),
+        span("hall-preview-meta", [p.badge, votes].filter(Boolean).join(" · ")),
+      );
+      li.append(a);
+      return li;
+    }));
+    $("hall-preview").hidden = false;
+  } catch {
+    // Preview is optional; leave it hidden.
+  }
+}
+
+loadHallPreview();
 
 async function downloadCard(card, btn, post) {
   if (!window.html2canvas) {

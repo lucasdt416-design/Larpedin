@@ -10,6 +10,15 @@
     .tagline           one-line pitch under the headline
     .intro-link        link to the gallery (Hall of Larp)
 
+  HALL PREVIEW (below the form, so the page is never empty)
+    .hall-preview          section; hidden if the gallery is empty/unreachable
+    .hall-preview-header   title + "See all →" row
+    .hall-preview-title    "Fresh from the Hall of Larp"
+    .hall-preview-list     <ol> of top posts
+    .hall-preview-item     one <li>; contains an <a> to gallery.html#post-<id>
+    .hall-preview-author / .hall-preview-headline / .hall-preview-text
+    .hall-preview-meta     badge + votes line
+
   COMPOSER
     .composer          the input card (form); .is-delarp in Delarp mode
     .mode-toggle       LARP / Delarp switch
@@ -106,7 +115,7 @@
   <main>
     <section class="intro">
       <h1 class="intro-title">Do nothing. Post like a visionary.</h1>
-      <p class="tagline">Tell us what you actually did. We'll make it LinkedIn-worthy. <a class="intro-link" href="gallery.html">See the Hall of Larp →</a></p>
+      <p class="tagline">Turn boring things you did into LinkedIn posts, or decode someone else's.</p>
     </section>
 
     <form class="composer" id="composer">
@@ -159,6 +168,14 @@
     <section class="result" id="result" aria-label="Your post" hidden>
       <p class="status-line" id="status" role="status"></p>
       <div class="results-grid" id="results" aria-live="polite"></div>
+    </section>
+
+    <section class="hall-preview" id="hall-preview" aria-labelledby="hall-preview-title" hidden>
+      <div class="hall-preview-header">
+        <h2 class="hall-preview-title" id="hall-preview-title">Fresh from the Hall of Larp</h2>
+        <a class="intro-link" href="gallery.html">See all →</a>
+      </div>
+      <ol class="hall-preview-list" id="hall-preview-list"></ol>
     </section>
   </main>
 
