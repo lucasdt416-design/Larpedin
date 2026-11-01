@@ -338,6 +338,7 @@ async function reveal(data) {
   win.classList.add("winner");
   lose.classList.add("loser");
   burst(win);
+  gavel();
   $("status").textContent = `👑 ${data[data.winner].name} wins!`;
   await wait(1300);
 
@@ -356,6 +357,99 @@ $("judgeVoice").addEventListener("change", e => {
   localStorage.setItem("larpedin-judge-voice", e.target.checked ? "1" : "0");
   if (!e.target.checked) stopSpeech();
 });
+
+// Best English voice: Premium/Enhanced, then named favourites, then any en-*.
+// (Network "Google" voices cut out after ~15s, but we speak one short sentence at a time.)
+let voice = null, utter = null;
+function bestVoice() {
+  const en = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang));
+  for (const re of [/Premium|Enhanced/i, /Daniel/, /Samantha/, /Alex/, /Google UK English Male/, /Google US English/]) {
+    const v = en.find(v => re.test(v.name));
+    if (v) return v;
+  }
+  return en[0] || null;
+}
+function loadVoice() { voice = bestVoice(); }
+if ("speechSynthesis" in window) { loadVoice(); speechSynthesis.addEventListener("voiceschanged", loadVoice); }
+
+// Browser voice, sentence by sentence from char `from`, with a dramatic pause between sentences
+// (longer after "!" or "?").
+function speakLines(text, from, gen, o) {
+  const lines = [...text.slice(from).matchAll(/[\s\S]*?(?:[.!?]+["')\]]*(?=\s|$)|\n|$)/g)].filter(m => m[0].trim());
+  const next = k => {
+    if (gen !== run || k >= lines.length) return;
+    const s = lines[k][0];
+    // Kept in a global so Chrome doesn't garbage-collect it mid-speech (which drops onend).
+    const u = utter = new SpeechSynthesisUtterance(s);
+    u.rate = o.rate; u.pitch = o.pitch; u.lang = "en-US";
+    if (voice) { u.voice = voice; u.lang = voice.lang; }
+    u.onend = () => setTimeout(() => next(k + 1), /[!?]["')\]]*\s*$/.test(s) ? 700 : 350);
+    speechSynthesis.speak(u);
+  };
+  next(0);
+}
+
+// ---- Courtroom sounds: Web Audio only (no files, no network). One context, made inside the tap for iOS. ----
+// Silent when the "Judge voice" toggle is off.
+let actx = null, master = null, noise = null;
+function initSound() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  if (!actx) {
+    actx = new AC();
+    noise = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate); // 2 s of white noise, reused
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (actx.state === "suspended") actx.resume();
+}
+const soundOn = () => actx && $("judgeVoice").checked;
+function bus() { // master gain (peak ~0.5); stopSounds() swaps in a fresh one
+  if (!master) { master = actx.createGain(); master.gain.value = 0.5; master.connect(actx.destination); }
+  return master;
+}
+function stopSounds() {
+  if (!master) return;
+  const old = master; master = null;
+  old.gain.setTargetAtTime(0, actx.currentTime, 0.01);
+  setTimeout(() => old.disconnect(), 100);
+}
+function filt(type, f, q) { const b = actx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; }
+
+// Gavel: low sine with a fast pitch drop, plus a short high noise click for the wood.
+function gavel() {
+  if (!soundOn()) return;
+  const t = actx.currentTime + 0.01, o = actx.createOscillator(), g = actx.createGain();
+  o.frequency.setValueAtTime(170, t);
+  o.frequency.exponentialRampToValueAtTime(42, t + 0.18);
+  g.gain.setValueAtTime(1, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+  o.connect(g).connect(bus()); o.start(t); o.stop(t + 0.42);
+  const s = actx.createBufferSource(), c = actx.createGain();
+  s.buffer = noise;
+  c.gain.setValueAtTime(0.6, t);
+  c.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+  s.connect(filt("highpass", 1500, 0.7)).connect(c).connect(bus()); s.start(t, 0, 0.06);
+}
+
+// Crowd "ooooh": noise through two vowel formants sliding from "oo" toward "oh", ~1.5 s.
+function ooh(dur = 1.5) {
+  if (!soundOn()) return;
+  const t = actx.currentTime + 0.02, s = actx.createBufferSource(), g = actx.createGain();
+  s.buffer = noise; s.loop = true;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(1, t + 0.5);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  g.connect(bus());
+  [[300, 480, 8], [800, 950, 4]].forEach(([a, b, amp]) => {
+    const f = filt("bandpass", a, 4), fg = actx.createGain();
+    f.frequency.setValueAtTime(a, t);
+    f.frequency.linearRampToValueAtTime(b, t + dur * 0.7);
+    fg.gain.value = amp; // band-passed noise is quiet, so boost it
+    s.connect(f).connect(fg).connect(g);
+  });
+  s.start(t); s.stop(t + dur);
+}
 
 // Split into [start, end, text] chunks of at most max chars: at sentence ends, else commas, else spaces.
 function chunks(t, max) {
@@ -391,6 +485,7 @@ async function tts(text, voiceName, ms) {
 const SILENT_WAV = "data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAACAgICAgICAgA==";
 function unlockAudio() {
   if (!audio) { audio = new Audio(SILENT_WAV); audio.play().catch(() => {}); }
+  initSound();
   if ("speechSynthesis" in window) {
     const u = new SpeechSynthesisUtterance(" ");
     u.volume = 0;
@@ -411,6 +506,7 @@ function playBlob(blob) {
 
 function stopSpeech() {
   run++;
+  stopSounds();
   aborts.forEach(a => a.abort());
   if (audio) {
     const end = audio.onended; // resolves a pending playBlob
@@ -426,14 +522,11 @@ async function speakVerdict(text) {
   if (!$("judgeVoice").checked) return;
   const gen = run;
   const clean = text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
+  ooh(); // the crowd reacts, then the judge speaks
+  const intro = new Promise(r => setTimeout(r, actx ? 1200 : 0));
   const speakFrom = from => {
     if (!("speechSynthesis" in window) || !clean.slice(from).trim()) return;
-    const u = new SpeechSynthesisUtterance(clean.slice(from));
-    u.rate = 0.95; u.pitch = 0.8; u.lang = "en-US";
-    // On-device voices: Chrome's network voices cut out after ~15s.
-    const v = speechSynthesis.getVoices().find(v => v.localService && /^en/i.test(v.lang));
-    if (v) u.voice = v;
-    speechSynthesis.speak(u);
+    intro.then(() => speakLines(clean, from, gen, { rate: 0.95, pitch: 0.8 }));
   };
   const parts = chunks(clean, 182); // 200-char API limit minus the tag
   if (ttsWorks === false || !parts.length) return speakFrom(0);
@@ -443,6 +536,7 @@ async function speakVerdict(text) {
   let next = say(0);
   for (let k = 0; k < parts.length; k++) {
     const blob = await next;
+    await intro;
     if (gen !== run) return;
     if (!blob) return fallback(parts[k][0]);
     next = k + 1 < parts.length ? say(k + 1) : null; // prefetch while this one plays
