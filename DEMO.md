@@ -2,6 +2,7 @@
 
 ## Before the demo (10 minutes before)
 
+0. About 15 minutes before: in the Render dashboard, open the `larpedin` service and click Manual Deploy → Restart service (or push any commit). The gallery lives in memory, so this clears test posts and leaves only the 12 seed posts. The leaderboard then shows only posts from the room.
 1. Open https://larpedin-p1fd.onrender.com on the demo laptop. The free server sleeps after about 15 minutes with no traffic, and the first load can take about 50 seconds.
 2. Generate one post. Then open its share link (`/p/<id>`) in a second tab, so that the TEDx step is ready.
 3. Make sure that the laptop sound goes to the room speakers. TEDx mode and the battle judge talk.
