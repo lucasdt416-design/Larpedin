@@ -50,6 +50,21 @@
   style.textContent = css;
   document.head.appendChild(style);
 
+  // Installable app (Add to Home Screen): added here so every page gets it, including pages we don't own.
+  [["link", { rel: "manifest", href: "/manifest.webmanifest" }],
+   ["link", { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" }],
+   ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
+   ["meta", { name: "mobile-web-app-capable", content: "yes" }],
+   ["meta", { name: "apple-mobile-web-app-title", content: "LarpedIn" }],
+   ["meta", { name: "theme-color", content: "#0a66c2" }]
+  ].forEach(function (t) {
+    var sel = t[0] + (t[1].rel ? '[rel="' + t[1].rel + '"]' : '[name="' + t[1].name + '"]');
+    if (document.head.querySelector(sel)) return;
+    var e = document.createElement(t[0]);
+    Object.keys(t[1]).forEach(function (k) { e.setAttribute(k, t[1][k]); });
+    document.head.appendChild(e);
+  });
+
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
