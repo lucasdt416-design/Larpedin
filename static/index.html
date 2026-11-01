@@ -81,6 +81,7 @@
     .share-btn         "Copy + open LinkedIn"
     .copy-btn          copy the post text only
     .link-btn          copy a shareable /p/<id> link (hidden if no id)
+    .download-btn      save the .post-card as a PNG (html2canvas)
     .regen-btn         same text + vibe + level again, replaces this card
 -->
 <html lang="en">
@@ -228,10 +229,12 @@
         <button type="button" class="share-btn">Copy + open LinkedIn</button>
         <button type="button" class="copy-btn">Copy</button>
         <button type="button" class="link-btn" hidden>🔗 Share link</button>
+        <button type="button" class="download-btn">📸 Download image</button>
         <button type="button" class="regen-btn">🔄 Regenerate</button>
       </div>
     </div>
   </template>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
   <script src="app.js"></script>
 </body>
 </html>

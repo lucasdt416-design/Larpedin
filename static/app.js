@@ -525,6 +525,7 @@ function renderCard(data, slot, req) {
     q(".link-btn").hidden = false;
     q(".link-btn").addEventListener("click", () => copyText(`${location.origin}/p/${data.id}`, "Link copied!"));
   }
+  q(".download-btn").addEventListener("click", (e) => downloadCard(q(".post-card"), e.currentTarget));
   q(".regen-btn").addEventListener("click", () => run(req.text, [generateTask(req)], item));
 
   slot.replaceWith(item);
@@ -539,6 +540,39 @@ function renderCard(data, slot, req) {
     requestAnimationFrame(() => gauge.style.setProperty("--pct", value));
   });
   return item;
+}
+
+async function downloadCard(card, btn) {
+  if (!window.html2canvas) {
+    showError("Image export didn't load. Take a screenshot instead.");
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const canvas = await html2canvas(card, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      logging: false,
+      // Export the full post, not the clamped preview.
+      onclone: (doc, clone) => {
+        clone.querySelector(".post-body").classList.add("is-expanded");
+        clone.querySelector(".see-more").hidden = true;
+      },
+    });
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error("empty image");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "larpedin-post.png";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("Image saved!");
+  } catch {
+    showError("Couldn't make the image. Take a screenshot instead.");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function shareToLinkedIn(post) {
