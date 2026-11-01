@@ -859,3 +859,30 @@ main {
 .is-presenting .gallery-card .post-meta,
 .is-presenting .gallery-original { font-size: 0.8em; }
 .is-presenting .gallery-card .see-more { display: none; }
+
+/* ---------- Delarp extras + export footer ---------- */
+
+.truth-original {
+  margin: 0 0 16px;
+  padding-left: 12px;
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  font-style: italic;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.export-footer {
+  margin: 0;
+  padding: 10px 0 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}

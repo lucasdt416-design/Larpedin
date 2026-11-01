@@ -88,6 +88,9 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
     if (!$("generate").disabled) $("generate").textContent = m.button;
     renderInspo();
     clearError();
+    // A LARP card under the Delarp box (or vice versa) is confusing; start clean.
+    $("results").replaceChildren();
+    $("result").hidden = true;
   });
 });
 
@@ -303,9 +306,11 @@ function setBusy(busy) {
 
 const delarp = async (text) => (await postJSON("/api/delarp", { text }, "truth")).truth;
 
-function renderTruth(truth, slot) {
+function renderTruth(original, truth, slot) {
   const item = $("truth-card-template").content.firstElementChild.cloneNode(true);
+  item.querySelector(".truth-original").textContent = original.trim();
   item.querySelector(".truth-text").textContent = truth;
+  item.querySelector(".copy-btn").addEventListener("click", () => copyText(truth, "Copied!"));
   slot.replaceWith(item);
 }
 
@@ -375,7 +380,7 @@ $("composer").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("text").value;
   if (mode === "delarp") {
-    run(text, [async (slot) => renderTruth(await delarp(text), slot)]);
+    run(text, [async (slot) => renderTruth(text, await delarp(text), slot)]);
   } else {
     run(text, [generateTask({ text, tone, level: Number($("level").value) })]);
   }
@@ -457,6 +462,7 @@ const randInt = (min, max) => Math.floor(min + Math.random() * (max - min + 1));
 const fmt = (n) => n.toLocaleString("en-US");
 
 function animateCount(el, target) {
+  el.dataset.target = target;
   if (reduceMotion) {
     el.textContent = fmt(target);
     return;
@@ -464,7 +470,8 @@ function animateCount(el, target) {
   const start = performance.now();
   const duration = 1200;
   const tick = (now) => {
-    const t = Math.min((now - start) / duration, 1);
+    // rAF timestamps can be slightly earlier than `start`; clamp so counts never go negative.
+    const t = Math.min(Math.max((now - start) / duration, 0), 1);
     const eased = 1 - Math.pow(1 - t, 3);
     el.textContent = fmt(Math.round(target * eased));
     if (t < 1) requestAnimationFrame(tick);
@@ -558,6 +565,7 @@ function renderCard(data, slot, req) {
       if (action === "like") {
         counts.like += on ? 1 : -1;
         q(".reaction-count").textContent = fmt(counts.like);
+        q(".reaction-count").dataset.target = counts.like;
       } else if (action in counts) {
         counts[action] += on ? 1 : -1;
         showCounts();
@@ -571,7 +579,7 @@ function renderCard(data, slot, req) {
     q(".link-btn").hidden = false;
     q(".link-btn").addEventListener("click", () => copyText(`${location.origin}/p/${data.id}`, "Link copied!"));
   }
-  q(".download-btn").addEventListener("click", (e) => downloadCard(q(".post-card"), e.currentTarget));
+  q(".download-btn").addEventListener("click", (e) => downloadCard(q(".post-card"), e.currentTarget, data.post));
   if (data.id != null) {
     q(".gallery-link").href = `gallery.html#post-${data.id}`;
     q(".gallery-link").hidden = false;
@@ -655,7 +663,7 @@ function burst(anchor) {
   }
 }
 
-async function downloadCard(card, btn) {
+async function downloadCard(card, btn, post) {
   if (!window.html2canvas) {
     showError("Image export didn't load. Take a screenshot instead.");
     return;
@@ -666,10 +674,19 @@ async function downloadCard(card, btn) {
       scale: 2,
       backgroundColor: "#ffffff",
       logging: false,
-      // Export the full post, not the clamped preview.
+      // Export the full post, not the clamped (or still typing) preview.
       onclone: (doc, clone) => {
-        clone.querySelector(".post-body").classList.add("is-expanded");
+        const body = clone.querySelector(".post-body");
+        body.textContent = post;
+        body.classList.remove("is-typing");
+        body.classList.add("is-expanded");
+        // Counters may still be animating; export their final values.
+        clone.querySelectorAll("[data-target]").forEach((el) => (el.textContent = fmt(Number(el.dataset.target))));
         clone.querySelector(".see-more").hidden = true;
+        const footer = doc.createElement("p");
+        footer.className = "export-footer";
+        footer.textContent = `LarpedIn · parody · ${location.host}`;
+        clone.append(footer);
       },
     });
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));

@@ -167,6 +167,7 @@ Show all model text with `textContent`, never `innerHTML`. Gallery posts come fr
   1. The fallback template "{text} taught me more than my MBA" reads badly with raw input ("I touched grass taught me more than my MBA"). It shows exactly when Groq is down during the demo.
   2. `nav.js` draws the brand as "Larped" plus a blue boxed "in". That looks like LinkedIn's "in" mark, which our rules say not to use. Plain text "LarpedIn" would be safer.
   3. `nav.js` calls `localStorage` without try/catch. Some private/blocked-storage browsers throw there.
+  4. Live Groq output sometimes includes the literal label "Fake life lesson:", because the prompt asks for "a fake life lesson". Maybe phrase it as "a life lesson (that is obviously absurd)" so the model doesn't print the label.
 - Heads-up: "Try 4 vibes" sends 4 `/api/generate` calls at once, so it hits the Groq rate limit 4x faster.
 - `gallery.html` uses `static/gallery.js` (frontend-owned). It polls `/api/gallery` every 5s and the QR points to `location.origin` (or the Render URL when running locally). It relies on the gallery keeping one shared in-memory store, so keep gunicorn at one worker.
 - The frontend reads these response fields: `post`, `headline`, `comments[].name/title/text`, `score.*`, `badge`, `id`, `truth`, `votes`. Renaming any of them breaks the UI, so tell Lucas first.

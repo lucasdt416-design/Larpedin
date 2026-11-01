@@ -81,6 +81,7 @@
     .post-comments     list of fake comments (only if backend sends them)
     .comment / .comment-avatar (initials) / .comment-author / .comment-title / .comment-text
     .truth-card        Delarp result card
+    .truth-original    the pasted post, quoted and clamped to 3 lines
     .truth-label       "What actually happened"
     .truth-text        the honest one-liner
     .post-actions      real buttons under the card (Copy + open LinkedIn)
@@ -89,6 +90,7 @@
     .copy-btn          copy the post text only
     .link-btn          copy a shareable /p/<id> link (hidden if no id)
     .download-btn      save the .post-card as a PNG (html2canvas)
+    .export-footer     "LarpedIn · parody" line added only inside the exported PNG
     .gallery-link      <a> to this post in gallery.html (hidden if no id)
     .regen-btn         same text + vibe + level again, replaces this card
 -->
@@ -183,9 +185,13 @@
   <template id="truth-card-template">
     <div class="result-item">
       <article class="truth-card">
+        <p class="truth-original"></p>
         <span class="truth-label">What actually happened</span>
         <p class="truth-text"></p>
       </article>
+      <div class="post-actions">
+        <button type="button" class="copy-btn">Copy the truth</button>
+      </div>
     </div>
   </template>
 
