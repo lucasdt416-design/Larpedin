@@ -37,35 +37,59 @@ TONES = {
     "Gen Z intern": "a Gen Z intern who writes in slang and is way too confident",
 }
 
+# Cringe = how far the claimed accomplishment is inflated, never how surreal it gets.
 LEVELS = [
-    "mildly corporate, almost normal",
-    "a little self-important",
-    "noticeably smug",
-    "full LinkedIn voice",
-    "very dramatic, every sentence is a lesson",
-    "wildly inflated, compares yourself to famous CEOs",
-    "delusional, this small thing changed your whole career",
-    "unhinged, you are now a visionary changing the industry",
-    "completely deranged, the universe sent you a sign about B2B sales",
-    "maximum lunacy: you cried in the Uber thinking about synergy",
+    "resume-speak; it could pass as a real post",
+    "polished resume-speak with one quantified result",
+    "a proud milestone with two quantified results",
+    "a full LinkedIn achievement post: metrics, skills gained, gratitude",
+    "framed as leading an initiative with measurable impact",
+    "a career milestone: credit it for a promotion-worthy skill and thank a mentor",
+    "transformational: it changed how you lead teams, with bold metrics",
+    "an industry voice: you now teach it, with an invented framework that has a name",
+    "keynote material: board-level impact, still told as a completely straight achievement",
+    "maximum larp: an origin story, a named methodology and an upcoming talk, completely straight-faced",
 ]
 
 GENERATE_PROMPT = (
-    "You write parody LinkedIn posts. The user tells you something small and ordinary they did. "
-    "Rewrite it as a LinkedIn post in the voice of {voice}. Cringe level {level}/10: {intensity}. "
-    "Use short one-line paragraphs, one obviously absurd life lesson (never print a label like 'Life lesson:' or 'Fake life lesson:'), a numbered list of 3 takeaways, "
-    "no emojis, and 3-5 hashtags at the end. Keep it under 200 words. "
-    "The post is plain text with no markdown or asterisks. "
-    "Also write an absurd LinkedIn headline for the author that is specific to what they did and to the voice. "
-    "Vary the format: pipes, a job title with a fake company, or a grandiose mission statement. "
-    "Do not start with 'Visionary' and do not use the words 'Whisperer' or 'Ex-Unemployed'. "
-    "Pick ONE format at random: a grandiose mission statement, a stack of 3 inflated titles separated by pipes, "
-    "a made-up award or credential, or a ridiculous job title at an invented company. "
-    "Invent every word from what they did. Never reuse example phrases, and avoid starting with 'Chief'. "
-    "and 2 or 3 comments from fake connections with silly names and job titles. "
+    "You ghostwrite LinkedIn posts for someone who is LARPING: they did something small and ordinary, "
+    "and they want to present it as a genuine professional accomplishment. Write in the voice of {voice}. "
+    "Inflation level {level}/10: {intensity}.\n"
+    "First fill real_event (what they actually did, plainly) and spin (the accomplishment they will claim, "
+    "a technically-true-but-dishonest reframe). Then write the post from that spin.\n"
+    "The post must contain, in this order: a hook announcing the achievement (for example 'I'm proud to share', "
+    "'After weeks of', 'Excited to announce'); the 'challenge' they faced; what they did, in professional verbs "
+    "(led, completed, navigated, shipped, optimized); one or two specific, plausible numbers (minutes, percent, "
+    "people, decisions); 3 numbered lessons, each tied to a real career skill (prioritization, resilience, "
+    "stakeholder management, execution, communication); thanks to a manager, mentor, professor or team; "
+    "and one engagement question. Then 3 to 5 hashtags.\n"
+    "Tell it completely straight, like a real post someone might believe at first glance. "
+    "The humor is the gap between the claim and what really happened, never weirdness. "
+    "Never use metaphors about the universe, destiny, blueprints, matrices, ecosystems, paradigms, "
+    "quantum anything or 'data points'. No cosmic signs, no talking objects, no impossible events. "
+    "Never print section labels like 'Challenge:' or 'Life lesson:'.\n"
+    "Short one-line paragraphs, plain text, no markdown, no asterisks, no emojis, under 200 words.\n"
+    "Example. What they did: 'I made instant ramen'. Spin: led a rapid end-to-end meal delivery under tight "
+    "constraints. Post:\n"
+    "I'm proud to share that I recently delivered a full meal solution in under 4 minutes, with zero budget overrun.\n"
+    "The constraints were real: one burner, no prep time, and a hard deadline before my 8pm call.\n"
+    "I prioritized ruthlessly, cut scope where it didn't matter, and shipped.\n"
+    "What it taught me:\n"
+    "1. Constraints are a feature, not a bug.\n"
+    "2. Done beats perfect when the stakes are dinner.\n"
+    "3. Great execution starts with knowing what to skip.\n"
+    "Grateful to my roommate for being an early adopter.\n"
+    "What's the fastest thing you've ever shipped?\n"
+    "#Execution #Leadership #Prioritization\n"
+    "(Do not reuse the example's wording; write from their real event.)\n"
+    "Also write the author's LinkedIn headline: an inflated but plausible title they 'earned' from what they did, "
+    "in ONE of these formats: a stack of 2 or 3 titles separated by pipes, a job title at an invented company, "
+    "or a short mission statement. Do not start with 'Visionary' or 'Chief', and do not use 'Whisperer'.\n"
+    "Also write 2 or 3 comments from fake connections with realistic names and job titles, reacting like real "
+    "LinkedIn commenters (congratulations, 'this resonates', or a humblebrag of their own).\n"
     "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
     "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
-    "A cringe level {level}/10 post should usually rate around {pct} overall."
+    "A level {level}/10 post should usually rate around {pct} overall."
 )
 
 DELARP_PROMPT = (
@@ -88,8 +112,11 @@ GENERATE_SCHEMA = {
     "schema": {
         "type": "object",
         "additionalProperties": False,
-        "required": ["post", "headline", "comments", "score"],
+        "required": ["real_event", "spin", "post", "headline", "comments", "score"],
         "properties": {
+            # Decided before the post so the post is built on a concrete accomplishment claim.
+            "real_event": {"type": "string"},
+            "spin": {"type": "string"},
             "post": {"type": "string"},
             "headline": {"type": "string"},
             "comments": {
@@ -253,13 +280,13 @@ def generate():
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
-        "Rewrite it to be even more delusional and self-important. Keep the same story, but escalate it: "
-        "bigger claims, an even more absurd life lesson, and a career pivot nobody asked for."
+        "Rewrite it one level more inflated. Keep the same real event and stay straight-faced and believable, "
+        "but claim a bigger accomplishment: bigger numbers, more people impacted, and a bigger career payoff."
     )
     try:
         out = json.loads(groq(
             [{"role": "system", "content": system}, {"role": "user", "content": user}],
-            temperature=0.5 + 0.06 * level,
+            temperature=min(0.85, 0.55 + 0.03 * level),
             schema=GENERATE_SCHEMA,
         ))
         result = {

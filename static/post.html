@@ -91,7 +91,6 @@
   }
 </style>
 <script src="/nav.js" defer></script>
-<script src="/linkedin.js" defer></script>
 <link rel="stylesheet" href="/edition.css">
 <link rel="icon" type="image/png" href="/icons/favicon.png">
 </head>
@@ -137,7 +136,7 @@
   <section class="card pad cta">
     <button class="btn outline copy" type="button">Copy link</button>
     <a class="btn outline" href="/">Make your own</a>
-    <button class="btn primary to-li" type="button">Post to LinkedIn</button>
+    <button class="btn primary to-li" type="button" title="Copies the post and opens LinkedIn. Nothing is posted unless you paste and post it there yourself.">Copy + open LinkedIn</button>
     <button class="btn tedx" type="button">Present at TEDx</button>
   </section>
   <p class="foot">LarpedIn is a parody. No careers were harmed.</p>
@@ -239,9 +238,17 @@ function render(p) {
   };
 
   const toLi = $(frag, ".to-li");
+  // Copy-paste only: LinkedIn's text prefill is unreliable (the mobile app ignores it),
+  // so copy first, then open the composer. Nothing is posted for the user.
   toLi.onclick = async () => {
-    const handled = window.LarpedInLinkedIn && await window.LarpedInLinkedIn.share(p.post);
-    if (!handled) window.open("https://www.linkedin.com/feed/?shareActive=true&text=" + encodeURIComponent(p.post), "_blank", "noopener");
+    try {
+      await navigator.clipboard.writeText(p.post);
+      toLi.textContent = "Copied! Paste it into LinkedIn";
+      setTimeout(() => { toLi.textContent = "Copy + open LinkedIn"; }, 3000);
+    } catch {
+      // Clipboard blocked; the composer is still prefilled where LinkedIn supports it.
+    }
+    window.open("https://www.linkedin.com/feed/?shareActive=true&text=" + encodeURIComponent(p.post), "_blank", "noopener");
   };
 
   const tedx = $(frag, ".tedx");

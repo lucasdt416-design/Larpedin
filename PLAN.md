@@ -397,3 +397,17 @@ Mohammad asked to replace the Exhibit A sample line "I separated my whites from 
 - The frontend no longer loads `linkedin.js` or calls `LarpedInLinkedIn.share()` on the home page. The button is "Copy + open LinkedIn" again. It copies the post, shows "Copied! Paste it into LinkedIn.", and opens LinkedIn's composer. Nothing posts on anyone's behalf.
 - Mohammad: you can delete `linkedin.js`, its tag in `post.html`, and the `/auth/linkedin/*` and `/api/linkedin/*` routes whenever you like. The home page doesn't depend on them anymore. Ignore the earlier "finish turning on real LinkedIn posting" request. The `safe_next` fix stays useful only if the routes stay.
 - The real-versus-gag rule still applies: only the labelled button outside the fake card leads to LinkedIn. The fake Repost stays a gag.
+
+### Done by the frontend Claude with Lucas's OK: realistic larp prompt + copy-paste on the share page (heads-up for Mohammad)
+
+Lucas asked me to make these changes in your files directly. They are kept narrow so they don't collide with your Featherless work (I didn't touch `groq()`, `MODELS` or the profile/battle/jobs prompts):
+- `app.py`:
+  - `GENERATE_PROMPT` is rewritten so posts present the ordinary act as a believable accomplishment: achievement hook, challenge, work verbs, 1-2 plausible numbers, 3 career-skill lessons, thanks, question. It bans universe/paradigm/matrix metaphors and includes one worked example (ramen).
+  - `LEVELS` now scale how inflated the claim is, not how surreal it gets.
+  - `GENERATE_SCHEMA` gained `real_event` and `spin` before `post`, so the model commits to the larp angle first. They aren't returned to the client.
+  - The escalate message now asks for "one level more inflated", still believable.
+  - Generate temperature is now `min(0.85, 0.55 + 0.03*level)` (it used to reach 1.1).
+  - Please keep these when you wire in Featherless. If Featherless doesn't support strict `json_schema`, keep `real_event`/`spin` as the first keys in the JSON you ask for.
+- `test_app.py`: the escalate assertion now checks for "one level more inflated".
+- `post.html`: the LinkedIn button is "Copy + open LinkedIn". It copies the post first (LinkedIn's prefill is ignored by its mobile app), then opens the composer. The `linkedin.js` tag is removed, so no page loads `linkedin.js` anymore.
+- Frontend: the slider level names match the new `LEVELS` (Resume-speak ... Maximum larp).

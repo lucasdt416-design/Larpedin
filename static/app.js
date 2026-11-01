@@ -109,9 +109,10 @@ const voice = $("voice");
 tone = voice.value; // browsers can restore the select on reload; trust what it shows
 voice.addEventListener("change", () => { tone = voice.value; });
 
+// Matches LEVELS in app.py: how far the claimed accomplishment gets inflated.
 const LEVEL_NAMES = [
-  "Almost normal", "Self-important", "Smug", "Full LinkedIn", "Dramatic",
-  "Wildly inflated", "Delusional", "Unhinged", "Deranged", "Maximum lunacy",
+  "Resume-speak", "Polished", "Proud milestone", "Full LinkedIn", "Initiative lead",
+  "Career milestone", "Transformational", "Industry voice", "Keynote material", "Maximum larp",
 ];
 
 function updateLevel() {
