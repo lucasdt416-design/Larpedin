@@ -345,3 +345,8 @@ Lucas's feedback on live output ("I touched grass" became "negotiate a merger wi
 > #Leadership #StrategicThinking #GrowthMindset
 
 The headline should follow the same idea: a plausible inflated title earned from the act (for example "Outdoor Strategy Lead | Driving Clarity Through Intentional Offline Time"). The frontend needs no change: same fields and schema. If you change `LEVELS`, the frontend Claude will update the level names in `app.js` to match. `cringe-levels.js` descriptions belong to the redesign agent.
+
+### Logo (from Mohammad, the user's call)
+
+Mohammad supplied his own tie logo (plain tie, rounded collar, no sparkle). It now replaces the tie-and-sparkle icon in `static/icons/` (favicon, icon-192, icon-512, maskable, apple-touch, logo) and the iOS app icon. In `wordmark.png`, only the left tile changed, and the "Larpedin" text is untouched. File names are the same, so no HTML change was needed. Please do not regenerate these icons.
+
