@@ -29,10 +29,12 @@
     .cringe-value      live text like "Level 7: Delusional"
     .generate-btn      submit button; .is-loading while waiting,
                        .is-warming while the server wakes up (/api/health)
+    .try-all-btn       "Try 4 vibes": current vibe + 3 random, 4 cards at once
     .shortcut-hint     "Ctrl/⌘ + Enter" hint text
 
   FEEDBACK
     .error-banner      inline error message (hidden when empty)
+    .toast             short confirmation like "Copied!" (hidden when idle)
 
   RESULT
     .result            section that holds the generated card(s);
@@ -42,6 +44,9 @@
     .skeleton-header / .skeleton-avatar / .skeleton-line (.is-short)
     .results-grid      container for cards (1 card now; 4 for "Try all 4 vibes")
     .result-item       one card + its actions
+    .post-vibe         vibe label above a card (only in "Try 4 vibes")
+    .card-error        a .result-item that failed (in "Try 4 vibes")
+    .card-error-text   its error message
     .post-card         the fake feed post (<article>)
     .post-header       avatar + author block row
     .avatar            circle with the user's initials
@@ -74,6 +79,9 @@
     .truth-text        the honest one-liner
     .post-actions      real buttons under the card (Copy + open LinkedIn)
     .share-btn         "Copy + open LinkedIn"
+    .copy-btn          copy the post text only
+    .link-btn          copy a shareable /p/<id> link (hidden if no id)
+    .regen-btn         same text + vibe + level again, replaces this card
 -->
 <html lang="en">
 <head>
@@ -125,10 +133,12 @@
       </div>
 
       <button type="submit" class="generate-btn is-warming" id="generate" disabled>Warming up the hustle...</button>
+      <button type="button" class="try-all-btn" id="try-all" disabled>🎲 Try 4 vibes</button>
       <span class="shortcut-hint" id="shortcut-hint">Ctrl + Enter</span>
     </form>
 
     <p class="error-banner" id="error" role="alert" hidden></p>
+    <div class="toast" id="toast" role="status" hidden></div>
 
     <section class="result" id="result" aria-label="Your post" hidden>
       <p class="status-line" id="status" role="status"></p>
@@ -149,6 +159,13 @@
     </div>
   </template>
 
+  <template id="card-error-template">
+    <div class="result-item card-error" role="alert">
+      <p class="post-vibe"></p>
+      <p class="card-error-text"></p>
+    </div>
+  </template>
+
   <template id="truth-card-template">
     <div class="result-item">
       <article class="truth-card">
@@ -160,6 +177,7 @@
 
   <template id="post-card-template">
     <div class="result-item">
+      <p class="post-vibe" hidden></p>
       <article class="post-card">
         <header class="post-header">
           <div class="avatar" aria-hidden="true"></div>
@@ -208,6 +226,9 @@
       </article>
       <div class="post-actions">
         <button type="button" class="share-btn">Copy + open LinkedIn</button>
+        <button type="button" class="copy-btn">Copy</button>
+        <button type="button" class="link-btn" hidden>🔗 Share link</button>
+        <button type="button" class="regen-btn">🔄 Regenerate</button>
       </div>
     </div>
   </template>

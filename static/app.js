@@ -39,6 +39,7 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
     const m = MODES[mode];
     $("composer").classList.toggle("is-delarp", mode === "delarp");
     $("larp-options").hidden = mode === "delarp";
+    $("try-all").hidden = mode === "delarp";
     $("text-label").textContent = m.label;
     $("text").maxLength = m.maxLength;
     $("text").rows = mode === "delarp" ? 6 : 3;
@@ -160,6 +161,7 @@ async function warmUp() {
   btn.classList.remove("is-warming");
   btn.disabled = false;
   btn.textContent = MODES[mode].button;
+  $("try-all").disabled = false;
 }
 
 warmUp();
@@ -174,6 +176,23 @@ function showError(message) {
 function clearError() {
   $("error").textContent = "";
   $("error").hidden = true;
+}
+
+let toastTimer;
+function showToast(message) {
+  $("toast").textContent = message;
+  $("toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => ($("toast").hidden = true), 2000);
+}
+
+async function copyText(text, message) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(message);
+  } catch {
+    showError("Couldn't copy. Select the text and copy it by hand.");
+  }
 }
 
 // ---------- Generate ----------
@@ -223,6 +242,8 @@ function startStatusLines() {
 function setBusy(busy) {
   const btn = $("generate");
   btn.disabled = busy;
+  $("try-all").disabled = busy;
+  document.querySelectorAll(".regen-btn").forEach((b) => (b.disabled = busy));
   btn.classList.toggle("is-loading", busy);
   btn.textContent = busy ? (mode === "delarp" ? "Delarping..." : "Larping...") : MODES[mode].button;
   $("result").classList.toggle("is-loading", busy);
@@ -248,8 +269,11 @@ function renderTruth(truth, slot) {
   slot.replaceWith(item);
 }
 
+const newSkeleton = () => $("skeleton-template").content.firstElementChild.cloneNode(true);
+
 // Runs tasks in parallel. Each task gets a skeleton slot that it replaces with its card.
-async function run(text, tasks) {
+// With `replaceItem`, that one card is swapped out instead of clearing the results.
+async function run(text, tasks, replaceItem = null) {
   if ($("generate").disabled) return;
   stopListening();
   clearError();
@@ -260,20 +284,31 @@ async function run(text, tasks) {
   }
   setBusy(true);
   const stopStatus = startStatusLines();
-  $("results").replaceChildren();
+  let slots;
+  if (replaceItem) {
+    slots = [newSkeleton()];
+    replaceItem.replaceWith(slots[0]);
+  } else {
+    $("results").replaceChildren();
+    slots = tasks.map(() => $("results").appendChild(newSkeleton()));
+  }
   $("result").hidden = false;
-  const slots = tasks.map(() => {
-    const slot = $("skeleton-template").content.firstElementChild.cloneNode(true);
-    $("results").append(slot);
-    return slot;
-  });
+  const multi = $("results").children.length > 1;
   try {
     await Promise.all(tasks.map(async (task, i) => {
       try {
         await task(slots[i]);
       } catch (err) {
-        slots[i].remove();
-        showError(err.message);
+        if (multi) {
+          // Other cards are still useful; show the error in this card's place.
+          const errItem = $("card-error-template").content.firstElementChild.cloneNode(true);
+          errItem.querySelector(".post-vibe").textContent = task.label || "";
+          errItem.querySelector(".card-error-text").textContent = err.message;
+          slots[i].replaceWith(errItem);
+        } else {
+          slots[i].remove();
+          showError(err.message);
+        }
       }
     }));
   } finally {
@@ -283,21 +318,45 @@ async function run(text, tasks) {
   }
 }
 
+function vibeLabel(t) {
+  const pill = document.querySelector(`.vibe-pill[data-tone="${CSS.escape(t)}"]`);
+  return pill ? pill.textContent.trim() : t;
+}
+
+// req: {text, tone, level, showVibe}
+function generateTask(req) {
+  const task = async (slot) => renderCard(await generate(req.text, req.tone, req.level), slot, req);
+  task.label = vibeLabel(req.tone);
+  return task;
+}
+
 $("composer").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("text").value;
   if (mode === "delarp") {
     run(text, [async (slot) => renderTruth(await delarp(text), slot)]);
   } else {
-    const level = Number($("level").value);
-    run(text, [async (slot) => renderCard(await generate(text, tone, level), slot)]);
+    run(text, [generateTask({ text, tone, level: Number($("level").value) })]);
   }
+});
+
+// Current vibe plus 3 random others, all in parallel.
+$("try-all").addEventListener("click", () => {
+  const text = $("text").value;
+  const level = Number($("level").value);
+  const others = [...document.querySelectorAll(".vibe-pill")]
+    .map((p) => p.dataset.tone)
+    .filter((t) => t !== tone)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
+  run(text, [tone, ...others].map((t) => generateTask({ text, tone: t, level, showVibe: true })));
 });
 
 // ---------- Profile (name + headline, saved locally) ----------
 
 const PROFILE_KEY = "larpedin.profile";
-const DEFAULT_PROFILE = { name: "Your Name", headline: "Visionary | Ex-Nothing | Open to Work" };
+const DEFAULT_PROFILE = { name: "Your Name" };
+const DEFAULT_HEADLINE = "Visionary | Ex-Nothing | Open to Work";
 
 function loadProfile() {
   try {
@@ -331,20 +390,22 @@ function syncProfile(source) {
   });
 }
 
-function bindEditable(el, field) {
+// Only the name is saved; a headline edit stays on that one card.
+function bindEditable(el, field, fallback) {
   el.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       el.blur();
     }
   });
+  el.addEventListener("blur", () => {
+    if (!el.textContent.trim()) el.textContent = fallback;
+  });
+  if (field !== "name") return;
   el.addEventListener("input", () => {
     profile[field] = el.textContent.trim() || DEFAULT_PROFILE[field];
     saveProfile();
-    if (field === "name") syncProfile(el);
-  });
-  el.addEventListener("blur", () => {
-    if (!el.textContent.trim()) el.textContent = DEFAULT_PROFILE[field];
+    syncProfile(el);
   });
 }
 
@@ -376,15 +437,22 @@ const FAMOUS_LIKERS = [
 ];
 
 // data: response from /api/generate. The new card replaces `slot` (a skeleton).
-function renderCard(data, slot) {
+// req is the request that made it, reused by Regenerate.
+function renderCard(data, slot, req) {
   const item = $("post-card-template").content.firstElementChild.cloneNode(true);
   const q = (sel) => item.querySelector(sel);
 
   q(".avatar").textContent = initials(profile.name);
   q(".post-author").textContent = profile.name;
-  q(".post-headline").textContent = data.headline || profile.headline;
-  bindEditable(q(".post-author"), "name");
-  bindEditable(q(".post-headline"), "headline");
+  const headline = data.headline || DEFAULT_HEADLINE;
+  q(".post-headline").textContent = headline;
+  bindEditable(q(".post-author"), "name", DEFAULT_PROFILE.name);
+  bindEditable(q(".post-headline"), "headline", headline);
+
+  if (req.showVibe) {
+    q(".post-vibe").textContent = vibeLabel(req.tone);
+    q(".post-vibe").hidden = false;
+  }
 
   q(".reaction-name").textContent = FAMOUS_LIKERS[randInt(0, FAMOUS_LIKERS.length - 1)];
 
@@ -452,6 +520,12 @@ function renderCard(data, slot) {
   });
 
   q(".share-btn").addEventListener("click", () => shareToLinkedIn(data.post));
+  q(".copy-btn").addEventListener("click", () => copyText(data.post, "Copied!"));
+  if (data.id != null) {
+    q(".link-btn").hidden = false;
+    q(".link-btn").addEventListener("click", () => copyText(`${location.origin}/p/${data.id}`, "Link copied!"));
+  }
+  q(".regen-btn").addEventListener("click", () => run(req.text, [generateTask(req)], item));
 
   slot.replaceWith(item);
 
