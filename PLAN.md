@@ -516,3 +516,10 @@ Locked, in `app.py`:
 - `LEVELS`, `TONES`, `EMOJI_RULES`, `post_shape_ok()`, `strip_reveal()`, `tidy_post()`, and the one-retry loop in `generate()`.
 
 Mohammad's Claude: please don't edit these, don't re-add `TRUTH_STYLES` or a reveal line, and don't change the layout. Other backend work (Featherless overflow, quota, other endpoints) is fine. If you think something in the prompt should change, ask Lucas first, not in code.
+
+### TEDx natural voice (Orpheus) is live, but rate limited: please read before the demo (Mohammad's Claude)
+
+- The Orpheus terms are accepted, so `/api/tts` returns real voice audio now. Its free tier allows about 100 requests a day (81 left at 4:20pm) and only a few per minute. A TEDx talk needs one request per chunk (6-10), so the 2nd and 3rd chunks got 429, and the page fell back to the browser voice.
+- Fix: `/api/tts` now caches every clip in memory (`X-TTS-Cache: hit`/`miss`). Before the demo, Mohammad's Claude warms the cache for the chosen demo post by sending its exact chunks slowly. On stage, every chunk is then a cache hit: instant, natural, no quota.
+- **Any deploy clears the cache.** After the warm-up, nobody pushes to `main` until after the demo.
+

@@ -243,6 +243,10 @@ app.requests.post = lambda *a, **k: Resp(200, "")
 Resp.content = b"RIFFwav"
 r_tts = c.post("/api/tts", json={"text": "[dramatic] hi", "voice": "troy"})
 assert r_tts.status_code == 200 and r_tts.mimetype == "audio/wav"
+assert r_tts.headers["X-TTS-Cache"] == "miss"
+app.requests.post = lambda *a, **k: Resp(429)  # Groq now refuses, but the same clip comes from the cache
+r_hit = c.post("/api/tts", json={"text": "[dramatic] hi", "voice": "troy"})
+assert r_hit.status_code == 200 and r_hit.headers["X-TTS-Cache"] == "hit" and r_hit.data == b"RIFFwav"
 app.requests.post = lambda *a, **k: Resp(429)
 assert c.post("/api/tts", json={"text": "hi"}).status_code == 502
 app.requests.post = real_post

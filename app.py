@@ -463,6 +463,11 @@ TTS_URL = "https://api.groq.com/openai/v1/audio/speech"
 TTS_VOICES = {"troy", "hannah", "austin"}
 
 
+# Orpheus free tier: ~100 requests/day and a short per-minute burst, while a TEDx talk needs one request per
+# chunk. Cache every clip so a repeated chunk (rehearsal, demo) costs nothing. Warm it before the demo.
+TTS_CACHE = {}  # (voice, text) -> wav bytes; ponytail: in memory, cleared on restart, capped at 300 clips
+
+
 @app.post("/api/tts")
 def tts():
     # Orpheus takes at most 200 characters per request, so the page sends one sentence at a time.
@@ -470,6 +475,10 @@ def tts():
     if not text:
         return jsonify(error="Nothing to say."), 400
     voice = data.get("voice") if data.get("voice") in TTS_VOICES else "troy"
+    with LOCK:
+        cached = TTS_CACHE.get((voice, text))
+    if cached:
+        return app.response_class(cached, mimetype="audio/wav", headers={"X-TTS-Cache": "hit"})
     try:
         r = requests.post(
             TTS_URL,
@@ -479,10 +488,14 @@ def tts():
         )
         r.raise_for_status()
     except (requests.RequestException, KeyError) as e:
-        detail = getattr(getattr(e, "response", None), "text", "")[:300]
-        app.logger.warning("TTS failed: %s %s", e, detail)
-        return jsonify(error="Voice unavailable, use the browser voice."), 502
-    return app.response_class(r.content, mimetype="audio/wav")
+        resp = getattr(e, "response", None)
+        app.logger.warning("TTS failed: %s %s", e, getattr(resp, "text", "")[:300])
+        retry = getattr(resp, "headers", {}).get("retry-after", "") if resp is not None else ""
+        return jsonify(error="Voice unavailable, use the browser voice."), 502, ({"Retry-After": retry} if retry else {})
+    with LOCK:
+        if len(TTS_CACHE) < 300:
+            TTS_CACHE[(voice, text)] = r.content
+    return app.response_class(r.content, mimetype="audio/wav", headers={"X-TTS-Cache": "miss"})
 
 
 @app.get("/api/stats")
