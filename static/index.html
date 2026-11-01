@@ -16,6 +16,10 @@
     .vibe-pills        group of the 4 vibe buttons
     .vibe-pill         one vibe button; .is-active = selected
     .vibe-emoji        emoji inside a pill
+    .cringe            wrapper for the cringe slider
+    .cringe-label      "Cringe level" label
+    .cringe-slider     <input type="range"> 1-10
+    .cringe-value      live text like "Level 7: Delusional"
     .generate-btn      submit button; .is-loading while waiting,
                        .is-warming while the server wakes up (/api/health)
     .shortcut-hint     "Ctrl/⌘ + Enter" hint text
@@ -81,6 +85,12 @@
         <button type="button" class="vibe-pill" data-tone="founder who failed 3 startups" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🚀</span> Founder who failed 3 startups</button>
         <button type="button" class="vibe-pill" data-tone="recruiter" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🎯</span> Recruiter</button>
         <button type="button" class="vibe-pill" data-tone="Gen Z intern" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">💅</span> Gen Z intern</button>
+      </div>
+
+      <div class="cringe">
+        <label class="cringe-label" for="level">Cringe level</label>
+        <input type="range" class="cringe-slider" id="level" min="1" max="10" value="5">
+        <output class="cringe-value" id="level-value" for="level">Level 5: Dramatic</output>
       </div>
 
       <button type="submit" class="generate-btn is-warming" id="generate" disabled>Warming up the hustle...</button>

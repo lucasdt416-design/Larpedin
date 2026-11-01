@@ -29,6 +29,21 @@ document.querySelectorAll(".vibe-pill").forEach((pill) => {
   });
 });
 
+const LEVEL_NAMES = [
+  "Almost normal", "Self-important", "Smug", "Full LinkedIn", "Dramatic",
+  "Wildly inflated", "Delusional", "Unhinged", "Deranged", "Maximum lunacy",
+];
+
+function updateLevel() {
+  const level = Number($("level").value);
+  const label = `Level ${level}: ${LEVEL_NAMES[level - 1]}`;
+  $("level-value").textContent = label;
+  $("level").setAttribute("aria-valuetext", label);
+}
+
+$("level").addEventListener("input", updateLevel);
+updateLevel();
+
 if (/Mac|iPhone|iPad/.test(navigator.platform)) {
   $("shortcut-hint").textContent = "⌘ + Enter";
 }
@@ -77,11 +92,11 @@ function clearError() {
 
 // ---------- Generate ----------
 
-async function generate(text, tone) {
+async function generate(text, tone, level) {
   const res = await fetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, tone }),
+    body: JSON.stringify({ text, tone, level }),
   });
   let data = {};
   try {
@@ -104,7 +119,7 @@ $("composer").addEventListener("submit", async (e) => {
   btn.classList.add("is-loading");
   btn.textContent = "Larping...";
   try {
-    const data = await generate($("text").value, tone);
+    const data = await generate($("text").value, tone, Number($("level").value));
     $("results").replaceChildren();
     $("result").hidden = false;
     renderCard(data, $("results"));
