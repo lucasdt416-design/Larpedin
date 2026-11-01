@@ -50,7 +50,9 @@ FAKE_PROFILE = {
     "education": [{"school": "s", "degree": "d", "dates": "d"}],
     "skills": [{"name": "n", "endorsements": 1}], "recommendations": [],
 }
+SEEN = []
 def fake_groq(messages, temperature, schema=None):
+    SEEN.append(messages[-1]["content"])
     if not schema:
         return "I got laid off."
     if schema["name"] == "larp_jobs":
@@ -71,6 +73,8 @@ r = c.post("/api/generate", json={"text": "touched grass", "tone": "recruiter", 
 assert r["fallback"] is False and len(r["comments"]) == 3
 assert r["score"] == {"buzzwords": 100, "emojis": 0, "humblebrag": 90, "overall": 90}
 assert r["badge"] == "Certified Lunatic"
+c.post("/api/generate", json={"text": "touched grass", "previous": "OLD POST"})
+assert "OLD POST" in SEEN[-1] and "even more delusional" in SEEN[-1]
 
 assert c.post("/api/delarp", json={"text": "Thrilled to announce"}).json == {"truth": "I got laid off."}
 

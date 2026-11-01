@@ -192,9 +192,15 @@ def generate():
         level = 5
 
     system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10)
+    previous = str(data.get("previous", "")).strip()[:2000]
+    user = text if not previous else (
+        f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
+        "Rewrite it to be even more delusional and self-important. Keep the same story, but escalate it: "
+        "bigger claims, a bigger fake life lesson, and a career pivot nobody asked for."
+    )
     try:
         out = json.loads(groq(
-            [{"role": "system", "content": system}, {"role": "user", "content": text}],
+            [{"role": "system", "content": system}, {"role": "user", "content": user}],
             temperature=0.5 + 0.06 * level,
             schema=GENERATE_SCHEMA,
         ))

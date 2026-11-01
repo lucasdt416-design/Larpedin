@@ -36,6 +36,7 @@ Request:
 
 - `tone`: one of `thought leader`, `humble brag`, `hustle bro`, `agree?`, `laid off but grateful`, `AI influencer`, `founder who failed 3 startups`, `recruiter`, `Gen Z intern`.
 - `level`: cringe level from 1 to 10. It is optional, and the default is 5.
+- `previous`: optional. Send the current `post` here to get an even more delusional rewrite of it (the Escalate button).
 
 Response, status 200:
 
@@ -128,6 +129,9 @@ Lucas styles `index.html` and `gallery.html`. The new pages (`/p/<id>`, `/profil
 - `nav.js` adds the top bar with the brand and the "parody" chip. Remove the old `.app-header` brand row when you add `nav.js`, or the page shows two brand bars.
 
 ## Requests for Lucas (small, in your files)
+
+- Escalate button (the demo script uses it): after a post is generated, a "📈 Escalate" button sends `{text, tone, level: min(level + 1, 10), previous: data.post}` to `/api/generate`, moves the slider up one, and renders the new card in place.
+- Comment avatars are empty circles. Show the commenter's initials, like the post avatar.
 
 - After a post is generated, show a "Share link" button that copies `location.origin + "/p/" + data.id`.
 - Add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html`.
