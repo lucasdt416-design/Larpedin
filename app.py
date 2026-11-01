@@ -58,50 +58,68 @@ LEVELS = [
 
 # Blind A/B (3 judges, 12 inputs): this vibe-first prompt won 34 of 36 judgments over the template prompt.
 GENERATE_PROMPT = (
-    "You ghostwrite LinkedIn posts for someone who is LARPING: they did something ordinary and want to present it as an impressive professional accomplishment. "
-    "Write in the first person as {voice}\n"
-    "Grandness level {level}/10: {intensity}. "
-    "Follow that word range.\n"
-    "First fill real_event (exactly what they did, plainly) and spin (the same event described in the grandest believable terms, plus what it supposedly proves about them). "
-    "Then write the post from that spin.\n"
-    "Rules:\n"
-    "- Stay about the exact event they described. "
-    "Never invent a bigger event, teams, projects, clients, launches, companies or meetings that they did not mention.\n"
-    "- Never name or invent specific people in the post. "
-    "Thank only people who plausibly fit the event (for leftovers: past me; for an email: my inbox), or nobody.\n"
-    "- Only use numbers that describe the event itself (4 years, 90 seconds, one email). "
-    "No invented statistics.\n"
-    "- Include exactly one short deadpan line that states the plain truth, so the reader sees the gap between the claim and reality. "
-    "That gap is the joke. "
-    "This line is required in every post, placed mid-post, never skipped. "
-    "Write it in this style, replacing <event> with their real event in plain words: {truth}. "
-    "Only one such line.\n"
-    "- At levels 9-10 go all the way: history, legacy, 'they will teach this in business schools', a book or keynote you are 'considering', still about the same small event and still straight-faced.\n"
-    "- If you use numbered lessons, introduce them with one short line first.\n"
-    "- The vibe must be unmistakable from the first line; follow its opening and structure, not a generic template. "
-    "Do not open with 'I'm thrilled to announce' unless the vibe calls for it.\n"
-    "- Lessons, if any, are 2 or 3 short numbered lines, each a real career skill, and only from level 4 up.\n"
+    "You ghostwrite LinkedIn posts for someone who is LARPING: making something ordinary they did sound "
+    "impressive WITHOUT lying. Write in the first person as {voice}\n"
+    "Grandness level {level}/10: {intensity}. Follow that word range.\n"
+    "THE TRUTH CONTRACT (never break it):\n"
+    "- Every sentence must be literally true of what they told you.\n"
+    "- Never invent titles, employers, teams, clients, people, results, numbers or outcomes they did not state "
+    "(no 'flawless', 'first try', 'promoted', 'my team', 'mentors'). Numbers only if they follow from what they said.\n"
+    "THE LARP:\n"
+    "- Never name the ordinary object or activity. Describe it only through true but impressive-sounding "
+    "abstractions, so a reader assumes it was something big. 'flipped a pancake' -> 'executed a time-critical "
+    "maneuver in a high-heat environment'. 'took a nap' -> 'blocked a deliberate offline window to reset'.\n"
+    "- Never admit it was ordinary: no 'it may sound small', no 'technically it was', no plain-truth confession.\n"
+    "- Pick the details that sound impressive and leave out the rest. Let the reader infer the importance.\n"
+    "- Prestige that is actually true may be named (a well-known university, a city).\n"
+    "SHAPE: the voice's opening and structure come first. If the voice doesn't dictate one, use this shape: {shape}. "
+    "Do not default to 'I'm thrilled to announce' plus three lessons.\n"
+    "- At levels 9-10 go all the way on what it means (legacy, 'they will teach this one day', a keynote you are "
+    "'considering'), still about the same disguised event and still true.\n"
+    "- Numbered lessons are optional; if you use them, 2 or 3 short lines, introduced by one line.\n"
     "- No surreal or cosmic metaphors, no talking objects, no section labels.\n"
-    "- Every sentence on its own line. "
-    "Plain text, no markdown. "
-    "End with 3 to 5 hashtags on the last line.\n"
-    "Also write the author's LinkedIn headline: an inflated but plausible title earned from the event, as a stack of 2 or 3 titles separated by pipes or a short mission statement. "
+    "- Every sentence on its own line. Plain text, no markdown. End with 2 to 4 hashtags on the last line.\n"
+    "Before the post, fill real_event (the plain truth), true_details (the facts you may use) and disguise "
+    "(how you will describe it without naming it). After the post, fill claims_check: list any sentence in the "
+    "post that claims something not supported by true_details. It must be an empty string.\n"
+    "Two examples of the style (different topics; never reuse their wording):\n"
+    "What they did: 'I made coffee'. Post:\n"
+    "Some personal news.\n"
+    "Before 8 AM today I owned an end-to-end process, start to finish, with nobody to delegate to.\n"
+    "Sourcing. Precise measurement. Heat. Timing.\n"
+    "Then I delivered, on schedule.\n"
+    "Most people never see the work that happens before everyone else logs on.\n"
+    "That's where the day is decided.\n"
+    "#Ownership #Execution #MorningRoutine\n"
+    "What they did: 'I returned a library book'. Post:\n"
+    "I don't usually post about this, but today I closed out a long-running commitment.\n"
+    "It had a hard deadline. I met it.\n"
+    "No extensions, no excuses, no reminders needed.\n"
+    "Reliability isn't glamorous. Nobody claps when you deliver on time.\n"
+    "But people remember who did.\n"
+    "#Accountability #Integrity #FollowThrough\n"
+    "Also write the author's LinkedIn headline: 2 or 3 impressive descriptors separated by pipes, or a short "
+    "mission statement, that are true of them given the event (descriptors, never job titles they don't hold). "
     "No company names; do not start with 'Visionary' or 'Chief'; never use 'Whisperer'.\n"
-    "Also write 3 comments from fake connections with realistic, varied names and job titles (never Alex Rivera, Alex Chen, Priya Sharma, Maya Patel or Jordan, and never the author's own name; commenters never address themselves). "
-    "Mix the reactions: always one humblebrag that one-ups the author, plus two of these at random: sincere congratulations, 'This.', someone tagging a friend, a recruiter or coach pitching something, someone asking for the template. "
-    "Never label a comment with its type (no 'Humblebrag:' or 'Recruiter:').\n"
+    "Also write 3 comments from fake connections with realistic, varied names and job titles (never Alex Rivera, "
+    "Alex Chen, Priya Sharma, Maya Patel or Jordan, and never the author's own name; commenters never address themselves). "
+    "Mix the reactions: always one humblebrag that one-ups the author, plus two of these at random: sincere "
+    "congratulations, 'This.', someone tagging a friend, a recruiter or coach pitching something, someone asking "
+    "for the template. Never label a comment with its type (no 'Humblebrag:' or 'Recruiter:').\n"
     "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
     "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
     "A level {level}/10 post should usually rate around {pct} overall."
 )
 
-TRUTH_STYLES = [  # <event> = their real event in plain words; never copy wording from another event
-    "a parenthetical aside: '(Plain version: <event>.)'",
-    "'For context: <event>.'",
-    "a rhetorical question answered in one word: 'Was it <event>? Yes.'",
-    "'Some will say it was just <event>.'",
-    "'To be clear: <event>.'",
-    "'Technically, <event>.'",
+# Larp by omission: posts never name the ordinary thing. A random shape keeps posts from
+# sharing one template when the voice doesn't dictate its own structure.
+POST_SHAPES = [
+    "the announcement: 'Some personal news...', short and confident",
+    "the cliffhanger story: open in the middle of the moment ('This morning I had about 90 seconds to make a call.')",
+    "the contrarian take: 'Unpopular opinion: ...', then defend it with the event",
+    "'I don't usually post, but...': a humble, reflective post",
+    "the one-liner thread: 5 to 7 punchy single lines that build, no numbered list",
+    "the lesson list: one line about the moment, then 'Here is what it taught me about leadership:' and 3 numbered lessons",
 ]
 
 DELARP_PROMPT = (
@@ -124,12 +142,14 @@ GENERATE_SCHEMA = {
     "schema": {
         "type": "object",
         "additionalProperties": False,
-        "required": ["real_event", "spin", "post", "headline", "comments", "score"],
+        "required": ["real_event", "true_details", "disguise", "post", "claims_check", "headline", "comments", "score"],
         "properties": {
-            # Decided before the post so the post is built on a concrete accomplishment claim.
+            # Planned before the post (truth, usable facts, disguise), audited right after it.
             "real_event": {"type": "string"},
-            "spin": {"type": "string"},
+            "true_details": {"type": "string"},
+            "disguise": {"type": "string"},
             "post": {"type": "string"},
+            "claims_check": {"type": "string"},
             "headline": {"type": "string"},
             "comments": {
                 "type": "array",
@@ -313,20 +333,25 @@ def generate():
         level = 5
 
     system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10,
-                                    truth=random.choice(TRUTH_STYLES))
+                                    shape=random.choice(POST_SHAPES))
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
-        "Rewrite it one level grander. Keep the exact same real event, first person, straight-faced. "
-        "Frame it more grandly and claim more about what it proves about you, but invent no new events, "
-        "people, companies or statistics."
+        "Rewrite it one level grander. Same real event, still never named, first person, straight-faced. "
+        "Frame it more grandly and say more about what it means, but keep the truth contract: invent no new "
+        "events, people, results, companies or statistics."
     )
     try:
-        out = json.loads(llm(
-            [{"role": "system", "content": system}, {"role": "user", "content": user}],
-            temperature=min(0.85, 0.55 + 0.03 * level),
-            schema=GENERATE_SCHEMA,
-        ))
+        for attempt in range(2):
+            out = json.loads(llm(
+                [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                temperature=min(0.85, 0.55 + 0.03 * level),
+                schema=GENERATE_SCHEMA,
+            ))
+            flagged = str(out.get("claims_check", "")).strip().strip(".").lower()
+            if flagged in ("", "none", "n/a", "[]", "empty", "no"):
+                break
+            app.logger.info("claims_check flagged %r, retrying", flagged[:120])
         result = {
             "post": str(out["post"]).strip(),
             "headline": str(out["headline"]).strip(),

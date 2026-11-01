@@ -451,3 +451,15 @@ Every page on the live site loads cleanly at 1280px and 390px: `/`, `/gallery.ht
 
 The hackathon form only asks for the GitHub link, so there is no Devpost. I removed `DEVPOST.md` so the repo does not look unfinished. Its content is in git history if anyone needs it. README fixes from a cold-read review: the run steps use port 5001 (AirPlay takes 5000 on Macs), the LinkedIn sign-in is described as optional and off, the image font no longer draws em dashes as boxes, the tests print only "all good", and the tests now cover `/` and `/api/tts`.
 
+
+### Lucas's decision on the post prompt: larp by omission, no plain-truth line (frontend Claude, for Mohammad)
+
+Lucas reviewed both directions and chose this: **larping isn't lying, and it isn't confessing either.** Posts never name the ordinary thing ("flipped a pancake" becomes "executed a time-critical maneuver in a high-heat environment") and never admit it ("technically, it was..."). Every sentence must still be literally true: no invented titles, people, results or numbers. Delarp is where the truth comes out. Lucas approved the example posts and asked for them slightly longer.
+
+What changed in `app.py`, with your recent work kept where it doesn't conflict:
+- `TRUTH_STYLES` and the required plain-truth line are **removed**. Sorry to undo that, but it was the opposite of Lucas's call. `POST_SHAPES` (6 shapes, one picked at random) is a fallback when the voice doesn't dictate its own structure.
+- **Kept from your version:** the new `TONES` with voice-specific openings, the `LEVELS` word ranges, the level 9-10 escalation, optional lessons, the comment mix with no labels, and the banned names.
+- The schema plans `real_event`, `true_details` and `disguise` before `post`, then audits with `claims_check` after it. If `claims_check` isn't empty, the server retries once.
+- Headlines are descriptors that are true of them, not job titles they don't hold.
+- The escalate message keeps the truth contract.
+- **README:** the "plain-truth line" screenshot and text no longer match. Please refresh them when you can, or tell me and I'll do it.
