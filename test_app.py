@@ -3,7 +3,11 @@ import json
 
 import os
 
+import logging
+
 import app
+
+app.app.logger.setLevel(logging.CRITICAL)  # fallback paths log tracebacks on purpose; keep the output readable
 
 assert len(app.GALLERY) == 12 and all(p["post"] and p["headline"] for p in app.GALLERY.values())  # seed_posts.json loaded
 app.GALLERY.clear()
@@ -221,5 +225,17 @@ c.post("/api/linkedin/logout")
 assert c.post("/api/linkedin/post", json={"text": "x"}).status_code == 401
 app.requests.post, app.requests.get = real_post, app.requests.get
 del os.environ["LINKEDIN_CLIENT_ID"], os.environ["LINKEDIN_CLIENT_SECRET"]
+
+# The home page and the TTS proxy (Groq voice; falls back to the browser voice on any error).
+assert c.get("/").status_code == 200
+assert c.post("/api/tts", json={"text": ""}).status_code == 400
+app.requests.post = lambda *a, **k: Resp(200, "")
+Resp.content = b"RIFFwav"
+r_tts = c.post("/api/tts", json={"text": "[dramatic] hi", "voice": "troy"})
+assert r_tts.status_code == 200 and r_tts.mimetype == "audio/wav"
+app.requests.post = lambda *a, **k: Resp(429)
+assert c.post("/api/tts", json={"text": "hi"}).status_code == 502
+app.requests.post = real_post
+assert app.no_emoji("reply\u2014it was") == "reply - it was"
 
 print("all good")

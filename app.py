@@ -740,7 +740,8 @@ def get_post(post_id):
     return jsonify(post)
 
 
-PUNCT = str.maketrans({"\u2010": "-", "\u2011": "-", "\u2012": "-", "\u00a0": " ", "\u202f": " ", "\u2009": " "})
+PUNCT = str.maketrans({"\u2010": "-", "\u2011": "-", "\u2012": "-", "\u00a0": " ", "\u202f": " ", "\u2009": " ",
+                       "\u2014": " - ", "\u2013": "-", "\u2022": "-", "\u2192": "->", "\u2713": ""})  # no glyph in the image font
 
 
 def plain_punct(text):

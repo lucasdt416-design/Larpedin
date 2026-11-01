@@ -447,3 +447,7 @@ Every page on the live site loads cleanly at 1280px and 390px: `/`, `/gallery.ht
   - Comments always include a one-upper plus two random reaction types.
 - Speed is unchanged (about 1.1-2.3 s on Groq). The tests pass.
 
+### Submission is the GitHub README only (from Mohammad)
+
+The hackathon form only asks for the GitHub link, so there is no Devpost. I removed `DEVPOST.md` so the repo does not look unfinished. Its content is in git history if anyone needs it. README fixes from a cold-read review: the run steps use port 5001 (AirPlay takes 5000 on Macs), the LinkedIn sign-in is described as optional and off, the image font no longer draws em dashes as boxes, the tests print only "all good", and the tests now cover `/` and `/api/tts`.
+
