@@ -46,6 +46,9 @@ FAKE_PROFILE = {
 def fake_groq(messages, temperature, schema=None):
     if not schema:
         return "I got laid off."
+    if schema["name"] == "larp_battle":
+        return json.dumps({"a": {"post": "p", "headline": "h", "score": 140}, "b": {"post": "q", "headline": "i", "score": 20},
+                           "winner": "a", "verdict": "v"})
     return json.dumps(FAKE_PROFILE if schema["name"] == "larp_profile" else FAKE)
 app.groq = fake_groq
 c = app.app.test_client()
@@ -71,6 +74,10 @@ assert c.post("/api/profile", json={"name": "Mo"}).status_code == 400
 assert c.get(f"/api/post/{r['id']}").json["comments"]
 assert c.get("/api/post/99999").status_code == 404
 
+b = c.post("/api/battle", json={"a": {"name": "Mo", "text": "ate"}, "b": {"text": "slept"}}).json
+assert b["winner"] == "a" and b["a"]["score"] == 100 and b["a"]["name"] == "Mo" and b["b"]["name"] == "Contestant B"
+assert c.post("/api/battle", json={"a": {"text": "ate"}}).status_code == 400
+
 def boom(*a, **k):
     raise RuntimeError("groq down")
 app.groq = boom
@@ -78,9 +85,12 @@ r2 = c.post("/api/generate", json={"text": "made toast"}).json
 assert r2["fallback"] is True and "made toast" in r2["post"]
 assert c.post("/api/delarp", json={"text": "x"}).json["truth"]
 assert c.post("/api/profile", json={"text": "x"}).json["fallback"] is True
+assert c.post("/api/battle", json={"a": {"text": "x"}, "b": {"text": "y"}}).json["fallback"] is True
 
 for _ in range(60):
     c.post("/api/generate", json={"text": "spam"})
 assert len(c.get("/api/gallery").json) == 50
 
+st = c.get("/api/stats").json
+assert st["posts"] >= 60 and st["profiles"] == 2 and st["battles"] == 2 and st["delarps"] == 2, st
 print("all good")

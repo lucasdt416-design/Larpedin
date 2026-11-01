@@ -14,7 +14,7 @@ Edit only the files that you own. If you must change another person's file, ask 
 |---|---|---|
 | Backend, prompts, Render | `app.py`, `requirements.txt`, `render.yaml` | Mohammad (Claude Code) |
 | Frontend logic | `static/index.html`, `static/app.js`, `static/gallery.html` | Lucas (Claude chat / Codex) |
-| New pages | `static/post.html`, `static/profile.html`, `static/nav.js`, `static/pages.css` | Mohammad (Claude Code) |
+| New pages | `static/post.html`, `static/profile.html`, `static/battle.html`, `static/nav.js`, `static/pages.css` | Mohammad (Claude Code) |
 | Design | `static/style.css` | Lucas |
 | Docs | `README.md`, `PLAN.md` | anyone |
 
@@ -94,10 +94,20 @@ Returns one gallery post with all its fields, or 404.
 
 Shareable page for one post (`static/post.html`). Link previews in iMessage, Slack and Discord show the headline and the post.
 
+### `POST /api/battle`
+
+Request: `{"a": {"name": "Mo", "text": "I ate cereal"}, "b": {"name": "Lucas", "text": "I took a nap"}, "level": 7}`
+Response: `{a: {name, text, post, headline, score}, b: {...}, winner: "a" or "b", verdict, fallback}`
+
+### `GET /api/stats`
+
+Returns `{"posts": 12, "profiles": 3, "battles": 1, "delarps": 4}` since the last restart.
+
 ## Mohammad's Claude is building (do not build these in index.html)
 
 - `post.html`: shareable post page at `/p/<id>`, with a "Present at TEDx" mode that reads the post out loud.
 - `profile.html`: "Larp your whole profile" generator.
+- `battle.html`: Larp Battle, two people compete and an AI judge roasts them.
 - `nav.js`: a shared top nav. Lucas, please add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html`.
 
 ## Requests for Lucas (small, in your files)

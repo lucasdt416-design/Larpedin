@@ -100,6 +100,12 @@ FALLBACK_POSTS = [
 GALLERY = {}
 NEXT_ID = itertools.count(1)
 LOCK = threading.Lock()
+STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0}
+
+
+def count(kind):
+    with LOCK:
+        STATS[kind] += 1
 
 
 def groq(messages, temperature, schema=None):
@@ -192,6 +198,7 @@ def generate():
     result["badge"] = badge(result["score"]["overall"])
 
     with LOCK:
+        STATS["posts"] += 1
         result["id"] = next(NEXT_ID)
         GALLERY[result["id"]] = {"text": text, "tone": tone, "level": level, "votes": 0, **result}
         for old in sorted(GALLERY)[:-50]:
@@ -212,7 +219,14 @@ def delarp():
     except Exception:
         app.logger.exception("Groq delarp failed, sending fallback")
         truth = "I did something completely normal and wanted attention."
+    count("delarps")
     return jsonify(truth=truth)
+
+
+@app.get("/api/stats")
+def stats():
+    with LOCK:
+        return jsonify(STATS)
 
 
 @app.get("/api/gallery")
@@ -319,6 +333,71 @@ def profile():
         app.logger.exception("Groq profile failed, sending fallback")
         out = {**FALLBACK_PROFILE, "fallback": True}
     out["name"] = name
+    count("profiles")
+    return jsonify(out)
+
+
+BATTLE_PROMPT = (
+    "You host Larp Battle, a parody LinkedIn competition. Two people tell you something ordinary they did. "
+    "For each one, write a short LinkedIn post (under 120 words, plain text, no markdown, a few emojis and hashtags) "
+    "and an absurd headline, at cringe level {level}/10: {intensity}. "
+    "Then act as a dramatic judge: score each post 0 to 100 for how delusional and self-important it is, "
+    "pick the winner, and write a 2-sentence verdict that roasts both contestants by name."
+)
+
+BATTLE_SCHEMA = {
+    "name": "larp_battle",
+    "strict": True,
+    "schema": strict({
+        "a": strict({"post": STR, "headline": STR, "score": INT}),
+        "b": strict({"post": STR, "headline": STR, "score": INT}),
+        "winner": {"type": "string", "enum": ["a", "b"]},
+        "verdict": STR,
+    }),
+}
+
+
+@app.post("/api/battle")
+def battle():
+    data = request.get_json(silent=True) or {}
+    sides = {}
+    for k in ("a", "b"):
+        side = data.get(k) if isinstance(data.get(k), dict) else {}
+        sides[k] = {
+            "name": str(side.get("name", "")).strip()[:40] or f"Contestant {k.upper()}",
+            "text": str(side.get("text", "")).strip()[:300],
+        }
+        if not sides[k]["text"]:
+            return jsonify(error=f"{sides[k]['name']} has not said what they did yet."), 400
+    try:
+        level = max(1, min(10, int(data.get("level", 7))))
+    except (TypeError, ValueError):
+        level = 7
+    user = "\n".join(f"Contestant {k.upper()}: {v['name']} - {v['text']}" for k, v in sides.items())
+    try:
+        out = json.loads(groq(
+            [{"role": "system", "content": BATTLE_PROMPT.format(level=level, intensity=LEVELS[level - 1])},
+             {"role": "user", "content": user}],
+            temperature=0.5 + 0.06 * level,
+            schema=BATTLE_SCHEMA,
+        ))
+        for k in ("a", "b"):
+            out[k]["score"] = clamp_score(out[k]["score"])
+        if out["winner"] not in ("a", "b"):
+            out["winner"] = "a" if out["a"]["score"] >= out["b"]["score"] else "b"
+        out["fallback"] = False
+    except Exception:
+        app.logger.exception("Groq battle failed, sending fallback")
+        out = {
+            k: {"post": random.choice(FALLBACK_POSTS).format(text=v["text"]),
+                "headline": "Visionary | Professional Larper", "score": 70 + i * 5}
+            for i, (k, v) in enumerate(sides.items())
+        }
+        out.update(winner="b", verdict="Both of you are deeply delusional. One of you is slightly more delusional.", fallback=True)
+    for k in ("a", "b"):
+        out[k]["name"] = sides[k]["name"]
+        out[k]["text"] = sides[k]["text"]
+    count("battles")
     return jsonify(out)
 
 
