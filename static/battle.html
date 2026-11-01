@@ -201,10 +201,10 @@ function el(tag, cls, text) {
 function buildCard(card, side) {
   card.className = card.className.replace(/\b(show|winner|loser)\b/g, "").trim();
   card.replaceChildren();
-  card.append(el("div", "crown", "👑"), el("div", "stamp", "ratio'd"));
+  card.append(el("div", "crown", "Winner"), el("div", "stamp", "ratio'd"));
   const who = el("div", "who");
   const info = el("div");
-  info.append(el("div", "name", side.name), el("div", "headline", side.headline), el("div", "meta", "1st • 3h • 🌐"));
+  info.append(el("div", "name", side.name), el("div", "headline", side.headline), el("div", "meta", "1st • 3h • Public"));
   who.append(el("div", "avatar", initials(side.name)), info);
   const score = el("div", "score");
   const num = el("b", null, "0");
@@ -228,9 +228,8 @@ function countUp(node, target, ms) {
 function burst(card) {
   if (reduced) return;
   const r = card.getBoundingClientRect();
-  const emojis = ["🎉", "👑", "✨", "🏆", "💼", "🚀", "🙌", "🔥"];
   for (let i = 0; i < 28; i++) {
-    const s = el("span", "burst", emojis[i % emojis.length]);
+    const s = el("span", "burst");
     s.style.left = (r.left + r.width / 2) + "px";
     s.style.top = (r.top + 20) + "px";
     s.style.setProperty("--dx", (Math.random() * 360 - 180) + "px");
@@ -340,7 +339,7 @@ async function reveal(data) {
   win.classList.add("winner");
   lose.classList.add("loser");
   burst(win);
-  $("status").textContent = `👑 ${data[data.winner].name} wins!`;
+  $("status").textContent = `${data[data.winner].name} wins!`;
   await wait(1300);
 
   // Step 4: verdict

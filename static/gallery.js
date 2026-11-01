@@ -4,18 +4,6 @@ const PUBLIC_URL = "https://larpedin-p1fd.onrender.com";
 const POLL_MS = 5000;
 const VOTED_KEY = "larpedin.voted";
 
-const TONE_EMOJI = {
-  "thought leader": "🧠",
-  "humble brag": "😇",
-  "hustle bro": "💪",
-  "agree?": "🤔",
-  "laid off but grateful": "🙏",
-  "AI influencer": "🤖",
-  "founder who failed 3 startups": "🚀",
-  "recruiter": "🎯",
-  "Gen Z intern": "💅",
-};
-
 // The gallery API has no author names, so each post gets a stable fake one.
 const FAKE_NAMES = [
   "Chad Synergy", "Karen Pivot", "Brayden Disrupt", "Ashleigh Leverage", "Tyler Bandwidth",
@@ -101,7 +89,7 @@ function buildCard(p) {
   const q = (sel) => card.querySelector(sel);
 
   const name = p.name || FAKE_NAMES[p.id % FAKE_NAMES.length];
-  q(".avatar").textContent = TONE_EMOJI[p.tone] || "💼";
+  q(".avatar").textContent = name.trim().split(/\s+/).slice(0, 2).map(word => [...word][0]).join("").toUpperCase();
   q(".post-author").textContent = name;
   q(".post-headline").textContent = p.headline || "Anonymous Larper";
   q(".gallery-tone").textContent = `${p.tone} · level ${p.level}`;
@@ -190,7 +178,7 @@ function focusLinkedPost() {
 
 // ---------- Leaderboard ----------
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+
 
 function renderLeaderboard(posts) {
   // Only real posts from the room can win; seed posts just fill the wall.
@@ -211,7 +199,7 @@ function renderLeaderboard(posts) {
       return el;
     };
     row.append(
-      cell("leaderboard-rank", MEDALS[i]),
+      cell("leaderboard-rank", String(i + 1).padStart(2, "0")),
       cell("leaderboard-name", p.name || FAKE_NAMES[p.id % FAKE_NAMES.length]),
       cell("leaderboard-text", p.text),
       cell("leaderboard-score", `${p.score.overall}/100`),
@@ -253,7 +241,7 @@ if (new URLSearchParams(location.search).has("present")) setPresenting(true);
 let flashTimer;
 function announce(p) {
   if (!document.body.classList.contains("is-presenting")) return;
-  $("flash").textContent = `🎉 New larp just dropped: "${p.text}"`;
+  $("flash").textContent = `New larp just dropped: "${p.text}"`;
   $("flash").hidden = false;
   clearTimeout(flashTimer);
   flashTimer = setTimeout(() => ($("flash").hidden = true), 5000);

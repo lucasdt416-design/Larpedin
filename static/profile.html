@@ -131,6 +131,7 @@
   }
 </style>
 <link rel="stylesheet" href="/edition.css">
+<script src="/cringe-levels.js"></script>
 </head>
 <body class="profile-page">
 <div class="wrap">
@@ -176,11 +177,7 @@
   if (savedName && savedName !== "Your Name" && !nameEl.value) nameEl.value = savedName;
   const go = $("go"), err = $("err"), loading = $("loading"), statusEl = $("status"), result = $("result");
 
-  const LEVEL_LABELS = [
-    "Basically a normal person", "Says 'circle back' sometimes", "Has a ring light",
-    "Full corporate voice", "Every job taught them a lesson", "Compares self to Steve Jobs",
-    "Delusional", "Unhinged visionary", "Talks to the universe about B2B", "Cried in an Uber about synergy",
-  ];
+
   const PLACEHOLDERS = [
     "I'm a student who mostly sleeps",
     "I work at Chipotle and play Valorant",
@@ -205,8 +202,8 @@
 
   const showLevel = () => {
     const v = +levelEl.value;
-    $("lvl").replaceChildren(el("b", null, v + "/10"), " · " + LEVEL_LABELS[v - 1]);
-    levelEl.setAttribute("aria-valuetext", v + " of 10, " + LEVEL_LABELS[v - 1]);
+    $("lvl").replaceChildren(el("b", null, v + "/10"), " · " + CRINGE_DESCRIPTIONS[v - 1]);
+    levelEl.setAttribute("aria-valuetext", v + " of 10, " + CRINGE_DESCRIPTIONS[v - 1]);
   };
   levelEl.addEventListener("input", showLevel);
 
@@ -436,7 +433,7 @@
       try { await navigator.clipboard.writeText(asText(current)); toast("Copied. Go paste it somewhere brave."); }
       catch { toast("Couldn't copy. Your browser is gatekeeping."); }
     };
-    const share = el("button", "btn", "🔗 Share profile link");
+    const share = el("button", "btn", "Share profile link");
     share.type = "button";
     share.onclick = async () => {
       const url = location.origin + (current.share_url || "/u/" + current.id);

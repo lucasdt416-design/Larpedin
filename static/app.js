@@ -39,9 +39,9 @@ const INSPO = {
     "I stayed in bed until noon on a Sunday",
   ],
   delarp: [
-    ["Layoff post", "Thrilled to announce that after 6 incredible years, I'm embarking on a new chapter! 🚀 Grateful for every lesson. Open to new opportunities. #OpenToWork #Grateful"],
-    ["Award post", "Humbled and honored to be recognized as one of the Top 50 Voices in Synergy. I never set out to win awards, I just wanted to add value. 🙏 #Leadership"],
-    ["Hustle post", "Woke up at 4am. Ran 10k. Closed 3 deals before breakfast. Your competition is sleeping. Are you? 💪 #Grindset #Mindset"],
+    ["Layoff post", "Thrilled to announce that after 6 incredible years, I'm embarking on a new chapter! Grateful for every lesson. Open to new opportunities. #OpenToWork #Grateful"],
+    ["Award post", "Humbled and honored to be recognized as one of the Top 50 Voices in Synergy. I never set out to win awards, I just wanted to add value. #Leadership"],
+    ["Hustle post", "Woke up at 4am. Ran 10k. Closed 3 deals before breakfast. Your competition is sleeping. Are you? #Grindset #Mindset"],
   ],
 };
 
@@ -116,7 +116,9 @@ function updateLevel() {
   const level = Number($("level").value);
   const label = `Level ${level}: ${LEVEL_NAMES[level - 1]}`;
   $("level-value").textContent = label;
-  $("level").setAttribute("aria-valuetext", label);
+  const description = CRINGE_DESCRIPTIONS[level - 1];
+  $("cringe-description").textContent = description;
+  $("level").setAttribute("aria-valuetext", label + ". " + description);
 }
 
 $("level").addEventListener("input", updateLevel);
@@ -664,7 +666,6 @@ function typeOut(el, text, done) {
   requestAnimationFrame(tick);
 }
 
-const CONFETTI = ["🎉", "💼", "📈", "🚀", "🙌", "✨", "🏆"];
 
 // Emoji burst from an element, for "Certified Lunatic" level cringe.
 function burst(anchor) {
@@ -674,7 +675,6 @@ function burst(anchor) {
     const piece = document.createElement("span");
     piece.className = "confetti";
     piece.setAttribute("aria-hidden", "true");
-    piece.textContent = CONFETTI[i % CONFETTI.length];
     // Page coordinates, so the burst stays on the badge even if the page is still scrolling.
     piece.style.left = `${r.left + scrollX + r.width / 2}px`;
     piece.style.top = `${r.top + scrollY + r.height / 2}px`;

@@ -484,7 +484,7 @@ main {
   transform: rotate(-2deg);
   box-shadow: 0 2px 0 #b97c1f, 0 4px 10px rgba(231, 163, 62, 0.35);
 }
-.badge::before { content: "🏅"; }
+.badge::before { content: ""; }
 .cringe-report .badge { margin-bottom: 4px; }
 
 .gauge {

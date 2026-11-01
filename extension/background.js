@@ -1,7 +1,7 @@
 const API_BASE = "https://larpedin-p1fd.onrender.com";
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({ id: "delarp", title: "🔍 Delarp this", contexts: ["selection"] });
+  chrome.contextMenus.create({ id: "delarp", title: "Delarp this", contexts: ["selection"] });
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {

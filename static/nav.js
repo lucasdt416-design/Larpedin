@@ -42,7 +42,7 @@
     ".lnav-gold{background:#e7a33e;color:#3b2500;}",
     ".lnav-plain{background:#fff;color:#0a66c2;box-shadow:inset 0 0 0 1px #0a66c2;}",
     ".lnav-prem{font-size:10px;font-weight:800;color:#3b2500;background:#e7a33e;border-radius:999px;padding:2px 7px;flex-shrink:0;}",
-    "@media (max-width:400px){.lnav-prem{font-size:0;padding:2px 4px}.lnav-prem::before{content:'⭐';font-size:12px}}",
+    "@media (max-width:400px){.lnav-prem{font-size:0;padding:2px 4px}.lnav-prem::before{content:'P';font-size:12px}}",
     "@media (prefers-reduced-motion:reduce){.lnav-toast{animation:none}}"
   ].join("\n");
 
@@ -56,7 +56,7 @@
    ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
    ["meta", { name: "mobile-web-app-capable", content: "yes" }],
    ["meta", { name: "apple-mobile-web-app-title", content: "LarpedIn" }],
-   ["meta", { name: "theme-color", content: "#153e32" }]
+   ["meta", { name: "theme-color", content: "#0a66c2" }]
   ].forEach(function (t) {
     var sel = t[0] + (t[1].rel ? '[rel="' + t[1].rel + '"]' : '[name="' + t[1].name + '"]');
     if (document.head.querySelector(sel)) return;
@@ -92,19 +92,16 @@
 
   var links = el("div", "lnav-links");
   [
-    ["/", "📝", "Post"],
-    ["/profile.html", "👤", "Profile"],
-    ["/battle.html", "⚔️", "Battle"],
-    ["/jobs.html", "💼", "Jobs"],
-    ["/gallery.html", "🏆", "Hall"]
+    ["/", "Post"],
+    ["/profile.html", "Profile"],
+    ["/battle.html", "Battle"],
+    ["/jobs.html", "Jobs"],
+    ["/gallery.html", "Hall"]
   ].forEach(function (l) {
     var a = el("a", "lnav-link");
     a.href = l[0];
-    a.setAttribute("aria-label", l[2]);
-    var ico = el("span", "lnav-ico", l[1]);
-    ico.setAttribute("aria-hidden", "true");
-    a.appendChild(ico);
-    a.appendChild(el("span", "lnav-txt", l[2]));
+    a.setAttribute("aria-label", l[1]);
+    a.appendChild(el("span", "lnav-txt", l[1]));
     if (l[0] === current) a.setAttribute("aria-current", "page");
     links.appendChild(a);
   });
@@ -130,7 +127,7 @@
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
     var card = el("div", "lnav-card");
-    card.appendChild(el("div", "", "⭐"));
+
     card.appendChild(el("h2", "", "LarpedIn Premium"));
     card.appendChild(el("p", "", "Be seen as the visionary you pretend to be."));
     var ul = el("ul");
@@ -158,7 +155,7 @@
       setFlag("lnavPremium", "1");
       markPremium();
       while (card.firstChild) card.removeChild(card.firstChild);
-      card.appendChild(el("div", "", "🎉"));
+
       card.appendChild(el("h2", "", "Welcome to Premium"));
       card.appendChild(el("p", "", "You now appear 400% more visionary. Your card will be charged $0.00 in exposure."));
       var ok = el("button", "lnav-gold", "I deserve this");
@@ -173,13 +170,13 @@
 
   // ---- Fake notifications ----
   var NOTES = [
-    ["👀", "A recruiter at Hooli viewed your profile"],
-    ["🔥", "Your post is trending in Greater Couch Area"],
-    ["🤝", "Elon's cousin's dentist wants to connect"],
-    ["📈", "You appeared in 47 searches this week"],
-    ["🎉", "Congratulate Chad on 0 years at Unemployed"],
-    ["💼", "New InMail: \"Quick question about synergy\""],
-    ["⭐", "You've been selected for LarpedIn Premium", true]
+    ["A recruiter at Hooli viewed your profile"],
+    ["Your post is trending in Greater Couch Area"],
+    ["Elon's cousin's dentist wants to connect"],
+    ["You appeared in 47 searches this week"],
+    ["Congratulate Chad on 0 years at Unemployed"],
+    ["New InMail: \"Quick question about synergy\""],
+    ["You've been selected for LarpedIn Premium", true]
   ];
   var shown = 0;
   var order = NOTES.slice().sort(function () { return Math.random() - 0.5; });
@@ -191,8 +188,8 @@
 
     var body = el("div");
     body.appendChild(el("b", "", "LarpedIn notification"));
-    body.appendChild(document.createTextNode(n[1]));
-    if (n[2] && !getFlag("lnavPremium")) {
+    body.appendChild(document.createTextNode(n[0]));
+    if (n[1] && !getFlag("lnavPremium")) {
       body.appendChild(document.createElement("br"));
       var cta = el("button", "lnav-cta", "See offer");
       cta.type = "button";
@@ -207,7 +204,7 @@
     t.appendChild(x);
     document.querySelectorAll(".lnav-toast").forEach(function (o) { o.remove(); });
     document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, n[2] ? 9000 : 6000);
+    setTimeout(function () { t.remove(); }, n[1] ? 9000 : 6000);
   }
   var notices = el("button", "lnav-link", "Inbox");
   notices.type = "button";

@@ -227,13 +227,13 @@ function card(job) {
   const apply = el("button", "btn primary", "Easy Apply");
   apply.type = "button";
   apply.addEventListener("click", () => easyApply(job, apply));
-  const save = el("button", "btn save", "🔖 Save");
+  const save = el("button", "btn save", "Save");
   save.type = "button";
   save.setAttribute("aria-pressed", "false");
   save.addEventListener("click", () => {
     const on = save.getAttribute("aria-pressed") !== "true";
     save.setAttribute("aria-pressed", on);
-    save.textContent = on ? "🔖 Saved" : "🔖 Save";
+    save.textContent = on? "Saved" : "Save";
   });
   const acts = el("div", "job-actions");
   acts.append(apply, save);
@@ -280,7 +280,7 @@ async function easyApply(job, btn) {
 }
 
 function showLetter(job, btn, offer) {
-  const head = el("div", "mail-head " + (offer ? "offer" : "rejection"), offer ? "🎉 Offer" : "📉 Update on your application");
+  const head = el("div", "mail-head " + (offer? "offer" : "rejection"), offer? "Offer" : "Update on your application");
   head.id = "modalTitle";
   const meta = el("div", "mail-meta");
   for (const [k, v] of [["From:", `${job.company} Talent Team`], ["To:", (() => { try { const n = (JSON.parse(localStorage.getItem("larpedin.profile")) || {}).name; return n && n !== "Your Name" ? n : "You"; } catch { return "You"; } })()], ["Subject:", `Your application to ${job.title}`]]) {
@@ -298,7 +298,7 @@ function showLetter(job, btn, offer) {
   });
   const acts = el("div", "mail-actions"); acts.append(close, another);
   const nodes = [head, meta, body];
-  if (!offer) nodes.push(el("p", "trombone", "🎺 wah wah wahhh"));
+  if (!offer) nodes.push(el("p", "trombone", "wah wah wahhh"));
   openModal(btn, ...nodes, acts);
   close.focus();
   burst(head, offer);
@@ -307,9 +307,8 @@ function showLetter(job, btn, offer) {
 function burst(anchor, offer) {
   if (reduced) return;
   const r = anchor.getBoundingClientRect();
-  const emojis = offer ? ["🎉", "🎊", "✨", "💼", "🚀", "🥳"] : ["📉", "📉", "😔", "🎺"];
   for (let i = 0; i < (offer ? 28 : 14); i++) {
-    const s = el("span", offer ? "burst" : "burst sad", emojis[i % emojis.length]);
+    const s = el("span", offer ? "burst" : "burst sad");
     s.setAttribute("aria-hidden", "true");
     s.style.left = (r.left + Math.random() * r.width) + "px";
     s.style.top = (r.top + 10) + "px";

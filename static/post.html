@@ -110,7 +110,7 @@
         <div>
           <div class="name">A LarpedIn Visionary</div>
           <div class="muted headline"></div>
-          <div class="muted">3h • 🌐</div>
+          <div class="muted">3h • Public</div>
         </div>
         <button class="follow" type="button">+ Follow</button>
       </div>
@@ -130,14 +130,14 @@
 
   <section class="card pad votes">
     <div><strong class="vcount">0</strong> <span class="muted">upvotes</span></div>
-    <button class="btn primary upvote" type="button">👍 Upvote</button>
+    <button class="btn primary upvote" type="button">Upvote</button>
   </section>
 
   <section class="card pad cta">
-    <button class="btn outline copy" type="button">🔗 Copy link</button>
-    <a class="btn outline" href="/">✍️ Make your own</a>
-    <button class="btn primary to-li" type="button">📣 Post to LinkedIn</button>
-    <button class="btn tedx" type="button">🎤 Present at TEDx</button>
+    <button class="btn outline copy" type="button">Copy link</button>
+    <a class="btn outline" href="/">Make your own</a>
+    <button class="btn primary to-li" type="button">Post to LinkedIn</button>
+    <button class="btn tedx" type="button">Present at TEDx</button>
   </section>
   <p class="foot">LarpedIn is a parody. No careers were harmed.</p>
 </template>
@@ -163,7 +163,7 @@ let post = null;
 function gone() {
   main.replaceChildren();
   const c = el("div", "card gone");
-  c.append(el("div", "big", "🌤️"), el("h2", null, "This post went back to being a normal day"),
+  c.append(el("div", "big", "404"), el("h2", null, "This post went back to being a normal day"),
     el("p", "muted", "Posts reset when the server restarts. Probably for the best."));
   const a = el("a", "btn primary", "Larp a new one");
   a.href = "/";
@@ -184,7 +184,7 @@ function render(p) {
 
   $(frag, ".follow").onclick = e => { e.target.textContent = "✓ Following"; };
   const n = (1000 + Math.floor(Math.random() * 9000)).toLocaleString();
-  $(frag, ".reactline").textContent = `👏❤️💡 ${pick(FAMOUS)} and ${n} others`;
+  $(frag, ".reactline").textContent = `${pick(FAMOUS)} and ${n} others`;
   const comments = p.comments || [];
   $(frag, ".ccount").textContent = comments.length ? `${comments.length} comment${comments.length > 1 ? "s" : ""}` : "";
   const cbox = $(frag, ".comments");
@@ -208,7 +208,7 @@ function render(p) {
     track.append(fill); bar.append(row, track); bars.append(bar);
     fills.push([fill, v]);
   }
-  $(frag, ".badge").textContent = "🏅 " + (p.badge || "Suspiciously Normal");
+  $(frag, ".badge").textContent = "" + (p.badge || "Suspiciously Normal");
 
   const vcount = $(frag, ".vcount"), up = $(frag, ".upvote");
   vcount.textContent = p.votes || 0;
@@ -228,9 +228,9 @@ function render(p) {
 
   const copy = $(frag, ".copy");
   copy.onclick = async () => {
-    try { await navigator.clipboard.writeText(location.href); copy.textContent = "✅ Copied!"; }
+    try { await navigator.clipboard.writeText(location.href); copy.textContent = "Copied!"; }
     catch { copy.textContent = "Copy failed, use the address bar"; }
-    setTimeout(() => { copy.textContent = "🔗 Copy link"; }, 2000);
+    setTimeout(() => { copy.textContent = "Copy link"; }, 2000);
   };
 
   const toLi = $(frag, ".to-li");
@@ -405,12 +405,12 @@ function present() {
 }
 
 function ovation() {
-  const label = el("div", "ovation-label", "👏 standing ovation");
+  const label = el("div", "ovation-label", "standing ovation");
   stage.append(label);
   if (reduced) return;
   for (let i = 0; i < 40; i++) {
     timers.push(setTimeout(() => {
-      const e = el("div", "ovation", pick(["👏", "👏", "👏", "🙌", "🔥", "💯", "🌹"]));
+      const e = el("div", "ovation");
       e.style.left = Math.random() * 95 + "vw";
       e.style.animationDuration = 2 + Math.random() * 2 + "s";
       stage.append(e);
