@@ -53,6 +53,10 @@ FAKE_PROFILE = {
 def fake_groq(messages, temperature, schema=None):
     if not schema:
         return "I got laid off."
+    if schema["name"] == "larp_jobs":
+        job = {"title": "t", "company": "c", "location": "l", "salary": "s", "applicants": -5,
+               "requirements": ["r"] * 9, "perks": "p", "outcome": "offer", "letter": "yay"}
+        return json.dumps({"jobs": [job] * 6})
     if schema["name"] == "larp_battle":
         return json.dumps({"a": {"post": "p", "headline": "h", "score": 140}, "b": {"post": "q", "headline": "i", "score": 20},
                            "winner": "a", "verdict": "v"})
@@ -94,6 +98,10 @@ b = c.post("/api/battle", json={"a": {"name": "Mo", "text": "ate"}, "b": {"text"
 assert b["winner"] == "a" and b["a"]["score"] == 100 and b["a"]["name"] == "Mo" and b["b"]["name"] == "Contestant B"
 assert c.post("/api/battle", json={"a": {"text": "ate"}}).status_code == 400
 
+j = c.post("/api/jobs", json={"text": "student"}).json
+assert len(j["jobs"]) == 4 and j["jobs"][0]["applicants"] == 0 and len(j["jobs"][0]["requirements"]) == 4 and not j["fallback"]
+assert c.post("/api/jobs", json={}).status_code == 400
+
 def boom(*a, **k):
     raise RuntimeError("groq down")
 app.groq = boom
@@ -102,11 +110,12 @@ assert r2["fallback"] is True and "made toast" in r2["post"]
 assert c.post("/api/delarp", json={"text": "x"}).json["truth"]
 assert c.post("/api/profile", json={"text": "x"}).json["fallback"] is True
 assert c.post("/api/battle", json={"a": {"text": "x"}, "b": {"text": "y"}}).json["fallback"] is True
+assert c.post("/api/jobs", json={"text": "x"}).json["fallback"] is True
 
 for _ in range(60):
     c.post("/api/generate", json={"text": "spam"})
 assert len(c.get("/api/gallery").json) == 50
 
 st = c.get("/api/stats").json
-assert st["posts"] >= 60 and st["profiles"] == 2 and st["battles"] == 2 and st["delarps"] == 2, st
+assert st["posts"] >= 60 and st["profiles"] == 2 and st["battles"] == 2 and st["delarps"] == 2 and st["jobs"] == 2, st
 print("all good")

@@ -14,7 +14,7 @@ Edit only the files that you own. If you must change another person's file, ask 
 |---|---|---|
 | Backend, prompts, Render | `app.py`, `requirements.txt`, `render.yaml` | Mohammad (Claude Code) |
 | Frontend logic | `static/index.html`, `static/app.js`, `static/gallery.html` | Lucas (Claude chat / Codex) |
-| New pages | `static/post.html`, `static/profile.html`, `static/battle.html`, `static/nav.js`, `static/pages.css` | Mohammad (Claude Code) |
+| New pages | `static/post.html`, `static/profile.html`, `static/battle.html`, `static/jobs.html`, `static/nav.js`, `extension/`, `static/pages.css` | Mohammad (Claude Code) |
 | Design | `static/style.css` | Lucas |
 | Docs | `README.md`, `PLAN.md` | anyone |
 
@@ -99,6 +99,11 @@ Shareable page for one post (`static/post.html`). Link previews in iMessage, Sla
 Request: `{"a": {"name": "Mo", "text": "I ate cereal"}, "b": {"name": "Lucas", "text": "I took a nap"}, "level": 7}`
 Response: `{a: {name, text, post, headline, score}, b: {...}, winner: "a" or "b", verdict, fallback}`
 
+### `POST /api/jobs`
+
+Request: `{"text": "I am a student who mostly sleeps"}`
+Response: `{jobs: [{title, company, location, salary, applicants, requirements: [str], perks, outcome: "offer" or "rejection", letter}], fallback}`
+
 ### `GET /api/stats`
 
 Returns `{"posts": 12, "profiles": 3, "battles": 1, "delarps": 4}` since the last restart.
@@ -108,6 +113,8 @@ Returns `{"posts": 12, "profiles": 3, "battles": 1, "delarps": 4}` since the las
 - `post.html`: shareable post page at `/p/<id>`, with a "Present at TEDx" mode that reads the post out loud.
 - `profile.html`: "Larp your whole profile" generator.
 - `battle.html`: Larp Battle, two people compete and an AI judge roasts them.
+- `jobs.html`: LarpedIn Jobs, absurd job listings with Easy Apply letters.
+- `extension/`: Delarp Chrome extension.
 - `nav.js`: a shared top nav. Lucas, please add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html`.
 
 ## Style guide (match the new pages)

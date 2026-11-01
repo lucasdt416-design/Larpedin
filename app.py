@@ -106,7 +106,7 @@ NEXT_ID = itertools.count(1)
 PROFILES = {}
 NEXT_PROFILE_ID = itertools.count(1)
 LOCK = threading.Lock()
-STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0, "tokens": 0, "by_model": {}}
+STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0, "jobs": 0, "tokens": 0, "by_model": {}}
 
 
 def count(kind):
@@ -448,6 +448,65 @@ def battle():
         out[k]["text"] = sides[k]["text"]
     count("battles")
     return jsonify(out)
+
+
+JOBS_PROMPT = (
+    "You write parody job listings for LarpedIn, a LinkedIn parody. The user describes who they really are. "
+    "Write 4 absurd job listings that 'match' them, from fake companies with silly names. "
+    "Each has a corporate title, a location like 'Remote (mandatory office 5 days)', a funny salary line, "
+    "an applicant count, 3 ridiculous requirements (for example '15 years of experience in a 3 year old framework'), "
+    "and a perks line. For each job, also write the letter the applicant receives right after clicking Easy Apply: "
+    "pick 'offer' for exactly one job and 'rejection' for the rest. Letters are under 70 words, signed by a fake recruiter, "
+    "overly enthusiastic, and the rejections thank them for their 'journey'. Plain text, no markdown."
+)
+
+JOBS_SCHEMA = {
+    "name": "larp_jobs",
+    "strict": True,
+    "schema": strict({
+        "jobs": array_of(strict({
+            "title": STR, "company": STR, "location": STR, "salary": STR, "applicants": INT,
+            "requirements": array_of(STR), "perks": STR,
+            "outcome": {"type": "string", "enum": ["offer", "rejection"]}, "letter": STR,
+        })),
+    }),
+}
+
+FALLBACK_JOBS = [{
+    "title": "Chief Synergy Evangelist", "company": "Disruptr.ai", "location": "Remote (office 5 days a week)",
+    "salary": "Competitive (with minimum wage)", "applicants": 4012,
+    "requirements": ["10 years of experience in AI tools released last week", "Must love family (we are a family)",
+                     "Comfortable with ambiguity, especially about pay"],
+    "perks": "Unlimited PTO (never approved), free pizza on Fridays (one slice)",
+    "outcome": "rejection",
+    "letter": "Thank you for sharing your journey with us! After careful consideration of 0 seconds, we have decided to "
+              "move forward with candidates who already work here. We will keep your resume on file forever. - Chad, Talent Ninja",
+}]
+
+
+@app.post("/api/jobs")
+def jobs():
+    _, text = text_from_request(500)
+    if not text:
+        return jsonify(error="Tell us who you are first."), 400
+    try:
+        out = json.loads(groq(
+            [{"role": "system", "content": JOBS_PROMPT}, {"role": "user", "content": text}],
+            temperature=0.9,
+            schema=JOBS_SCHEMA,
+        ))
+        listings = out["jobs"][:4]
+        for j in listings:
+            j["requirements"] = j["requirements"][:4]
+            j["applicants"] = max(0, int(j["applicants"]))
+        if not listings:
+            raise ValueError("no jobs")
+        fallback = False
+    except Exception:
+        app.logger.exception("Groq jobs failed, sending fallback")
+        listings, fallback = FALLBACK_JOBS, True
+    count("jobs")
+    return jsonify(jobs=listings, fallback=fallback)
 
 
 @app.get("/api/post/<int:post_id>")
