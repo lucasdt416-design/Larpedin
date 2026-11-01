@@ -252,4 +252,23 @@ assert c.post("/api/tts", json={"text": "hi"}).status_code == 502
 app.requests.post = real_post
 assert app.no_emoji("reply\u2014it was") == "reply - it was"
 
+# ElevenLabs voice: off without a key, cached after the first call, 502 on failure.
+os.environ.pop("ELEVENLABS_API_KEY", None)
+assert c.post("/api/voice", json={"text": "hi"}).status_code == 503
+os.environ["ELEVENLABS_API_KEY"] = "el"
+class EL:
+    status_code = 200
+    def raise_for_status(self): pass
+    def json(self): return {"audio_base64": "QUJD", "alignment": {"characters": list("hi"), "character_start_times_seconds": [0.0, 0.1]}}
+el_calls = []
+app.requests.post = lambda url, **k: el_calls.append((url, k["json"])) or EL()
+v1 = c.post("/api/voice", json={"text": "hi", "role": "judge"}).json
+assert v1["audio"] == "QUJD" and v1["chars"] == ["h", "i"] and v1["starts"] == [0.0, 0.1]
+assert app.ELEVEN_VOICES["judge"] in el_calls[0][0] and el_calls[0][1]["model_id"] == app.ELEVEN_MODEL
+app.requests.post = lambda *a, **k: Resp(429)
+assert c.post("/api/voice", json={"text": "hi", "role": "judge"}).json["audio"] == "QUJD"  # cache hit
+assert c.post("/api/voice", json={"text": "new text"}).status_code == 502
+assert c.post("/api/voice", json={"text": ""}).status_code == 400
+del os.environ["ELEVENLABS_API_KEY"]; app.requests.post = real_post
+
 print("all good")

@@ -523,3 +523,10 @@ Mohammad's Claude: please don't edit these, don't re-add `TRUTH_STYLES` or a rev
 - Fix: `/api/tts` now caches every clip in memory (`X-TTS-Cache: hit`/`miss`). Before the demo, Mohammad's Claude warms the cache for the chosen demo post by sending its exact chunks slowly. On stage, every chunk is then a cache hit: instant, natural, no quota.
 - **Any deploy clears the cache.** After the warm-up, nobody pushes to `main` until after the demo.
 
+### ElevenLabs voice for TEDx and the battle judge (Mohammad has the Creator plan)
+
+- New route `POST /api/voice {text, role: "tedx"|"judge"}` returns `{audio (base64 mp3), mime, chars, starts}`. It voices the whole text in one request, with per-character start times for word-by-word highlighting. The model is `eleven_v4`. The voices, picked by Mohammad by ear: George (TEDx) and Daniel (judge). Clips are cached in memory.
+- **Lucas, please add `ELEVENLABS_API_KEY` in Render → Environment.** Mohammad will send you the value privately. Without it, `/api/voice` returns 503 and the pages fall back to Orpheus, then to the browser voice, as now.
+- Measured: a 359-character post takes about 6 s to generate and about 30 s to play. A cached replay is instant.
+- Mohammad's Claude is updating `post.html` (TEDx) and `battle.html` (judge) to use it.
+

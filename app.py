@@ -498,6 +498,47 @@ def tts():
     return app.response_class(r.content, mimetype="audio/wav", headers={"X-TTS-Cache": "miss"})
 
 
+# ElevenLabs: the natural voice for TEDx (George) and the battle judge (Daniel). One request voices the whole
+# text and returns per-character timings, so the page can light up each word as it is spoken.
+ELEVEN_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice}/with-timestamps?output_format=mp3_44100_128"
+ELEVEN_VOICES = {"tedx": "JBFqnCBsd6RMkjVDRZzb", "judge": "onwK4e9ZLuTAKqWW03F9"}  # George, Daniel
+ELEVEN_MODEL = "eleven_v4"
+VOICE_CACHE = {}  # (role, text) -> response dict; ponytail: in memory, capped at 100, cleared on restart
+
+
+@app.post("/api/voice")
+def voice():
+    data, text = text_from_request(2500)
+    role = data.get("role") if data.get("role") in ELEVEN_VOICES else "tedx"
+    if not text:
+        return jsonify(error="Nothing to say."), 400
+    if not os.environ.get("ELEVENLABS_API_KEY"):
+        return jsonify(error="No ElevenLabs key; use another voice."), 503
+    with LOCK:
+        cached = VOICE_CACHE.get((role, text))
+    if cached:
+        return jsonify(cached)
+    try:
+        r = requests.post(
+            ELEVEN_URL.format(voice=ELEVEN_VOICES[role]),
+            headers={"xi-api-key": os.environ["ELEVENLABS_API_KEY"]},
+            json={"text": text, "model_id": ELEVEN_MODEL},
+            timeout=45,
+        )
+        r.raise_for_status()
+        d = r.json()
+        a = d.get("alignment") or {}
+        out = {"audio": d["audio_base64"], "mime": "audio/mpeg",
+               "chars": a.get("characters") or [], "starts": a.get("character_start_times_seconds") or []}
+    except (requests.RequestException, KeyError, ValueError) as e:
+        app.logger.warning("ElevenLabs failed: %s %s", e, getattr(getattr(e, "response", None), "text", "")[:300])
+        return jsonify(error="Voice unavailable, use another voice."), 502
+    with LOCK:
+        if len(VOICE_CACHE) < 100:
+            VOICE_CACHE[(role, text)] = out
+    return jsonify(out)
+
+
 @app.get("/api/stats")
 def stats():
     with LOCK:
