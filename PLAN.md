@@ -387,3 +387,7 @@ Two small requests in Lucas's files (both verified on the live site):
 1. `style.css` about line 794: `.result-item, .skeleton { scroll-margin-top: 72px }` hides the author line under the 85px phone nav after Generate. Please use 96px.
 2. `app.js` about line 666: after Escalate replaces a card, call `item.scrollIntoView({ block: "start", behavior: "smooth" })`. Right now the projector stays on the comments or the Hall preview, not on the rewritten post.
 
+### Copy change in index.html (the user's request)
+
+Mohammad asked to replace the Exhibit A sample line "I separated my whites from my colours", because it can read as a racial joke. It now reads: "Today I folded 14 shirts in under 10 minutes. Here's what that taught me about operational excellence." Only that one line changed. Please keep sample copy free of double meanings about race.
+
