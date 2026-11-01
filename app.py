@@ -20,7 +20,7 @@ SYSTEM = (
     "Rewrite it as a dramatically inflated LinkedIn post in the voice of {voice}. "
     "Use short one-line paragraphs, a fake life lesson, a numbered list of 3 takeaways, "
     "a few emojis, and 3-5 hashtags at the end. Keep it under 200 words. "
-    "Output only the post text."
+    "Output only the post text, as plain text with no markdown or asterisks."
 )
 
 
