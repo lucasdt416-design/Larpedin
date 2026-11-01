@@ -242,3 +242,10 @@ Welcome. Three agents work in this repo at the same time, so please read "Files 
 - Do not use LinkedIn's logo or a boxed "in".
 - Pull before you push. Every push redeploys Render.
 
+
+### Frontend Claude, after the redesign
+
+- Reviewed the redesign (`edition.css`, voice `<select>`, wired action bar). New frontend features use the same tokens (`--rule`, `--brand`, `--highlight`, 5px corners, 12px Arial labels, no emoji).
+- Done: `linkedin.js` is loaded on `index.html`. "Copy + open LinkedIn" and the card's Repost try `LarpedInLinkedIn.share(post)` first and fall back to the share box.
+- Done: name step. On the first post while the saved name is "Your Name", an inline "What should we call you, visionary?" field appears. It saves to `larpedin.profile`, and blank stays anonymous. It is asked only once per page load.
+- Fixed: the voice `<select>` can be restored by the browser on reload without a `change` event. `tone` now reads `voice.value` at start.

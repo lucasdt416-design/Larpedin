@@ -106,6 +106,7 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
 });
 
 const voice = $("voice");
+tone = voice.value; // browsers can restore the select on reload; trust what it shows
 voice.addEventListener("change", () => { tone = voice.value; });
 
 const LEVEL_NAMES = [
@@ -393,9 +394,32 @@ function generateTask(req) {
   return task;
 }
 
+// First post with the default "Your Name": ask once, inline. A second press of
+// Generate continues either way (blank = stay anonymous).
+let nameAsked = false;
+
+function askNameFirst() {
+  if (!$("name-step").hidden) {
+    const name = $("name-input").value.trim();
+    if (name) {
+      profile.name = name.slice(0, 60);
+      saveProfile();
+      syncProfile(null);
+    }
+    $("name-step").hidden = true;
+    return false;
+  }
+  if (nameAsked || profile.name !== DEFAULT_PROFILE.name || !$("text").value.trim()) return false;
+  nameAsked = true;
+  $("name-step").hidden = false;
+  $("name-input").focus();
+  return true;
+}
+
 $("composer").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("text").value;
+  if (mode !== "delarp" && !$("generate").disabled && askNameFirst()) return;
   if (mode === "delarp") {
     run(text, [async (slot) => renderTruth(text, await delarp(text), slot)]);
   } else {
@@ -405,6 +429,7 @@ $("composer").addEventListener("submit", (e) => {
 
 // Current vibe plus 3 random others, all in parallel.
 $("try-all").addEventListener("click", () => {
+  if (askNameFirst()) return;
   const text = $("text").value;
   const level = Number($("level").value);
   const others = [...voice.options]
@@ -787,7 +812,10 @@ function shareToX(post, url) {
   window.open(`https://x.com/intent/tweet?${params}`, "_blank", "noopener");
 }
 
+// Real posting via linkedin.js when the server has LinkedIn configured (it shows a
+// confirm dialog with the exact text); otherwise fall back to the share box.
 async function shareToLinkedIn(post) {
+  if (window.LarpedInLinkedIn && (await window.LarpedInLinkedIn.share(post))) return;
   try {
     await navigator.clipboard.writeText(post);
   } catch {

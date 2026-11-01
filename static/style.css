@@ -968,3 +968,28 @@ main {
 .sort-btn:hover:not(.is-active) { color: var(--text); }
 .sort-btn.is-active { background: var(--blue); color: #fff; }
 .leaderboard-empty { margin: 0; color: var(--muted); }
+
+/* ---------- Name step (matches edition.css: rule lines, 5px corners, Arial labels) ---------- */
+
+.name-step {
+  display: grid;
+  gap: 5px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--rule, #c9d6e4);
+  border-left: 3px solid var(--brand, #0a66c2);
+  border-radius: 5px;
+  background: var(--highlight, #dfedff);
+}
+.name-step-label { font: 600 12px Arial, sans-serif; color: #394851; }
+.name-step-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--rule, #c9d6e4);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--brand, #0a66c2);
+  font: 16px Arial, sans-serif;
+}
+.name-step-input:focus { outline: 2px solid var(--brand, #0a66c2); outline-offset: 1px; }
+.name-step-hint { margin: 0; font-size: 11px; color: #4d6174; }

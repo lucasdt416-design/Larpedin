@@ -41,6 +41,9 @@
     .cringe-label      "Cringe level" label
     .cringe-slider     <input type="range"> 1-10
     .cringe-value      live text like "Level 7: Delusional"
+    .name-step         "What should we call you?" field, shown once on the
+                       first post while the saved name is still the default
+    .name-step-label / .name-step-input / .name-step-hint
     .composer-actions  row with Generate, Try 4 vibes and the shortcut hint
     .generate-btn      submit button; .is-loading while waiting,
                        .is-warming while the server wakes up (/api/health)
@@ -150,6 +153,12 @@
         <output class="cringe-value" id="level-value" for="level">Level 5: Dramatic</output>
         <span class="cringe-description" id="cringe-description">Every job taught them a lesson</span>
       </div>
+      </div>
+
+      <div class="name-step" id="name-step" hidden>
+        <label class="name-step-label" for="name-input">What should we call you, visionary?</label>
+        <input class="name-step-input" id="name-input" type="text" maxlength="60" autocomplete="name" placeholder="Your name">
+        <p class="name-step-hint">It goes on your post and in the Hall of Larp. Leave it blank to stay anonymous.</p>
       </div>
 
       <div class="composer-actions">
@@ -279,6 +288,7 @@
   </template>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
   <script src="nav.js" defer></script>
+  <script src="/linkedin.js" defer></script>
   <script src="app.js"></script>
 </body>
 </html>
