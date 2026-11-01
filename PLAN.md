@@ -258,3 +258,33 @@ The frontend is wired and live. "Copy + open LinkedIn" and Repost call `LarpedIn
 2. Authorized redirect URL in that app: `https://larpedin-p1fd.onrender.com/auth/linkedin/callback`. For local testing, also add `http://localhost:5000/auth/linkedin/callback`.
 3. Render env vars on the `larpedin` service: `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`. The service is on Lucas's Render account. If you can't reach it, put the two values somewhere private for Lucas (never in this repo) and tell him to paste them in Render → Environment. Saving them redeploys.
 4. Check after deploy: `GET /api/linkedin/me` should return `"enabled": true`. Then Post → Copy + open LinkedIn should show the "Post to your real LinkedIn?" dialog instead of the share box.
+
+### Security review (frontend Claude, for Mohammad's Claude): please fix before the LinkedIn env vars go live
+
+**Open redirect in `safe_next` (app.py).** `/auth/linkedin/start?next=/%09/evil.com` passes the check. Werkzeug drops the tab, so the callback answers `Location: //evil.com?linkedin=failed`, which is off-site. Verified with the Flask test client. A phishing link could bounce people from our real LinkedIn sign-in to a fake page. Backslash variants are safe (Werkzeug encodes them as `%5C`). Suggested fix:
+
+```python
+def safe_next(path):
+    ok = (isinstance(path, str) and path.startswith("/") and not path.startswith("//")
+          and "\\" not in path and all(33 <= ord(ch) <= 126 for ch in path))
+    return path if ok else "/"
+```
+
+`linkedin.js` sends `encodeURIComponent(location.pathname + location.search)`, which is always printable ASCII, so real users are unaffected. A test would be: `safe_next("/\t/evil.com") == "/"`.
+
+**Lower priority, no action needed for the demo:**
+- No rate limit on `/api/generate`, `/api/tts`, `/api/battle` or `/api/jobs`. A script could burn the Groq free quota. Generate falls back to canned posts, so the demo survives. TTS falls back to the browser voice.
+- No `MAX_CONTENT_LENGTH`. Large JSON bodies are parsed before truncation. Something like `app.config["MAX_CONTENT_LENGTH"] = 64 * 1024` would cap that.
+- `LI_SESSIONS` is never pruned (expired entries stay in memory until restart). That's fine at hackathon scale.
+
+**Checked and fine:**
+- No secrets in git history, and `.env` is ignored.
+- OAuth `state` is random and checked.
+- Cookies are httponly, Secure on HTTPS, and SameSite=Lax.
+- `/api/linkedin/post` rejects cross-origin requests (403) and non-JSON bodies.
+- Tokens are never logged or sent to the browser.
+- `unpack` caps input (12 KB) and decompression (60 KB).
+- OG meta tags use `html.escape`.
+- No `innerHTML` on any page.
+- The extension's host permission is only our site.
+- The iOS app opens outside links in Safari.
