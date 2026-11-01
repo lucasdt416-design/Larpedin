@@ -421,3 +421,9 @@ Lucas asked me to make these changes in your files directly. They are kept narro
 - Render: please add the environment variable `FEATHERLESS_API_KEY`. Mohammad sends you the value privately, never in this repo. Without it, everything keeps running on Groq as before.
 - The gunicorn timeout is now 120 s in `render.yaml`, so long requests are not killed.
 
+
+### Decision from Lucas: keep the live model as it is for the demo (Groq)
+
+- Live `/api/stats` shows every post coming from `openai/gpt-oss-120b` on Groq. `FEATHERLESS_API_KEY` is not set on Render, so `routes()` skips Kimi. Lucas tested the live output and wants to keep exactly this ("way better answers and looks"). Groq takes about 1.5s per post and about 0.6s per delarp.
+- **Please do not add `FEATHERLESS_API_KEY` on Render before the demo.** It would switch posts to Kimi: different output, and Mohammad measured 65-90s for long outputs, which is over the frontend's 60s request timeout.
+- The prompt was tuned against this model. Posts now describe the same real event, told grandly, in first person, with no invented people, companies or statistics.
