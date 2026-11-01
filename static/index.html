@@ -48,8 +48,9 @@
                        JS sets --pct (0-100) on .gauge for the fill width
     .gauge-label / .gauge-track / .gauge-fill / .gauge-value
     .post-stats        row with reactions (left) and counts (right)
-    .reactions         reaction emoji + like count
+    .reactions         "👏❤️💡 Bill Gates and 4,812 others"
     .reaction-emojis   the stacked reaction emoji
+    .reaction-name     famous person who "liked" it
     .reaction-count    like count (animates up on render)
     .post-counts       "N comments · N reposts"
     .comment-count / .repost-count
@@ -146,7 +147,7 @@
           </div>
         </section>
         <div class="post-stats">
-          <span class="reactions"><span class="reaction-emojis" aria-hidden="true">👍❤️👏</span> <span class="reaction-count">0</span></span>
+          <span class="reactions"><span class="reaction-emojis" aria-hidden="true">👏❤️💡</span> <span class="reaction-name"></span> and <span class="reaction-count">0</span> others</span>
           <span class="post-counts"><span class="comment-count"></span> · <span class="repost-count"></span></span>
         </div>
         <div class="action-bar">

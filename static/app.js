@@ -208,6 +208,11 @@ function animateCount(el, target) {
   requestAnimationFrame(tick);
 }
 
+const FAMOUS_LIKERS = [
+  "Bill Gates", "Oprah Winfrey", "Satya Nadella", "Gordon Ramsay", "Your Mom",
+  "Mark Cuban", "Taylor Swift", "Your Ex", "Richard Branson", "Gary Vee",
+];
+
 // data: response from /api/generate. Uses headline/comments if the backend sends them.
 function renderCard(data, container) {
   const item = $("post-card-template").content.firstElementChild.cloneNode(true);
@@ -218,6 +223,8 @@ function renderCard(data, container) {
   q(".post-headline").textContent = data.headline || profile.headline;
   bindEditable(q(".post-author"), "name");
   bindEditable(q(".post-headline"), "headline");
+
+  q(".reaction-name").textContent = FAMOUS_LIKERS[randInt(0, FAMOUS_LIKERS.length - 1)];
 
   const body = q(".post-body");
   const seeMore = q(".see-more");
