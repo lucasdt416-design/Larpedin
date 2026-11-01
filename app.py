@@ -89,13 +89,13 @@ GENERATE_PROMPT = (
     "{level}/10 post should usually rate around {pct} overall."
 )
 
-TRUTH_STYLES = [
-    "a parenthetical aside, like '(It was one email.)'",
-    "'For context:' followed by the plain event",
-    "a rhetorical question answered in one word, like 'Was it a salad? Yes.'",
-    "'Some will say it was just ...' naming the event",
-    "'To be clear:' followed by the plain event",
-    "'Technically,' followed by the plain event",
+TRUTH_STYLES = [  # <event> = their real event in plain words; never copy wording from another event
+    "a parenthetical aside: '(Plain version: <event>.)'",
+    "'For context: <event>.'",
+    "a rhetorical question answered in one word: 'Was it <event>? Yes.'",
+    "'Some will say it was just <event>.'",
+    "'To be clear: <event>.'",
+    "'Technically, <event>.'",
 ]
 
 DELARP_PROMPT = (
