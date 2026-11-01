@@ -30,6 +30,13 @@ try:
     raise AssertionError("expected HTTPError when every model is rate limited")
 except app.requests.HTTPError:
     pass
+# bad JSON from one model with a schema also falls through
+calls.clear()
+def bad_then_good(url, headers, json, timeout):
+    calls.append(json["model"])
+    return Resp(200, "not json" if len(calls) == 1 else '{"a": 1}')
+app.requests.post = bad_then_good
+assert app.groq([], 0.5, schema={"name": "x"}) == '{"a": 1}' and len(calls) == 2
 app.requests.post = real_post
 
 FAKE = {

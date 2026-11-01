@@ -15,9 +15,9 @@ from PIL import Image, ImageDraw, ImageFont
 app = Flask(__name__, static_folder="static", static_url_path="")
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-# Each model has its own free rate limit (~8K tokens/min), so on 429 try the next one.
+# Each model has its own free rate limit (~8K tokens/min, ~200K/day), so if one fails try the next.
 # llama-3.3-70b shut down 2026-08-16; check console.groq.com/docs/deprecations before changing.
-MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
+MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
 
 TONES = {
     "thought leader": "a visionary thought leader who turns everything into a business lesson",
@@ -104,7 +104,7 @@ FALLBACK_POSTS = [
 GALLERY = {}
 NEXT_ID = itertools.count(1)
 LOCK = threading.Lock()
-STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0}
+STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0, "tokens": 0, "by_model": {}}
 
 
 def count(kind):
@@ -113,21 +113,32 @@ def count(kind):
 
 
 def groq(messages, temperature, schema=None):
-    body = {"temperature": temperature, "reasoning_effort": "low", "messages": messages}
+    body = {"temperature": temperature, "messages": messages}
     if schema:
         body["response_format"] = {"type": "json_schema", "json_schema": schema}
     for i, model in enumerate(MODELS):
-        r = requests.post(
-            GROQ_URL,
-            headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
-            json={**body, "model": model},
-            timeout=30,
-        )
-        if r.status_code == 429 and i + 1 < len(MODELS):
-            app.logger.warning("%s rate limited, trying %s", model, MODELS[i + 1])
+        extra = {"reasoning_effort": "low"} if model.startswith("openai/gpt-oss") else {}
+        try:
+            r = requests.post(
+                GROQ_URL,
+                headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
+                json={**body, **extra, "model": model},
+                timeout=30,
+            )
+            r.raise_for_status()
+            data = r.json()
+            content = data["choices"][0]["message"]["content"].strip()
+            if schema:
+                json.loads(content)  # bad JSON from this model: try the next one
+        except (requests.RequestException, ValueError, KeyError, IndexError) as e:
+            if i + 1 == len(MODELS):
+                raise
+            app.logger.warning("%s failed (%s), trying %s", model, e, MODELS[i + 1])
             continue
-        r.raise_for_status()
-        return r.json()["choices"][0]["message"]["content"].strip()
+        with LOCK:
+            STATS["tokens"] += data.get("usage", {}).get("total_tokens", 0)
+            STATS["by_model"][model] = STATS["by_model"].get(model, 0) + 1
+        return content
 
 
 def badge(overall):
