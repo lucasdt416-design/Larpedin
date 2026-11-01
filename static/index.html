@@ -23,7 +23,32 @@
     .error-banner      inline error message (hidden when empty)
 
   RESULT
-    .result            wrapper around the generated post + actions
+    .result            section that holds the generated card(s)
+    .results-grid      container for cards (1 card now; 4 for "Try all 4 vibes")
+    .result-item       one card + its actions
+    .post-card         the fake feed post (<article>)
+    .post-header       avatar + author block row
+    .avatar            circle with the user's initials
+    .post-author-block column with name / headline / meta
+    .post-author       display name (editable, saved in localStorage)
+    .post-headline     headline (editable, saved in localStorage)
+    .post-meta         "1st · 2m · 🌐" line
+    .parody-label      small "Parody" tag in the meta line
+    .post-body         post text, line breaks preserved; clamped to ~5 lines
+                       unless .is-expanded
+    .see-more          "...see more" / "see less" toggle
+    .post-stats        row with reactions (left) and counts (right)
+    .reactions         reaction emoji + like count
+    .reaction-emojis   the stacked reaction emoji
+    .reaction-count    like count (animates up on render)
+    .post-counts       "N comments · N reposts"
+    .comment-count / .repost-count
+    .action-bar        Like / Comment / Repost / Send row
+    .action-btn        one action; .is-active when toggled on
+    .post-comments     list of fake comments (only if backend sends them)
+    .comment / .comment-author / .comment-title / .comment-text
+    .post-actions      real buttons under the card (Copy + open LinkedIn)
+    .share-btn         "Copy + open LinkedIn"
 -->
 <html lang="en">
 <head>
@@ -58,11 +83,41 @@
 
     <p class="error-banner" id="error" role="alert" hidden></p>
 
-    <section class="result" id="result" aria-live="polite" hidden>
-      <pre id="post"></pre>
-      <button type="button" id="share">Copy + open LinkedIn</button>
+    <section class="result" id="result" aria-live="polite" aria-label="Your post" hidden>
+      <div class="results-grid" id="results"></div>
     </section>
   </main>
+
+  <template id="post-card-template">
+    <div class="result-item">
+      <article class="post-card">
+        <header class="post-header">
+          <div class="avatar" aria-hidden="true"></div>
+          <div class="post-author-block">
+            <span class="post-author" contenteditable="plaintext-only" role="textbox" aria-label="Display name (editable)" spellcheck="false"></span>
+            <span class="post-headline" contenteditable="plaintext-only" role="textbox" aria-label="Headline (editable)" spellcheck="false"></span>
+            <span class="post-meta">1st · 2m · <span aria-label="Public">🌐</span> <span class="parody-label">Parody</span></span>
+          </div>
+        </header>
+        <div class="post-body"></div>
+        <button type="button" class="see-more" aria-expanded="false" hidden>...see more</button>
+        <div class="post-stats">
+          <span class="reactions"><span class="reaction-emojis" aria-hidden="true">👍❤️👏</span> <span class="reaction-count">0</span></span>
+          <span class="post-counts"><span class="comment-count"></span> · <span class="repost-count"></span></span>
+        </div>
+        <div class="action-bar">
+          <button type="button" class="action-btn" data-action="like" aria-pressed="false">👍 Like</button>
+          <button type="button" class="action-btn" data-action="comment" aria-pressed="false">💬 Comment</button>
+          <button type="button" class="action-btn" data-action="repost" aria-pressed="false">🔁 Repost</button>
+          <button type="button" class="action-btn" data-action="send" aria-pressed="false">📨 Send</button>
+        </div>
+        <ul class="post-comments" hidden></ul>
+      </article>
+      <div class="post-actions">
+        <button type="button" class="share-btn">Copy + open LinkedIn</button>
+      </div>
+    </div>
+  </template>
   <script src="app.js"></script>
 </body>
 </html>
