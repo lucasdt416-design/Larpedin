@@ -30,84 +30,73 @@ FEATHERLESS_MODELS = [m for m in os.environ.get("FEATHERLESS_MODELS", "moonshota
 MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
 
 TONES = {
-    "thought leader": "a visionary thought leader who turns everything into a business lesson",
-    "humble brag": "someone humbly bragging, pretending to be modest while flexing hard",
-    "hustle bro": "a 5am-grindset hustle bro who relates everything to closing deals",
-    "agree?": "an engagement-bait poster who ends with 'Agree?' and begs people to comment",
-    "laid off but grateful": "someone who just got laid off and insists it is the best thing that ever happened",
-    "AI influencer": "an AI influencer who says this changes everything and you are falling behind",
-    "founder who failed 3 startups": "a founder whose 3 startups failed and who sees each failure as a masterclass",
-    "recruiter": "an overly excited recruiter who turns everything into a hiring pitch",
-    "Gen Z intern": "a Gen Z intern who writes in slang and is way too confident",
+    "thought leader": "a thought leader. Open with a contrarian hook (for example 'Unpopular opinion:', 'Nobody talks about this, but', 'Hot take:' or 'Here is what 99% of people get wrong:'; pick one at random). Turn the event into a principle and preach it to the reader.",
+    "humble brag": "a humble-bragger. Open with fake reluctance such as 'I don't usually post about myself, but' and slip in prestige while pretending it is no big deal.",
+    "hustle bro": "a hustle bro. Open with a time stamp that fits the event (before sunrise unless the event itself happened later, for example '4:58 AM.' or '11:00 AM. While you slept in, I...'). Short punchy fragments. Everything is discipline, grind and closing.",
+    "agree?": "an engagement farmer. Short one-line paragraphs, a bold claim built from the event, and the very last line before the hashtags is exactly 'Agree?'.",
+    "laid off but grateful": "someone recently laid off and aggressively grateful. Open with 'Some personal news.' Frame the event as proof that the layoff was a gift. Mention being #OpenToWork.",
+    "AI influencer": "an AI influencer. Explain how the event is basically what AI does, warn that people who don't get it will be left behind, and offer a 'framework' in numbered steps.",
+    "founder who failed 3 startups": "a founder whose three startups failed. Open by mentioning the three failures, then present the event as the lesson none of them taught. Investors are 'welcome to reach out'.",
+    "recruiter": "an over-excited recruiter. Treat the event as a hiring signal, end with 'We're hiring!' or 'My DMs are open', and use phrases like 'rockstar' and 'culture fit'.",
+    "Gen Z intern": "a Gen Z intern. Write in lowercase with Gen Z slang ('lowkey', 'no cap', 'it's giving', 'ate', 'main character energy'), still bragging like a LinkedIn post. Up to 2 emojis allowed.",
 }
 
 # Cringe = how grandly you present YOUR OWN event and what it proves about you. Never surreal,
 # never a different invented event.
 LEVELS = [
-    "modest and sincere; it could pass as a real post",
-    "proud, with one small humblebrag",
-    "a proud milestone that claims a couple of real-sounding skills",
-    "full LinkedIn voice: grand framing, skills gained, gratitude, excited for what's next",
-    "confident: present it as proof you are ready for big things",
-    "very confident: treat it like a major career milestone with impressive-sounding skills",
-    "grandiose: a defining moment of your leadership journey",
-    "thought-leader mode: you now have advice for everyone based on it",
-    "visionary: clearly the start of something historic for you",
-    "maximum larp: legend-in-the-making energy, still completely straight-faced",
+    "modest and sincere; 40-60 words; it could pass as a real post",
+    "proud, one small humblebrag; 50-70 words",
+    "a proud milestone that claims a couple of real-sounding skills; 60-90 words",
+    "full LinkedIn voice: grand framing, skills, gratitude; 80-110 words",
+    "confident: proof you are ready for big things; 90-120 words",
+    "a major career milestone with impressive-sounding skills; 100-130 words",
+    "grandiose: a defining moment of your leadership journey; 110-140 words",
+    "thought-leader mode: you now have advice for everyone; 120-150 words",
+    "visionary: clearly the start of something historic for you; 130-160 words",
+    "maximum larp: legend-in-the-making energy, still completely straight-faced; 140-170 words",
 ]
 
+# Blind A/B (3 judges, 12 inputs): this vibe-first prompt won 34 of 36 judgments over the template prompt.
 GENERATE_PROMPT = (
     "You ghostwrite LinkedIn posts for someone who is LARPING: they did something ordinary and want to "
-    "present it as an impressive professional accomplishment. Write in the first person, in the voice of {voice}. "
-    "Grandness level {level}/10: {intensity}.\n"
-    "First fill real_event (exactly what they did, plainly) and spin (the same event described in the grandest "
-    "believable terms, plus what it supposedly proves about them). Then write the post from that spin.\n"
-    "The most important rule: stay about the exact event they described. Do not invent a different or bigger "
-    "event: no programs, launches, companies, teams, projects, hires or clients that they did not mention. "
-    "Larping means describing the SAME thing grandly and claiming what it says about you, not making things up.\n"
-    "Never invent or name specific people. Thank only unnamed groups (my professors, my family, my friends, "
-    "everyone who supported me). Only use numbers that describe the event itself (4 years, 20 minutes, one email); "
-    "never invent statistics, percentages or results.\n"
-    "Use flattering framing that is true-ish, the way people really larp: rankings and prestige ('Canada's top "
-    "university'), duration and difficulty ('four rigorous years'), and what it proves about you.\n"
-    "Scale with the level. Levels 1-3: modest and sincere. Levels 4-6: grand framing, prestige, confident "
-    "skills. Levels 7-8: a defining moment of your leadership journey, with advice for others. Levels 9-10: "
-    "legend-in-the-making, history will remember this, still the same event and still straight-faced.\n"
-    "Vary your opening and closing lines; do not always use the same phrases.\n"
-    "The post: open by announcing it as an achievement ('I'm thrilled to announce', 'I'm proud to share'); "
-    "describe the event in its grandest true-ish terms; say what it taught you as 3 numbered lessons tied to real "
-    "career skills (time management, thinking ahead, collaboration, resilience, prioritization, communication); "
-    "a line of gratitude; that you're excited to continue your journey or for what's next. Then 3 to 5 hashtags.\n"
-    "Tell it completely straight, like a real post someone might believe at first glance. "
-    "The humor is the gap between the grand framing and the ordinary truth, never weirdness. "
-    "Never use metaphors about the universe, destiny, blueprints, matrices, ecosystems, paradigms, "
-    "quantum anything or 'data points'. No cosmic signs, no talking objects. "
-    "Never print section labels like 'Challenge:' or 'Life lesson:'.\n"
-    "Put every sentence on its own line, and start the lessons with a line like 'Some lessons I'm taking with me:'. "
-    "Always end with 3 to 5 hashtags on the last line. "
-    "Plain text, no markdown, no asterisks, no emojis, under 180 words.\n"
-    "Example (style only; their topic will be different). What they did: 'I assembled an IKEA shelf'. "
-    "Spin: single-handedly delivered a full furniture build from raw components. Post:\n"
-    "I'm proud to share that I have successfully completed a full furniture build, from raw components to finished product.\n"
-    "Yes, it was an IKEA shelf. I owned the project end to end, with only one Allen key and instructions with no words.\n"
-    "Some lessons I'm taking with me:\n"
-    "1. Attention to detail: every screw matters.\n"
-    "2. Problem solving: when the instructions are unclear, you lead anyway.\n"
-    "3. Patience: great things are built one step at a time.\n"
-    "Grateful to everyone who believed I could do this.\n"
-    "Excited to bring this builder mindset to whatever comes next.\n"
-    "#ProblemSolving #Ownership #GrowthMindset\n"
-    "(Do not reuse the example's wording; write from their real event.)\n"
-    "Also write the author's LinkedIn headline: an inflated but plausible title they 'earned' from what they did, "
-    "as either a stack of 2 or 3 titles separated by pipes or a short mission statement. No company names. "
-    "Do not start with 'Visionary' or 'Chief', and do not use 'Whisperer'.\n"
-    "Also write 2 or 3 comments from fake connections reacting like real LinkedIn commenters (congratulations, "
-    "'this resonates', or a humblebrag of their own). The comments are the only place where names appear: give "
-    "each commenter a realistic name and job title.\n"
-    "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
-    "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
-    "A level {level}/10 post should usually rate around {pct} overall."
+    "present it as an impressive professional accomplishment. Write in the first person as {voice}\n"
+    "Grandness level {level}/10: {intensity}. Follow that word range.\nFirst fill real_event (exactly what "
+    "they did, plainly) and spin (the same event described in the grandest believable terms, plus what it "
+    "supposedly proves about them). Then write the post from that spin.\nRules:\n- Stay about the exact "
+    "event they described. Never invent a bigger event, teams, projects, clients, launches, companies or "
+    "meetings that they did not mention.\n- Never name or invent specific people in the post. Thank only "
+    "people who plausibly fit the event (for leftovers: past me; for an email: my inbox), or nobody.\n- "
+    "Only use numbers that describe the event itself (4 years, 90 seconds, one email). No invented "
+    "statistics.\n- Include exactly one short deadpan line that states the plain truth, so the reader sees "
+    "the gap between the claim and reality. That gap is the joke. Write that line in this style: {truth}. "
+    "Only one such line.\n- At levels 9-10 go all the way: history, legacy, 'they will teach this in "
+    "business schools', a book or keynote you are 'considering', still about the same small event and "
+    "still straight-faced.\n- If you use numbered lessons, introduce them with one short line first.\n- The "
+    "vibe must be unmistakable from the first line; follow its opening and structure, not a generic "
+    "template. Do not open with 'I'm thrilled to announce' unless the vibe calls for it.\n- Lessons, if "
+    "any, are 2 or 3 short numbered lines, each a real career skill, and only from level 4 up.\n- No "
+    "surreal or cosmic metaphors, no talking objects, no section labels.\n- Every sentence on its own "
+    "line. Plain text, no markdown. End with 3 to 5 hashtags on the last line.\nAlso write the author's "
+    "LinkedIn headline: an inflated but plausible title earned from the event, as a stack of 2 or 3 "
+    "titles separated by pipes or a short mission statement. No company names; do not start with "
+    "'Visionary' or 'Chief'; never use 'Whisperer'.\nAlso write 3 comments from fake connections with "
+    "realistic, varied names and job titles (never Alex Rivera, Alex Chen, Priya Sharma, Maya Patel or "
+    "Jordan, and never the author's own name; commenters never address themselves). Mix the reactions: "
+    "always one humblebrag that one-ups the author, plus two of these at random: sincere congratulations, "
+    "'This.', someone tagging a friend, a recruiter or coach pitching something, someone asking for the "
+    "template.\nFinally, rate the post for buzzwords, emojis, humblebrag and overall cringe. Each rating "
+    "is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. A level "
+    "{level}/10 post should usually rate around {pct} overall."
 )
+
+TRUTH_STYLES = [
+    "a parenthetical aside, like '(It was one email.)'",
+    "'For context:' followed by the plain event",
+    "a rhetorical question answered in one word, like 'Was it a salad? Yes.'",
+    "'Some will say it was just ...' naming the event",
+    "'To be clear:' followed by the plain event",
+    "'Technically,' followed by the plain event",
+]
 
 DELARP_PROMPT = (
     "You translate LinkedIn posts into the brutally honest, funny truth, in the first person, as the author. "
@@ -317,7 +306,8 @@ def generate():
     except (TypeError, ValueError):
         level = 5
 
-    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10)
+    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10,
+                                    truth=random.choice(TRUTH_STYLES))
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"

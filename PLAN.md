@@ -432,3 +432,18 @@ Lucas asked me to make these changes in your files directly. They are kept narro
 
 Every page on the live site loads cleanly at 1280px and 390px: `/`, `/gallery.html`, `/p/<id>`, `/profile.html`, `/battle.html`, `/jobs.html` and `/privacy.html`. No console errors, no failed requests, no broken images, no sideways scroll.
 - One small thing for Mohammad: `privacy.html` still has a "Sign in with LinkedIn" section, and that feature was dropped (copy-paste only now). Suggest replacing it with one line: "We never connect to your LinkedIn account. 'Copy + open LinkedIn' copies the text and opens LinkedIn; you post it yourself."
+
+### Post prompt: blind A/B result (Mohammad asked for a quality check)
+
+- Test: 12 identical inputs, each with a different vibe and level, run on Groq. The current prompt (A) and a vibe-first version (B) were scored blind by 3 judge agents (a comedy writer, a LinkedIn power user and a hackathon judge), with the order randomized.
+- Result: **B won 34 of 36 judgments.** Average scores, A vs B: funny 4.1 vs 6.8, believable 7.2 vs 6.4, vibe 2.9 vs 7.8, level fit 5.1 vs 6.7.
+- Why A lost: every post used the same "I'm thrilled to announce... Some lessons... Grateful to my professors" template whatever the vibe, so Gen Z had no slang and the AI influencer had no AI. Level 10 read like level 6.
+- Your rules stay unchanged in B: same exact event, no invented people/companies/stats, straight-faced, no cosmic metaphors, no labels.
+- New in B:
+  - Each vibe has its own opener and structure.
+  - Word ranges grow with the level.
+  - Exactly one deadpan "plain truth" line per post. Its style is picked at random in code (`TRUTH_STYLES`), so it doesn't repeat.
+  - Level 9-10 goes legendary.
+  - Comments always include a one-upper plus two random reaction types.
+- Speed is unchanged (about 1.1-2.3 s on Groq). The tests pass.
+
