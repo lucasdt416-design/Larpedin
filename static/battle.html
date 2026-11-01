@@ -91,19 +91,21 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 </style>
+<link rel="stylesheet" href="/edition.css">
 </head>
-<body>
+<body class="battle-page">
 <main>
   <header>
-    <h1>⚔️ Larp Battle</h1>
-    <p class="sub">Two contestants. One LinkedIn. Zero shame.</p>
+    <p class="dept-folio">03 / COMPETITIONS</p>
+    <h1>Larp Battle</h1>
+    <p class="sub">Two ordinary days. Whose announcement goes further?</p>
     <span class="parody">Parody · not affiliated with LinkedIn</span>
   </header>
 
   <form id="form" novalidate>
     <div class="arena">
       <section class="panel a" aria-label="Blue corner">
-        <h2>🔵 Blue corner</h2>
+        <h2>Contestant A</h2>
         <label for="nameA">Name</label>
         <input id="nameA" type="text" maxlength="40" placeholder="Contestant A" autocomplete="off">
         <label for="textA">What did you actually do today?</label>
@@ -111,7 +113,7 @@
       </section>
       <div class="vs" id="vs" aria-hidden="true"><span>VS</span></div>
       <section class="panel b" aria-label="Red corner">
-        <h2>🔴 Red corner</h2>
+        <h2>Contestant B</h2>
         <label for="nameB">Name</label>
         <input id="nameB" type="text" maxlength="40" placeholder="Contestant B" autocomplete="off">
         <label for="textB">What did you actually do today?</label>
@@ -126,7 +128,7 @@
         <span id="levelOut">7</span>
       </div>
       <button type="button" class="swap" id="swap">⇄ Swap sides</button><br>
-      <button type="submit" class="fight" id="fight">FIGHT</button>
+      <button type="submit" class="fight" id="fight">Start battle</button>
       <div class="status" id="status" aria-live="polite"></div>
       <div class="error" id="error" role="alert" hidden></div>
     </div>
@@ -138,12 +140,12 @@
       <article class="card side-b" id="cardB"></article>
     </div>
     <div class="judge" id="judge">
-      <div class="judge-name">⚖️ The Honorable Judge of LinkedIn <label><input type="checkbox" id="judgeVoice" checked> 🔊 Judge voice</label></div>
+      <div class="judge-name">The judge <label><input type="checkbox" id="judgeVoice" checked> Read verdict aloud</label></div>
       <div class="bubble" id="verdict" aria-live="polite"></div>
       <div class="fallback-note" id="fbNote" hidden>The judge's AI is napping, so this is a backup verdict.</div>
     </div>
     <div class="actions">
-      <button type="button" class="primary" id="rematch">🔁 Rematch</button>
+      <button type="button" class="primary" id="rematch">Rematch</button>
       <button type="button" id="swap2">⇄ Swap sides</button>
     </div>
   </section>

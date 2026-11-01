@@ -228,7 +228,7 @@ function renderLeaderboard(posts) {
 function setPresenting(on) {
   document.body.classList.toggle("is-presenting", on);
   $("present").setAttribute("aria-pressed", String(on));
-  $("present").textContent = on ? "✕ Exit presenter mode" : "📽️ Presenter mode";
+  $("present").textContent = on ? "✕ Exit presenter mode" : "Presenter mode";
   setSort(on ? "new" : "top");
 }
 
@@ -268,7 +268,7 @@ async function loadStats() {
     const s = await res.json();
     const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
     // Seed posts don't count, so hide "0 larps" until the room has posted something.
-    const parts = s.posts ? [`🔥 ${plural(s.posts, "larp")} posted`] : [];
+    const parts = s.posts ? [`${plural(s.posts, "larp")} posted`] : [];
     if (s.delarps) parts.push(plural(s.delarps, "delarp"));
     if (s.battles) parts.push(plural(s.battles, "battle"));
     $("stats").textContent = parts.join(" · ");

@@ -10,8 +10,8 @@ const PLACEHOLDERS = {
 };
 
 const MODES = {
-  larp: { label: "What did you do today?", button: "Generate post", empty: "Tell us what you did first.", maxLength: 500 },
-  delarp: { label: "Paste a LinkedIn post", button: "Delarp it", empty: "Paste a LinkedIn post first.", maxLength: 3000 },
+  larp: { label: "What did you do today?", button: "Write my post", empty: "Tell us what you did first.", maxLength: 500 },
+  delarp: { label: "Paste a LinkedIn post", button: "Translate post", empty: "Paste a LinkedIn post first.", maxLength: 3000 },
 };
 
 // Clickable examples under the textarea. Delarp ones are full fake posts.
@@ -51,7 +51,7 @@ let mode = "larp";
 function renderInspo() {
   const list = mode === "delarp"
     ? INSPO.delarp
-    : [...INSPO.larp].sort(() => Math.random() - 0.5).slice(0, 4).map((t) => [t, t]);
+    : [...INSPO.larp].sort(() => Math.random() - 0.5).slice(0, 2).map((t) => [t, t]);
   $("inspo-chips").replaceChildren(...list.map(([label, text]) => {
     const chip = document.createElement("button");
     chip.type = "button";
@@ -63,7 +63,7 @@ function renderInspo() {
     });
     return chip;
   }));
-  $("inspo-label").textContent = mode === "delarp" ? "Try one:" : "Need inspo?";
+  $("inspo-label").textContent = mode === "delarp" ? "Try a sample" : "Borrow a line";
 }
 renderInspo();
 
@@ -104,16 +104,8 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
   });
 });
 
-document.querySelectorAll(".vibe-pill").forEach((pill) => {
-  pill.addEventListener("click", () => {
-    tone = pill.dataset.tone;
-    document.querySelectorAll(".vibe-pill").forEach((p) => {
-      const active = p === pill;
-      p.classList.toggle("is-active", active);
-      p.setAttribute("aria-pressed", String(active));
-    });
-  });
-});
+const voice = $("voice");
+voice.addEventListener("change", () => { tone = voice.value; });
 
 const LEVEL_NAMES = [
   "Almost normal", "Self-important", "Smug", "Full LinkedIn", "Dramatic",
@@ -285,7 +277,7 @@ const generate = (text, tone, level, previous) => {
 };
 
 const STATUS_LINES = [
-  "Synergizing...",
+  "Drafting the announcement…",
   "Leveraging your journey...",
   "Consulting a thought leader...",
   "Circling back...",
@@ -385,8 +377,7 @@ async function run(text, tasks, replaceItem = null) {
 }
 
 function vibeLabel(t) {
-  const pill = document.querySelector(`.vibe-pill[data-tone="${CSS.escape(t)}"]`);
-  return pill ? pill.textContent.trim() : t;
+  return Array.from(voice.options).find(option => option.value === t)?.textContent || t;
 }
 
 // req: {text, tone, level, showVibe, previous}
@@ -410,8 +401,8 @@ $("composer").addEventListener("submit", (e) => {
 $("try-all").addEventListener("click", () => {
   const text = $("text").value;
   const level = Number($("level").value);
-  const others = [...document.querySelectorAll(".vibe-pill")]
-    .map((p) => p.dataset.tone)
+  const others = [...voice.options]
+    .map(option => option.value)
     .filter((t) => t !== tone)
     .sort(() => Math.random() - 0.5)
     .slice(0, 3);
@@ -620,7 +611,7 @@ function renderCard(data, slot, req) {
 
   // Escalate: one level more cringe, rewriting this post, in place.
   const nextLevel = Math.min(req.level + 1, 10);
-  q(".escalate-btn").textContent = req.level >= 10 ? "📈 Escalate (max)" : `📈 Escalate to ${nextLevel}`;
+  q(".escalate-btn").textContent = req.level >= 10 ? "Escalate (max)" : `Escalate to ${nextLevel}`;
   q(".escalate-btn").addEventListener("click", () => {
     $("level").value = nextLevel;
     updateLevel();

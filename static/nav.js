@@ -56,7 +56,7 @@
    ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
    ["meta", { name: "mobile-web-app-capable", content: "yes" }],
    ["meta", { name: "apple-mobile-web-app-title", content: "LarpedIn" }],
-   ["meta", { name: "theme-color", content: "#0a66c2" }]
+   ["meta", { name: "theme-color", content: "#153e32" }]
   ].forEach(function (t) {
     var sel = t[0] + (t[1].rel ? '[rel="' + t[1].rel + '"]' : '[name="' + t[1].name + '"]');
     if (document.head.querySelector(sel)) return;
@@ -85,8 +85,8 @@
   brand.setAttribute("aria-label", "LarpedIn home");
   inner.appendChild(brand);
 
-  var chip = el("span", "lnav-chip", "parody");
-  chip.appendChild(el("span", "lnav-chip-long", " · not affiliated"));
+  var chip = el("span", "lnav-chip", "Parody network");
+
   chip.title = "Parody site. Not affiliated with any real professional network.";
   inner.appendChild(chip);
 
@@ -184,11 +184,11 @@
   var shown = 0;
   var order = NOTES.slice().sort(function () { return Math.random() - 0.5; });
   function toast() {
-    if (shown >= 4 || document.hidden) return;
+    if (document.hidden) return;
     var n = order[shown++ % order.length];
     var t = el("div", "lnav-toast");
     t.setAttribute("role", "status");
-    t.appendChild(el("span", "", n[0]));
+
     var body = el("div");
     body.appendChild(el("b", "", "LarpedIn notification"));
     body.appendChild(document.createTextNode(n[1]));
@@ -209,6 +209,9 @@
     document.body.appendChild(t);
     setTimeout(function () { t.remove(); }, n[2] ? 9000 : 6000);
   }
-  setTimeout(function () { toast(); setInterval(toast, 35000); }, 15000);
+  var notices = el("button", "lnav-link", "Inbox");
+  notices.type = "button";
+  notices.addEventListener("click", function () { shown %= order.length; toast(); });
+  links.appendChild(notices);
   }
 })();

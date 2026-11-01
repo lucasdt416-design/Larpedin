@@ -5,7 +5,7 @@
   .post-author, .post-headline, .post-meta, .parody-label, .post-body,
   .see-more, .badge with index.html. Top bar comes from nav.js.
 
-    .gallery-page      <body> class for this page; .is-presenting in presenter mode
+    .gallery-page      <body class="gallery-page"> class for this page; .is-presenting in presenter mode
                        (fullscreen projector view, also via gallery.html?present)
     .gallery-toolbar   row with live stats + presenter button
     .gallery-stats     "🔥 23 larps · 5 delarps · 2 battles" from /api/stats
@@ -38,17 +38,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LarpedIn Gallery</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>">
+  <link rel="icon" href="/icons/fold.svg">
   <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="/edition.css">
 </head>
 <body class="gallery-page">
   <main>
     <section class="intro">
-      <h1 class="intro-title">Hall of Larp</h1>
-      <p class="tagline">The most delusional posts, live, voted by you. <a class="intro-link" href="/">Make your own →</a></p>
+      <p class="dept-folio">05 / PUBLIC RECORD</p>
+    <h1 class="intro-title">Hall of Larp</h1>
+      <p class="tagline">The room’s most distinguished exaggerations. <a class="intro-link" href="/">Make your own →</a></p>
       <div class="gallery-toolbar">
         <p class="gallery-stats" id="stats" aria-live="polite"></p>
-        <button type="button" class="present-btn" id="present" aria-pressed="false">📽️ Presenter mode</button>
+        <button type="button" class="present-btn" id="present" aria-pressed="false">Presenter mode</button>
       </div>
     </section>
 
@@ -63,16 +65,16 @@
       <p class="error-banner" id="error" role="alert" hidden></p>
       <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboard-title" hidden>
         <div class="leaderboard-header">
-          <h2 class="leaderboard-title" id="leaderboard-title">🏆 Most cringe in the room</h2>
-          <a class="battle-link" id="battle-link" hidden>⚔️ Battle the top two</a>
+          <h2 class="leaderboard-title" id="leaderboard-title">On the leaderboard</h2>
+          <a class="battle-link" id="battle-link" hidden>Battle the top two</a>
         </div>
         <p class="leaderboard-empty" id="leaderboard-empty" hidden>Nobody from the room yet. Scan the code and claim the crown.</p>
         <ol class="leaderboard-list" id="leaderboard-list"></ol>
       </section>
       <p class="gallery-empty" id="empty" hidden>No posts yet. Scan the code and be the first to larp.</p>
       <div class="sort-toggle" role="group" aria-label="Sort posts">
-        <button type="button" class="sort-btn is-active" data-sort="top" aria-pressed="true">🔥 Top</button>
-        <button type="button" class="sort-btn" data-sort="new" aria-pressed="false">🆕 New</button>
+        <button type="button" class="sort-btn is-active" data-sort="top" aria-pressed="true">Top</button>
+        <button type="button" class="sort-btn" data-sort="new" aria-pressed="false">New</button>
       </div>
       <ol class="gallery-feed" id="feed" aria-live="polite"></ol>
     </section>

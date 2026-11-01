@@ -1,0 +1,108 @@
+/* The personnel edition. Paper, stamp ink and one highlighter. */
+:root {
+  --forest:#153e32; --paper:#f5f4ec; --lime:#daf49a; --rule:#cbd1c4;
+  --bg:var(--paper); --blue:var(--forest); --blue-hover:#0c3024; --blue-dark:#0c3024;
+  --blue-soft:#e6eddf; --pill:6px; --radius:8px;
+  --shadow:0 0 0 1px var(--rule); --shadow-lift:0 0 0 1px var(--forest);
+}
+body {background:var(--paper);color:#192d24;font-family:Arial,Helvetica,sans-serif}
+body .lnav {background:#fbfbf5;box-shadow:none;border-color:var(--rule)}
+body .lnav-in {max-width:1176px;padding:0 28px;height:62px;gap:16px}
+body .lnav-brand {gap:9px;font:700 25px/1 Arial,sans-serif;letter-spacing:-1.7px;color:var(--forest)}
+.lnav-brand::before {content:"";width:34px;height:34px;background:url('/icons/fold.svg') center/contain}
+body .lnav-chip {background:none;border:0;border-left:1px solid var(--rule);border-radius:0;font:10px/1.2 monospace;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;color:#546256}
+body .lnav-links {gap:8px;align-items:stretch}
+body .lnav-link {font:600 13px Arial,sans-serif;padding:0 10px;border-radius:0;min-width:0}
+body .lnav-link[aria-current=page] {color:var(--forest);border-color:var(--forest)}
+body .lnav-link:hover {background:#e9eee2}
+body .lnav-txt {display:block}
+body .lnav-ico {display:none}
+.studio {max-width:1176px;padding:24px 28px 60px}
+.mast {position:relative;isolation:isolate;display:flex;align-items:center;min-height:250px;overflow:hidden;border-radius:12px;background:var(--forest);color:var(--paper);padding:30px 42px}
+.mast-copy {z-index:1}
+.folio,.desk-label,.original small {font:600 10px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.11em}
+.mast .folio {color:var(--lime);margin:0 0 18px}
+.mast h1 {font:600 clamp(48px,5.4vw,74px)/.92 Arial,Helvetica,sans-serif;letter-spacing:-.065em;margin:0;color:var(--paper)}
+.mast h1 em {font:italic 1.04em/.94 Georgia,serif;letter-spacing:-.058em;color:var(--lime)}
+.mast-sub {font-size:15px;color:#e2e8da;margin:15px 0 0}
+.pass-art {height:103%;width:44%;object-fit:contain;position:absolute;right:1%;top:-1%}
+.desk {display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:28px;margin-top:24px}
+.desk-label {color:#536456;display:flex;justify-content:space-between;align-items:center;padding:0 0 10px;border-bottom:1px solid var(--rule);margin-bottom:12px}
+.desk-label span+span {font-size:9px;color:#627466}
+.studio .composer {padding:22px 24px;border-radius:8px;background:#fffefa;box-shadow:var(--shadow)}
+.studio .mode-toggle {padding:0;gap:22px;border-radius:0;background:none;border-bottom:1px solid var(--rule);display:flex;margin-bottom:18px}
+.studio .mode-btn {padding:0 0 9px;border:0;border-bottom:2px solid transparent;background:none;border-radius:0;box-shadow:none;color:#677268;font-size:14px}
+.studio .mode-btn.is-active {color:var(--forest);border-bottom-color:var(--forest);box-shadow:none}
+.studio .composer-label {font-size:19px;letter-spacing:-.035em}
+.studio .composer-input {background:#fafaf4;border:1px solid var(--rule);padding:13px;min-height:76px;border-radius:5px;font-size:16px}
+.studio .inspo {margin-top:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.studio .inspo-label {font-size:11px;color:#657067;margin:0}
+.studio .inspo-chips {display:inline-flex;gap:8px}
+.studio .inspo-chip {font-size:11px;padding:1px 0;border:0;background:none;box-shadow:none;color:var(--forest);text-decoration:underline;text-underline-offset:3px}
+.studio .larp-options {display:grid;grid-template-columns:1fr 1fr;gap:22px;border-top:1px solid #dde0d6;padding-top:14px;margin:14px 0}
+.voice-control {display:grid;gap:5px}
+.voice-control label,.studio .cringe-label {font:600 12px Arial,sans-serif;color:#35483c}
+.voice-control select {width:100%;font:14px Arial,sans-serif;padding:8px;background:white;border:1px solid var(--rule);border-radius:5px;color:var(--forest)}
+.studio .cringe {margin:0;gap:4px;align-self:center}
+.studio .cringe-value {font-size:10px;line-height:1.2;color:#46614e}
+.studio .cringe-slider {accent-color:var(--forest)}
+.studio .composer-actions {margin-top:15px}
+.studio .generate-btn {background:var(--forest);color:white;border-radius:5px;box-shadow:none;padding:10px 20px}
+.studio .generate-btn::after {content:'→';margin-left:5px}
+.studio .try-all-btn {border-radius:5px;box-shadow:none;color:var(--forest);background:#eaf0e4}
+.clipping {border-radius:8px;background:#e5ecda;border:1px solid #c4d0b9;padding:22px 24px;color:#1b392b}
+.clipping .folio {color:#486244;margin:0 0 22px}
+.byline {display:flex;align-items:center;gap:10px;margin:0}
+.byline b,.byline small {display:block}
+.byline small {font-size:12px;color:#495a4e}
+.monogram {display:grid;place-items:center;width:36px;height:36px;border:1px solid #a4b39d;border-radius:50%;font:italic 18px Georgia;background:#f1f3e6}
+.clipping blockquote {font:normal clamp(22px,2vw,30px)/1.18 Georgia,serif;letter-spacing:-.038em;margin:18px 0}
+.original {border-top:1px dashed #9baa93;padding-top:12px;font-size:14px}
+.original small {display:block;margin-bottom:4px;color:#53654f}
+.case-link {display:flex;justify-content:space-between;color:var(--forest);font-size:13px;padding:15px 2px;border-bottom:1px solid var(--rule)}
+.studio .hall-preview-list {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:12px}
+body .wrap>.card:first-child,body .gallery-page .intro {background:#fffefa}
+.wrap>.card:first-child {border-top:5px solid var(--forest);padding:clamp(18px,4vw,36px)}
+.wrap>.card:first-child h1,main>header h1,.gallery-page .intro-title {font:normal clamp(36px,5vw,56px)/1 Georgia,serif;letter-spacing:-.055em;color:var(--forest)}
+.wrap>.card:first-child h1::before,main>header:not(.mast) h1::before,.gallery-page .intro-title::before {content:"PERSONNEL DEPARTMENT";display:block;font:600 10px/1.5 monospace;letter-spacing:.12em;margin-bottom:14px;color:#5d715e}
+body .btn.primary,body .battle-link {background:var(--forest);border-radius:5px}
+body .btn,body .vote-btn {border-radius:5px}
+@media(max-width:760px){
+  .studio {padding:16px 16px 50px}
+  .desk {grid-template-columns:1fr;gap:22px}
+  .mast {min-height:215px;padding:25px}
+  .mast h1 {font-size:48px}
+  .mast-copy {max-width:63%}
+  .mast-sub {font-size:13px}
+  .pass-art {width:39%;right:0}
+  body .lnav-in {height:auto;gap:8px;padding:10px 16px 0;flex-wrap:wrap}
+  body .lnav-links {width:100%;justify-content:space-between;height:33px}
+  body .lnav-link {font-size:13px;padding:0 6px}
+}
+@media(max-width:480px){
+  .mast {min-height:200px;padding:20px}
+  .mast h1 {font-size:39px}
+  .mast .folio {font-size:8px;max-width:170px}
+  .pass-art {width:44%;right:-2%}
+  .studio .composer {padding:16px}
+  .studio .larp-options {gap:12px}
+  .studio .shortcut-hint {display:none}
+}
+.studio .mode-toggle {box-shadow:none}
+.badge::before {content:'◆';font-size:.7em}
+.dept-folio {font:600 10px/1.4 ui-monospace,monospace;letter-spacing:.12em;color:#536554;margin:0 0 16px}
+body .dept-folio+h1::before {display:none}
+.jobs-page .wrap,.profile-page .wrap {max-width:850px;padding-top:30px}
+.jobs-page .sub,.profile-page .sub {margin:8px 0 20px}
+.gallery-page .intro,.battle-page main>header {background:var(--forest);padding:clamp(20px,3vw,36px);border-radius:8px;text-align:left}
+.gallery-page .intro .intro-title,.battle-page main>header h1 {color:var(--paper)}
+.gallery-page .intro .tagline,.battle-page header .sub {color:#e7eadf}
+.gallery-page .intro-link,.gallery-page .intro .dept-folio,.battle-page .dept-folio {color:var(--lime)}
+.gallery-page .gallery-stats,.battle-page header .parody {color:#e2e9db}
+.gallery-page .intro .present-btn {background:var(--paper);color:var(--forest)}
+.battle-page {--a:#295740;--b:#8c442f;--a-tint:#e4ecda;--b-tint:#f3e4da}
+.battle-page .vs span {background:var(--lime);color:var(--forest);box-shadow:none;font:italic 26px Georgia}
+.battle-page .fight {background:var(--forest);border-radius:5px;font:600 17px Arial;letter-spacing:0;box-shadow:none}
+.battle-page .panel {padding:20px}
+.battle-page .panel.a {background:var(--a-tint)}
+.battle-page .panel.b {background:var(--b-tint)}
