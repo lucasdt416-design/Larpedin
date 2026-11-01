@@ -77,7 +77,8 @@
   .actions button.primary { background: var(--blue); color: #fff; }
   .swap { margin-top: 10px; font-size: .85rem; padding: 6px 14px; }
 
-  .burst { position: fixed; pointer-events: none; font-size: 1.8rem; z-index: 50; animation: fly 1.4s ease-out forwards; }
+  .burst { position: fixed; pointer-events: none; font-size: 1.8rem; animation: fly 1.4s ease-out forwards; z-index: 1100; }
+  #results { scroll-margin-top: 64px; }
   @keyframes fly { to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
 
   @media (min-width: 720px) {
