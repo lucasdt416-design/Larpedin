@@ -238,6 +238,32 @@ def delarp():
     return jsonify(truth=truth)
 
 
+TTS_URL = "https://api.groq.com/openai/v1/audio/speech"
+TTS_VOICES = {"troy", "hannah", "austin"}
+
+
+@app.post("/api/tts")
+def tts():
+    # Orpheus takes at most 200 characters per request, so the page sends one sentence at a time.
+    data, text = text_from_request(200)
+    if not text:
+        return jsonify(error="Nothing to say."), 400
+    voice = data.get("voice") if data.get("voice") in TTS_VOICES else "troy"
+    try:
+        r = requests.post(
+            TTS_URL,
+            headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
+            json={"model": "canopylabs/orpheus-v1-english", "input": text, "voice": voice, "response_format": "wav"},
+            timeout=30,
+        )
+        r.raise_for_status()
+    except (requests.RequestException, KeyError) as e:
+        detail = getattr(getattr(e, "response", None), "text", "")[:300]
+        app.logger.warning("TTS failed: %s %s", e, detail)
+        return jsonify(error="Voice unavailable, use the browser voice.", detail=detail), 502
+    return app.response_class(r.content, mimetype="audio/wav")
+
+
 @app.get("/api/stats")
 def stats():
     with LOCK:
