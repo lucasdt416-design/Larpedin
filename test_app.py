@@ -188,6 +188,10 @@ assert body["author"] == "urn:li:person:abc" and body["specificContent"]["com.li
 evil = c.get("/auth/linkedin/start?next=//evil.com")  # open redirect: next must stay on this site
 st2 = evil.location.split("state=")[1].split("&")[0]
 assert c.get(f"/auth/linkedin/callback?code=x&state={st2}").location == "/?linkedin=ok"
+for bad_next in ("/\t/evil.com", "//evil.com", "/\\evil.com", "https://evil.com", "/ok space"):
+    assert app.safe_next(bad_next) == "/", repr(bad_next)
+assert app.safe_next("/p/3?d=abc_-") == "/p/3?d=abc_-"
+assert c.post("/api/generate", data="x" * 70000, content_type="application/json").status_code == 413
 c.post("/api/linkedin/logout")
 assert c.post("/api/linkedin/post", json={"text": "x"}).status_code == 401
 app.requests.post, app.requests.get = real_post, app.requests.get

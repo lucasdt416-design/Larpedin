@@ -18,6 +18,7 @@ from flask import Flask, jsonify, redirect, request, send_file, send_from_direct
 from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__, static_folder="static", static_url_path="")
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024  # every endpoint truncates long text anyway
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 # Each model has its own free rate limit (~8K tokens/min, ~200K/day), so if one fails try the next.
@@ -799,7 +800,10 @@ def li_session():
 
 
 def safe_next(path):
-    return path if isinstance(path, str) and path.startswith("/") and not path.startswith("//") else "/"
+    # Printable ASCII only: Werkzeug drops tabs, so "/\t/evil.com" would become "//evil.com" (frontend review).
+    ok = (isinstance(path, str) and path.startswith("/") and not path.startswith("//")
+          and "\\" not in path and all(33 <= ord(ch) <= 126 for ch in path))
+    return path if ok else "/"
 
 
 @app.get("/auth/linkedin/start")
@@ -839,6 +843,8 @@ def li_callback():
         return redirect(nxt + sep + "linkedin=failed")
     sid = secrets.token_urlsafe(32)
     with LOCK:
+        for old in [k for k, v in LI_SESSIONS.items() if v["exp"] < time.time()]:
+            del LI_SESSIONS[old]
         LI_SESSIONS[sid] = {"token": token, "sub": me["sub"], "name": me.get("name", ""),
                             "exp": time.time() + min(int(tok.json().get("expires_in", 3600)), 86400)}  # privacy page: 24 h max
     resp = redirect(nxt + sep + "linkedin=ok")
