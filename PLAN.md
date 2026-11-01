@@ -110,6 +110,16 @@ Returns `{"posts": 12, "profiles": 3, "battles": 1, "delarps": 4}` since the las
 - `battle.html`: Larp Battle, two people compete and an AI judge roasts them.
 - `nav.js`: a shared top nav. Lucas, please add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html`.
 
+## Style guide (match the new pages)
+
+Lucas styles `index.html` and `gallery.html`. The new pages (`/p/<id>`, `/profile.html`, `/battle.html`) use these values. Use the same ones so the site looks like one product.
+
+- Page background `#f4f2ee`. Cards are white with an 8px radius and `box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04)`.
+- Font: `-apple-system, system-ui, "Segoe UI", Roboto, sans-serif`. Body text `#191919`, secondary text `#666`.
+- Primary blue `#0a66c2`, hover `#004182`. Primary buttons are pills (border-radius 999px), white bold text. Secondary buttons are white with a 1px blue border.
+- Accent red `#e62b1e` (TEDx and battle), gold `#e7a33e` (badges).
+- `nav.js` adds the top bar with the brand and the "parody" chip. Remove the old `.app-header` brand row when you add `nav.js`, or the page shows two brand bars.
+
 ## Requests for Lucas (small, in your files)
 
 - After a post is generated, show a "Share link" button that copies `location.origin + "/p/" + data.id`.
