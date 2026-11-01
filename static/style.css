@@ -113,10 +113,14 @@ main {
 /* Ghost: grey text, background on hover. */
 .copy-btn,
 .link-btn,
+.x-btn,
+.delarp-btn,
 .download-btn,
 .regen-btn { color: var(--muted); }
 .copy-btn:hover:not(:disabled),
 .link-btn:hover:not(:disabled),
+.x-btn:hover:not(:disabled),
+.delarp-btn:hover:not(:disabled),
 .download-btn:hover:not(:disabled),
 .regen-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
 

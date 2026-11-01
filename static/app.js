@@ -27,6 +27,16 @@ const INSPO = {
     "I drank water today",
     "I fixed the printer by turning it off and on",
     "I said \"you too\" when the waiter said enjoy your meal",
+    "I finally cleaned my room",
+    "I took a nap at 3pm",
+    "I left someone on read",
+    "I ordered the same coffee as yesterday",
+    "I walked my dog around the block",
+    "I skipped leg day",
+    "I updated my phone",
+    "I asked ChatGPT to write my essay",
+    "I watered my plant",
+    "I stayed in bed until noon on a Sunday",
   ],
   delarp: [
     ["Layoff post", "Thrilled to announce that after 6 incredible years, I'm embarking on a new chapter! 🚀 Grateful for every lesson. Open to new opportunities. #OpenToWork #Grateful"],
@@ -302,7 +312,7 @@ function setBusy(busy) {
   const btn = $("generate");
   btn.disabled = busy;
   $("try-all").disabled = busy;
-  document.querySelectorAll(".regen-btn, .escalate-btn").forEach((b) => (b.disabled = busy));
+  document.querySelectorAll(".regen-btn, .escalate-btn, .delarp-btn").forEach((b) => (b.disabled = busy));
   btn.classList.toggle("is-loading", busy);
   btn.textContent = busy ? (mode === "delarp" ? "Delarping..." : "Larping...") : MODES[mode].button;
   $("result").classList.toggle("is-loading", busy);
@@ -590,6 +600,8 @@ function renderCard(data, slot, req) {
     // share_url carries the post in ?d=, so the link survives server restarts.
     const shareUrl = location.origin + (data.share_url || `/p/${data.id}`);
     q(".link-btn").addEventListener("click", () => copyText(shareUrl, "Link copied!"));
+    q(".x-btn").hidden = false;
+    q(".x-btn").addEventListener("click", () => shareToX(data.post, shareUrl));
   }
   q(".download-btn").addEventListener("click", (e) => downloadCard(q(".post-card"), e.currentTarget, data.post));
   if (data.id != null) {
@@ -597,6 +609,14 @@ function renderCard(data, slot, req) {
     q(".gallery-link").hidden = false;
   }
   q(".regen-btn").addEventListener("click", () => run(req.text, [generateTask(req)], item));
+
+  // Full circle: feed the generated post back through Delarp.
+  q(".delarp-btn").addEventListener("click", () => {
+    if ($("generate").disabled) return;
+    document.querySelector('.mode-btn[data-mode="delarp"]').click();
+    $("text").value = data.post;
+    $("composer").requestSubmit();
+  });
 
   // Escalate: one level more cringe, rewriting this post, in place.
   const nextLevel = Math.min(req.level + 1, 10);
@@ -752,6 +772,13 @@ async function downloadCard(card, btn, post) {
   } finally {
     btn.disabled = false;
   }
+}
+
+// X has a 280 character limit, so post a short excerpt plus the share link.
+function shareToX(post, url) {
+  const excerpt = post.length > 180 ? post.slice(0, 177).trimEnd() + "…" : post;
+  const params = new URLSearchParams({ text: `${excerpt}\n\n#LarpedIn`, url });
+  window.open(`https://x.com/intent/tweet?${params}`, "_blank", "noopener");
 }
 
 async function shareToLinkedIn(post) {
