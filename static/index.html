@@ -31,7 +31,11 @@
     .error-banner      inline error message (hidden when empty)
 
   RESULT
-    .result            section that holds the generated card(s)
+    .result            section that holds the generated card(s);
+                       .is-loading while requests are in flight
+    .status-line       rotating funny loading text ("Synergizing...")
+    .skeleton          placeholder card shown while a post loads
+    .skeleton-header / .skeleton-avatar / .skeleton-line (.is-short)
     .results-grid      container for cards (1 card now; 4 for "Try all 4 vibes")
     .result-item       one card + its actions
     .post-card         the fake feed post (<article>)
@@ -111,10 +115,24 @@
 
     <p class="error-banner" id="error" role="alert" hidden></p>
 
-    <section class="result" id="result" aria-live="polite" aria-label="Your post" hidden>
-      <div class="results-grid" id="results"></div>
+    <section class="result" id="result" aria-label="Your post" hidden>
+      <p class="status-line" id="status" role="status"></p>
+      <div class="results-grid" id="results" aria-live="polite"></div>
     </section>
   </main>
+
+  <template id="skeleton-template">
+    <div class="skeleton" aria-hidden="true">
+      <div class="skeleton-header">
+        <span class="skeleton-avatar"></span>
+        <span class="skeleton-line is-short"></span>
+      </div>
+      <span class="skeleton-line"></span>
+      <span class="skeleton-line"></span>
+      <span class="skeleton-line"></span>
+      <span class="skeleton-line is-short"></span>
+    </div>
+  </template>
 
   <template id="post-card-template">
     <div class="result-item">

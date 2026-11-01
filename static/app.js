@@ -165,27 +165,77 @@ async function generate(text, tone, level) {
   return data;
 }
 
-$("composer").addEventListener("submit", async (e) => {
-  e.preventDefault();
+const STATUS_LINES = [
+  "Synergizing...",
+  "Leveraging your journey...",
+  "Consulting a thought leader...",
+  "Circling back...",
+  "Adding a humble brag...",
+  "Disrupting the narrative...",
+  "Crying in the Uber...",
+  "Aligning stakeholders...",
+];
+
+function startStatusLines() {
+  let i = 0;
+  $("status").textContent = STATUS_LINES[0];
+  const timer = setInterval(() => {
+    i = (i + 1) % STATUS_LINES.length;
+    $("status").textContent = STATUS_LINES[i];
+  }, 1500);
+  return () => {
+    clearInterval(timer);
+    $("status").textContent = "";
+  };
+}
+
+function setBusy(busy) {
   const btn = $("generate");
-  if (btn.disabled) return;
+  btn.disabled = busy;
+  btn.classList.toggle("is-loading", busy);
+  btn.textContent = busy ? "Larping..." : "Generate post";
+  $("result").classList.toggle("is-loading", busy);
+  $("result").setAttribute("aria-busy", String(busy));
+}
+
+// One request per tone, in parallel. Each gets a skeleton that its card replaces.
+async function run(text, tones, level) {
+  if ($("generate").disabled) return;
   stopListening();
   clearError();
-  btn.disabled = true;
-  btn.classList.add("is-loading");
-  btn.textContent = "Larping...";
-  try {
-    const data = await generate($("text").value, tone, Number($("level").value));
-    $("results").replaceChildren();
-    $("result").hidden = false;
-    renderCard(data, $("results"));
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    btn.disabled = false;
-    btn.classList.remove("is-loading");
-    btn.textContent = "Generate post";
+  if (!text.trim()) {
+    showError("Tell us what you did first.");
+    $("text").focus();
+    return;
   }
+  setBusy(true);
+  const stopStatus = startStatusLines();
+  $("results").replaceChildren();
+  $("result").hidden = false;
+  const slots = tones.map(() => {
+    const slot = $("skeleton-template").content.firstElementChild.cloneNode(true);
+    $("results").append(slot);
+    return slot;
+  });
+  try {
+    await Promise.all(tones.map(async (t, i) => {
+      try {
+        renderCard(await generate(text, t, level), slots[i]);
+      } catch (err) {
+        slots[i].remove();
+        showError(err.message);
+      }
+    }));
+  } finally {
+    stopStatus();
+    if (!$("results").children.length) $("result").hidden = true;
+    setBusy(false);
+  }
+}
+
+$("composer").addEventListener("submit", (e) => {
+  e.preventDefault();
+  run($("text").value, [tone], Number($("level").value));
 });
 
 // ---------- Profile (name + headline, saved locally) ----------
@@ -269,8 +319,8 @@ const FAMOUS_LIKERS = [
   "Mark Cuban", "Taylor Swift", "Your Ex", "Richard Branson", "Gary Vee",
 ];
 
-// data: response from /api/generate. Uses headline/comments if the backend sends them.
-function renderCard(data, container) {
+// data: response from /api/generate. The new card replaces `slot` (a skeleton).
+function renderCard(data, slot) {
   const item = $("post-card-template").content.firstElementChild.cloneNode(true);
   const q = (sel) => item.querySelector(sel);
 
@@ -347,7 +397,7 @@ function renderCard(data, container) {
 
   q(".share-btn").addEventListener("click", () => shareToLinkedIn(data.post));
 
-  container.append(item);
+  slot.replaceWith(item);
 
   // Only offer "see more" if the clamped text actually overflows.
   seeMore.hidden = body.scrollHeight <= body.clientHeight + 1;
