@@ -15,6 +15,8 @@ Live demo: https://larpedin-p1fd.onrender.com
 - **LarpedIn Jobs:** you describe who you really are, and the app shows absurd job listings that "match" you. Easy Apply instantly reveals an offer or a very grateful rejection letter.
 - **Hall of Larp:** a live gallery of everyone's posts with upvotes and a QR code, so a whole room can join from their phones.
 - **Delarp extension:** a Chrome extension. You select text on any page, right-click, and choose "Delarp this". See `extension/README.md`.
+- **Post to real LinkedIn:** you sign in with LinkedIn and post your larp for real. A confirmation window always shows the exact text first, and you can edit it. Without LinkedIn keys, the button opens the LinkedIn share box instead.
+- **Install it:** on a phone, choose "Add to Home Screen" and LarpedIn opens like an app. There is also a native iOS app in `ios/` (see `ios/README.md`).
 - **Extras:** voice input, image download of a post card, fake notifications, and a LarpedIn Premium offer for $0 forever.
 
 ## How it works
@@ -24,6 +26,9 @@ Live demo: https://larpedin-p1fd.onrender.com
 - Reliability: if a model hits its rate limit or fails, the request moves to the next model (`gpt-oss-120b`, then `gpt-oss-20b`, then `qwen3.8-27b`). If all three fail, the user still gets a canned post, never an error page. A burst of 12 requests at once all returned real posts in 3 to 5 seconds.
 - Link preview images are drawn on the server with Pillow.
 - The gallery, profiles and stats live in memory. A restart clears them. This keeps the app free to run with no database.
+- Share links carry the post itself in the URL (compressed), so they keep working after the free server restarts and forgets everything in memory.
+- A GitHub Actions job pings the server every 10 minutes, so it does not fall asleep.
+- A word filter keeps slurs off the projector wall. The Hall starts with 12 seed posts after every restart.
 - Total running cost: $0. Render free plan, Groq free plan.
 
 ## Run locally
@@ -45,6 +50,8 @@ GROQ_API_KEY=your_key flask --app app run
 4. Open http://localhost:5000.
 
 Do not commit the key. If you put it in a `.env` file, git ignores that file. Without a key, the app still runs and returns canned posts.
+
+To turn on real LinkedIn posting, create an app at https://www.linkedin.com/developers/apps. Add the products "Sign In with LinkedIn using OpenID Connect" and "Share on LinkedIn". Add `<your site>/auth/linkedin/callback` as a redirect URL. Then set `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`.
 
 ## Tests
 
