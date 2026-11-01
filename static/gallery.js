@@ -37,19 +37,23 @@ if (window.QRCode) {
 
 // ---------- Votes (one per post per browser) ----------
 
+// Stored as {boot, ids}. Post ids restart at 1 when the server restarts, so the
+// saved votes only count while /api/health reports the same boot id.
 function loadVoted() {
   try {
-    return new Set(JSON.parse(localStorage.getItem(VOTED_KEY)) || []);
+    const saved = JSON.parse(localStorage.getItem(VOTED_KEY)) || {};
+    return { boot: saved.boot ?? null, ids: new Set(saved.ids || []) };
   } catch {
-    return new Set();
+    return { boot: null, ids: new Set() };
   }
 }
 
-const voted = loadVoted();
+const votes = loadVoted();
+const voted = votes.ids;
 
 function saveVoted() {
   try {
-    localStorage.setItem(VOTED_KEY, JSON.stringify([...voted]));
+    localStorage.setItem(VOTED_KEY, JSON.stringify({ boot: votes.boot, ids: [...voted] }));
   } catch {
     // Storage blocked; votes still count on the server.
   }
@@ -96,7 +100,7 @@ function buildCard(p) {
   const card = $("gallery-card-template").content.firstElementChild.cloneNode(true);
   const q = (sel) => card.querySelector(sel);
 
-  const name = FAKE_NAMES[p.id % FAKE_NAMES.length];
+  const name = p.name || FAKE_NAMES[p.id % FAKE_NAMES.length];
   q(".avatar").textContent = TONE_EMOJI[p.tone] || "💼";
   q(".post-author").textContent = name;
   q(".post-headline").textContent = p.headline || "Anonymous Larper";
@@ -217,7 +221,27 @@ async function loadStats() {
   }
 }
 
+// After a server restart, ids are reused for different posts: drop stale votes and cards.
+async function checkBoot() {
+  try {
+    const res = await fetch("/api/health", { cache: "no-store", signal: AbortSignal.timeout(10000) });
+    const { boot } = await res.json();
+    if (boot == null || boot === votes.boot) return;
+    if (votes.boot !== null) {
+      for (const card of cards.values()) card.remove();
+      cards.clear();
+      firstLoad = true; // don't announce the whole reloaded wall as "new"
+    }
+    votes.boot = boot;
+    voted.clear();
+    saveVoted();
+  } catch {
+    // Health check failed; the gallery poll will show the error.
+  }
+}
+
 async function poll() {
+  await checkBoot();
   try {
     const res = await fetch("/api/gallery", { cache: "no-store", signal: AbortSignal.timeout(10000) });
     if (!res.ok) throw new Error(`Gallery error (${res.status})`);

@@ -266,8 +266,13 @@ async function postJSON(url, body, requiredField) {
 }
 
 // previous: an earlier post to escalate (backend makes it even more delusional).
-const generate = (text, tone, level, previous) =>
-  postJSON("/api/generate", previous ? { text, tone, level, previous } : { text, tone, level }, "post");
+// name: the saved profile name, so the gallery and share pages show who posted.
+const generate = (text, tone, level, previous) => {
+  const body = { text, tone, level };
+  if (profile.name !== DEFAULT_PROFILE.name) body.name = profile.name;
+  if (previous) body.previous = previous;
+  return postJSON("/api/generate", body, "post");
+};
 
 const STATUS_LINES = [
   "Synergizing...",
@@ -345,7 +350,11 @@ async function run(text, tasks, replaceItem = null) {
       try {
         await task(slots[i]);
       } catch (err) {
-        if (multi) {
+        if (replaceItem) {
+          // Regenerate/Escalate failed: keep the card the user already had.
+          slots[i].replaceWith(replaceItem);
+          showError(err.message);
+        } else if (multi) {
           // Other cards are still useful; show the error in this card's place.
           const errItem = $("card-error-template").content.firstElementChild.cloneNode(true);
           errItem.querySelector(".post-vibe").textContent = task.label || "";
@@ -577,7 +586,9 @@ function renderCard(data, slot, req) {
   q(".copy-btn").addEventListener("click", () => copyText(data.post, "Copied!"));
   if (data.id != null) {
     q(".link-btn").hidden = false;
-    q(".link-btn").addEventListener("click", () => copyText(`${location.origin}/p/${data.id}`, "Link copied!"));
+    // share_url carries the post in ?d=, so the link survives server restarts.
+    const shareUrl = location.origin + (data.share_url || `/p/${data.id}`);
+    q(".link-btn").addEventListener("click", () => copyText(shareUrl, "Link copied!"));
   }
   q(".download-btn").addEventListener("click", (e) => downloadCard(q(".post-card"), e.currentTarget, data.post));
   if (data.id != null) {
