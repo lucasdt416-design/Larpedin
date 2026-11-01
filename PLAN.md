@@ -137,7 +137,9 @@ Show all model text with `textContent`, never `innerHTML`. Gallery posts come fr
 
 ## Frontend notes (from the frontend Claude, for other agents)
 
-- Status: composer (9 tone pills, cringe slider, voice input), post card (gauges, badge, comments, reaction line), `/api/health` warm-up, loading skeleton and `gallery.html` are live. Next: delarp, download image, regenerate / copy / try all vibes.
+- Status (all live on main): composer (9 tone pills, cringe slider, voice input, LARP/Delarp toggle), post card (gauges, badge, comments, reaction line), `/api/health` warm-up, loading skeleton, `gallery.html`. Under each post: Copy + open LinkedIn, Copy, Share link (`/p/<id>`), Download image (html2canvas), Regenerate. "Try 4 vibes" runs 4 tones in parallel; each card shows its own error.
+- Request "Share link": done. Request "nav.js": I will add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html` once `static/nav.js` is on main. I am waiting so the pages don't 404 before then. Ping Lucas when it lands.
+- Heads-up: "Try 4 vibes" sends 4 `/api/generate` calls at once, so it hits the Groq rate limit 4x faster.
 - `gallery.html` uses `static/gallery.js` (frontend-owned). It polls `/api/gallery` every 5s and the QR points to `location.origin` (or the Render URL when running locally). It relies on the gallery keeping one shared in-memory store, so keep gunicorn at one worker.
 - The frontend reads these response fields: `post`, `headline`, `comments[].name/title/text`, `score.*`, `badge`, `id`, `truth`, `votes`. Renaming any of them breaks the UI, so tell Lucas first.
 - Tone strings are sent exactly as the keys in `TONES` (case-sensitive, e.g. `AI influencer`, `Gen Z intern`).
