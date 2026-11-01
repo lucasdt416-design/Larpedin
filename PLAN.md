@@ -350,3 +350,26 @@ The headline should follow the same idea: a plausible inflated title earned from
 
 Mohammad supplied his own tie logo (plain tie, rounded collar, no sparkle). It now replaces the tie-and-sparkle icon in `static/icons/` (favicon, icon-192, icon-512, maskable, apple-touch, logo) and the iOS app icon. In `wordmark.png`, only the left tile changed, and the "Larpedin" text is untouched. File names are the same, so no HTML change was needed. Please do not regenerate these icons.
 
+
+### Request from Lucas for Mohammad's Claude: "Real openings, larped fit" on the Jobs page
+
+Lucas wants real job postings matched to the user, with a larped reason why they're "perfect" and a link to the real posting. Example: a psychology new grad gets NVIDIA, Senior AI Researcher, because "you spent 4 years studying neural networks (the biological kind)". The data source is verified live today, free and with no keys:
+
+- Greenhouse: `GET https://boards-api.greenhouse.io/v1/boards/<slug>/jobs` returns `jobs[].title`, `location.name`, `absolute_url`. Working slugs: stripe (746 jobs), anthropic (674), databricks (909), airbnb (202), reddit (163), figma (140), discord (41).
+- Lever: `GET https://api.lever.co/v0/postings/palantir?mode=json` returns `text`, `categories.location`, `hostedUrl` (301 jobs). `netflix` did not respond.
+- NVIDIA (Workday, unofficial): `POST https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs` with `{"limit":20,"offset":0,"searchText":""}` returned 200. Treat it as optional: short timeout, skip on failure.
+
+**Backend (suggested):**
+1. `fetch_openings()`: pull the boards in parallel (timeout 6s each) and keep English titles in US, Remote or major hubs. Cache everything in memory for 30 minutes as `{id: {title, company, location, url}}`. If a refresh fails, keep the stale cache. Warm it at startup so the demo never waits.
+2. New endpoint `POST /api/jobs/real` taking `{text}` and returning `{jobs: [{title, company, location, url, pitch, stretch}], fallback}`. Send Groq the user's background plus about 40 sampled openings as `id: title @ company (location)`, mixing teams and seniority and favouring famous companies.
+3. Schema: `picks[]: {id, pitch, stretch(0-100)}`. **Map `id` back to the cached posting server-side and drop unknown ids. Never take a URL or company name from the model.** Allowlist URL hosts (greenhouse.io, the company careers domains returned by the API, lever.co, myworkdayjobs.com).
+4. Prompt idea: "You are a wildly optimistic career coach. The user describes their real background. From the REAL openings below, pick the 4 most ambitious-but-arguable matches. For each, write a 2-sentence pitch to the user ('You...') that reframes their actual experience as exactly what the role needs, with specific technically-true spins, completely straight-faced. Only use ids from the list."
+5. Fallback: if there's no cache at all, return `fallback: true` with the existing parody listings, so the page still works on stage.
+
+**Frontend (`jobs.html`), keeping real separate from gag (Lucas's rule):**
+- Put it in its own section or tab ("Real openings, larped fit"), apart from the parody listings.
+- Every real card gets a visible label: **"Real job. Larped qualifications. Apply as yourself."**
+- Show the title, company and location as plain text (no company logos), the pitch, and a link "View the real posting ↗" (`target="_blank" rel="noopener noreferrer"`).
+- **No Easy Apply button and no generated letter on real jobs.** The fake offer/rejection letters stay only on the parody listings, so nothing looks like we apply on someone's behalf.
+
+**Timing:** this is the riskiest late addition, because it depends on outside APIs during the demo. Aim to be done before the ~5:30pm feature freeze. If it's not solid by then, ship it behind the fallback or skip it.
