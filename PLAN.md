@@ -233,3 +233,12 @@ From now on, I will post any change that affects your files in this section befo
 
 - The post card still says "Your Name" with "YN" by default. Suggestion: on the first Generate, if the saved name is still "Your Name", show a small inline field ("What should we call you, visionary?") and save it to `larpedin.profile`. `profile.html`, `battle.html` and `jobs.html` already read that key.
 
+### Note for the redesign agent (GPT 6-astra), from Mohammad's Claude
+
+Welcome. Three agents work in this repo at the same time, so please read "Files and owners" above before editing.
+- Lucas's agent owns `index.html`, `app.js`, `gallery.html`, `gallery.js` and `style.css`. Mohammad's Claude owns `app.py`, `post.html`, `profile.html`, `battle.html`, `jobs.html`, `nav.js`, `linkedin.js`, `privacy.html`, `extension/` and `ios/`.
+- For a redesign, the safest path is CSS variables and classes. Keep element ids, the API field names and the `{{og_title}}`/`{{og_description}}`/`{{og_image}}` placeholders in `post.html` and `profile.html` (the server fills them).
+- `nav.js` draws the shared top bar and adds the manifest and icon tags. If the logo changes, replace `static/icons/*.png` and `static/icons/logo.png` (keep the file names). The iOS icon is `ios/LarpedIn/Assets.xcassets/AppIcon.appiconset/icon.png`.
+- Do not use LinkedIn's logo or a boxed "in".
+- Pull before you push. Every push redeploys Render.
+

@@ -254,13 +254,105 @@ let voice = null, timers = [], utter = null, opener = null;
 // Orpheus (Groq) is preferred; null = untested, false = failed once this session, so skip it.
 let ttsWorks = null, run = 0, audio = null;
 const aborts = new Set();
-function loadVoice() {
-  const vs = speechSynthesis.getVoices();
-  // Prefer on-device voices: Chrome's network "Google" voices cut out after ~15s and never fire onend.
-  const en = vs.filter(v => /^en/i.test(v.lang)), local = en.filter(v => v.localService);
-  voice = local.find(v => /Daniel|Alex|Samantha/i.test(v.name)) || local.find(v => /^en[-_]US/i.test(v.lang)) || local[0] || en[0] || null;
+// Best English voice: Premium/Enhanced, then named favourites, then any en-*.
+// (Network "Google" voices cut out after ~15s, but we speak one short sentence at a time.)
+function bestVoice() {
+  const en = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang));
+  for (const re of [/Premium|Enhanced/i, /Daniel/, /Samantha/, /Alex/, /Google UK English Male/, /Google US English/]) {
+    const v = en.find(v => re.test(v.name));
+    if (v) return v;
+  }
+  return en[0] || null;
 }
+function loadVoice() { voice = bestVoice(); }
 if ("speechSynthesis" in window) { loadVoice(); speechSynthesis.addEventListener("voiceschanged", loadVoice); }
+
+// Browser voice, sentence by sentence from char `from`, with a dramatic pause between sentences
+// (longer after "!" or "?"). o.onWord(i) gets absolute char indexes into text for highlighting.
+function speakLines(text, from, gen, o) {
+  const lines = [...text.slice(from).matchAll(/[\s\S]*?(?:[.!?]+["')\]]*(?=\s|$)|\n|$)/g)].filter(m => m[0].trim());
+  const next = k => {
+    if (gen !== run) return;
+    if (k >= lines.length) return o.onDone && o.onDone();
+    const s = lines[k][0], at = from + lines[k].index;
+    // Kept in a global so Chrome doesn't garbage-collect it mid-speech (which drops onboundary/onend).
+    const u = utter = new SpeechSynthesisUtterance(s);
+    u.rate = o.rate; u.pitch = o.pitch; u.lang = "en-US";
+    if (voice) { u.voice = voice; u.lang = voice.lang; }
+    if (o.onWord) {
+      o.onWord(at + s.search(/\S/)); // light up the first word even if onboundary never fires
+      u.onboundary = e => { if (!e.name || e.name === "word") o.onWord(at + e.charIndex); };
+    }
+    u.onend = () => setTimeout(() => next(k + 1), /[!?]["')\]]*\s*$/.test(s) ? 700 : 350);
+    speechSynthesis.speak(u);
+  };
+  next(0);
+}
+
+// ---- Stage sounds: Web Audio only (no files, no network). One context, made inside the tap for iOS. ----
+let actx = null, master = null, noise = null;
+function initSound() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  if (!actx) {
+    actx = new AC();
+    noise = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate); // 2 s of white noise, reused
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (actx.state === "suspended") actx.resume();
+}
+function bus() { // master gain (peak ~0.5); stopSounds() swaps in a fresh one
+  if (!master) { master = actx.createGain(); master.gain.value = 0.5; master.connect(actx.destination); }
+  return master;
+}
+function stopSounds() {
+  if (!master) return;
+  const old = master; master = null;
+  old.gain.setTargetAtTime(0, actx.currentTime, 0.01);
+  setTimeout(() => old.disconnect(), 100);
+}
+// Linear ramps through [[seconds, value], ...] starting at t0.
+function env(p, t0, pts) { p.setValueAtTime(pts[0][1], t0 + pts[0][0]); pts.slice(1).forEach(([t, v]) => p.linearRampToValueAtTime(v, t0 + t)); }
+function filt(type, f, q) { const b = actx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; }
+
+// Warm low A-major swell (3 detuned saws through an opening lowpass). Returns its length in ms.
+function sting() {
+  if (!actx) return 0;
+  const t = actx.currentTime + 0.02, g = actx.createGain(), lp = filt("lowpass", 250, 1);
+  env(lp.frequency, t, [[0, 250], [0.9, 1600], [1.5, 400]]);
+  env(g.gain, t, [[0, 0], [0.8, 0.22], [1.5, 0]]);
+  lp.connect(g).connect(bus());
+  [[110, -7], [138.59, 5], [164.81, -3]].forEach(([f, cents]) => {
+    const o = actx.createOscillator();
+    o.type = "sawtooth"; o.frequency.value = f; o.detune.value = cents;
+    o.connect(lp); o.start(t); o.stop(t + 1.55);
+  });
+  return 1500;
+}
+
+// Crowd applause: a soft hiss bed plus ~100 short band-passed noise claps, rising then fading.
+function applause(dur = 3.6) {
+  if (!actx) return;
+  const t0 = actx.currentTime + 0.02, out = bus();
+  const level = x => Math.max(0, Math.min(1, x / 0.6, (dur - x) / 1.6));
+  const bed = actx.createBufferSource(), bg = actx.createGain();
+  bed.buffer = noise; bed.loop = true;
+  env(bg.gain, t0, [[0, 0], [0.6, 0.08], [dur - 1.6, 0.07], [dur, 0]]);
+  bed.connect(filt("bandpass", 1800, 0.6)).connect(bg).connect(out);
+  bed.start(t0); bed.stop(t0 + dur);
+  for (let i = 0; i < 160; i++) {
+    const x = Math.random() * dur;
+    if (Math.random() > level(x)) continue; // denser in the middle
+    const s = actx.createBufferSource(), g = actx.createGain(), t = t0 + x;
+    s.buffer = noise;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3 + Math.random() * 0.4, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + Math.random() * 0.05);
+    s.connect(filt("bandpass", 900 + Math.random() * 1800, 1 + Math.random() * 1.5)).connect(g).connect(out);
+    s.start(t, Math.random() * 1.8, 0.1);
+  }
+}
 
 // Split into [start, end, text] chunks of at most max chars: at sentence ends, else commas, else spaces.
 function chunks(t, max) {
@@ -296,6 +388,7 @@ async function tts(text, voiceName, ms) {
 const SILENT_WAV = "data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAACAgICAgICAgA==";
 function unlockAudio() {
   if (!audio) { audio = new Audio(SILENT_WAV); audio.play().catch(() => {}); }
+  initSound();
   if ("speechSynthesis" in window) {
     const u = new SpeechSynthesisUtterance(" ");
     u.volume = 0;
@@ -316,6 +409,7 @@ function playBlob(blob) {
 
 function stopSpeech() {
   run++;
+  stopSounds();
   aborts.forEach(a => a.abort());
   if (audio) {
     const end = audio.onended; // resolves a pending playBlob
@@ -346,6 +440,7 @@ function present() {
   stopSpeech();
   unlockAudio(); // still inside the TEDx button tap
   const gen = run;
+  const intro = new Promise(r => setTimeout(r, sting())); // speech waits for the sting; TTS fetch doesn't
   // Strip emoji so the voice doesn't read "clapping hands sign"; same length keeps charIndex aligned.
   const clean = text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
   let cur = null;
@@ -357,24 +452,16 @@ function present() {
   };
 
   // Browser voice from char offset `from` to the end (fallback path).
-  const speakFrom = from => {
-    // Kept in a global so Chrome doesn't garbage-collect it mid-speech (which drops onboundary/onend).
-    const u = utter = new SpeechSynthesisUtterance(clean.slice(from));
-    u.rate = 0.9; u.pitch = 0.9; u.lang = "en-US";
-    if (voice) u.voice = voice;
-    u.onboundary = e => {
-      if (e.name && e.name !== "word") return;
-      speech.classList.remove("plain");
-      let i = words.length - 1;
-      while (i > 0 && words[i][0] > e.charIndex + from) i--;
-      if (cur) { cur.classList.remove("now"); }
-      for (let j = 0; j <= i; j++) words[j][1].classList.add("said");
-      cur = words[i] && words[i][1];
-      if (cur) { cur.classList.add("now"); cur.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" }); }
-    };
-    u.onend = finish;
-    speechSynthesis.speak(u);
+  const onWord = at => {
+    speech.classList.remove("plain");
+    let i = words.length - 1;
+    while (i > 0 && words[i][0] > at) i--;
+    if (cur) { cur.classList.remove("now"); }
+    for (let j = 0; j <= i; j++) words[j][1].classList.add("said");
+    cur = words[i] && words[i][1];
+    if (cur) { cur.classList.add("now"); cur.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" }); }
   };
+  const speakFrom = from => intro.then(() => speakLines(clean, from, gen, { rate: 0.9, pitch: 0.9, onWord, onDone: finish }));
 
   const TAGS = ["[dramatic] ", "[dramatic] ", "[excited] ", "[dramatic] ", "[dramatic] ", "[whisper] "];
   const parts = chunks(clean, 189); // 200-char API limit minus the longest tag
@@ -387,6 +474,7 @@ function present() {
     let next = say(0);
     for (let k = 0; k < parts.length; k++) {
       const blob = await next;
+      await intro;
       if (gen !== run) return;
       const [s, e] = parts[k];
       if (!blob) return fallback(s);
@@ -408,6 +496,7 @@ function present() {
 function ovation() {
   const label = el("div", "ovation-label", "standing ovation");
   stage.append(label);
+  applause();
   if (reduced) return;
   for (let i = 0; i < 40; i++) {
     timers.push(setTimeout(() => {
