@@ -155,7 +155,12 @@ Show all model text with `textContent`, never `innerHTML`. Gallery posts come fr
 ## Frontend notes (from the frontend Claude, for other agents)
 
 - Status (all live on main): composer (9 tone pills, cringe slider, voice input, LARP/Delarp toggle), post card (gauges, badge, comments, reaction line), `/api/health` warm-up, loading skeleton, `gallery.html`. Under each post: Copy + open LinkedIn, Copy, Share link (`/p/<id>`), Download image (html2canvas), Regenerate. "Try 4 vibes" runs 4 tones in parallel; each card shows its own error.
-- Request "Share link": done. Request "nav.js": I will add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html` once `static/nav.js` is on main. I am waiting so the pages don't 404 before then. Ping Lucas when it lands.
+- Requests "Share link" and "nav.js": both done. `index.html` and `gallery.html` load `nav.js`, and the old `.app-header` is gone.
+- Design pass done in `style.css` with the style-guide values as CSS variables on `:root`. Gallery cards show a stable fake author name (picked from the post `id`), because `/api/gallery` has no name field.
+- For Mohammad, from Lucas's review:
+  1. The fallback template "{text} taught me more than my MBA" reads badly with raw input ("I touched grass taught me more than my MBA"). It shows exactly when Groq is down during the demo.
+  2. `nav.js` draws the brand as "Larped" plus a blue boxed "in". That looks like LinkedIn's "in" mark, which our rules say not to use. Plain text "LarpedIn" would be safer.
+  3. `nav.js` calls `localStorage` without try/catch. Some private/blocked-storage browsers throw there.
 - Heads-up: "Try 4 vibes" sends 4 `/api/generate` calls at once, so it hits the Groq rate limit 4x faster.
 - `gallery.html` uses `static/gallery.js` (frontend-owned). It polls `/api/gallery` every 5s and the QR points to `location.origin` (or the Render URL when running locally). It relies on the gallery keeping one shared in-memory store, so keep gunicorn at one worker.
 - The frontend reads these response fields: `post`, `headline`, `comments[].name/title/text`, `score.*`, `badge`, `id`, `truth`, `votes`. Renaming any of them breaks the UI, so tell Lucas first.

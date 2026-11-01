@@ -4,10 +4,11 @@
   States are classes, never inline styles.
 
   LAYOUT
-    .app-header        top bar
-    .brand             "LarpedIn" text wordmark (no LinkedIn logo/assets)
-    .tagline           one-line pitch under the wordmark
-    .nav-link          link to the live gallery (gallery.html)
+    (top bar comes from nav.js: .lnav*, styled inside nav.js)
+    .intro             heading block above the composer
+    .intro-title       big headline
+    .tagline           one-line pitch under the headline
+    .intro-link        link to the gallery (Hall of Larp)
 
   COMPOSER
     .composer          the input card (form); .is-delarp in Delarp mode
@@ -27,6 +28,7 @@
     .cringe-label      "Cringe level" label
     .cringe-slider     <input type="range"> 1-10
     .cringe-value      live text like "Level 7: Delusional"
+    .composer-actions  row with Generate, Try 4 vibes and the shortcut hint
     .generate-btn      submit button; .is-loading while waiting,
                        .is-warming while the server wakes up (/api/health)
     .try-all-btn       "Try 4 vibes": current vibe + 3 random, 4 cards at once
@@ -93,13 +95,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="app-header">
-    <span class="brand">LarpedIn</span>
-    <p class="tagline">Tell us what you actually did. We'll make it LinkedIn-worthy.</p>
-    <a class="nav-link" href="gallery.html">Live gallery →</a>
-  </header>
-
   <main>
+    <section class="intro">
+      <h1 class="intro-title">Do nothing. Post like a visionary.</h1>
+      <p class="tagline">Tell us what you actually did. We'll make it LinkedIn-worthy. <a class="intro-link" href="gallery.html">See the Hall of Larp →</a></p>
+    </section>
+
     <form class="composer" id="composer">
       <div class="mode-toggle" role="group" aria-label="Mode">
         <button type="button" class="mode-btn is-active" data-mode="larp" aria-pressed="true"><span aria-hidden="true">🎭</span> LARP it</button>
@@ -133,9 +134,11 @@
       </div>
       </div>
 
-      <button type="submit" class="generate-btn is-warming" id="generate" disabled>Warming up the hustle...</button>
-      <button type="button" class="try-all-btn" id="try-all" disabled>🎲 Try 4 vibes</button>
-      <span class="shortcut-hint" id="shortcut-hint">Ctrl + Enter</span>
+      <div class="composer-actions">
+        <button type="submit" class="generate-btn is-warming" id="generate" disabled>Warming up the hustle...</button>
+        <button type="button" class="try-all-btn" id="try-all" disabled>🎲 Try 4 vibes</button>
+        <span class="shortcut-hint" id="shortcut-hint">Ctrl + Enter</span>
+      </div>
     </form>
 
     <p class="error-banner" id="error" role="alert" hidden></p>
@@ -208,7 +211,7 @@
             <span class="gauge-value">0</span>
           </div>
           <div class="gauge" data-key="overall" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Overall cringe">
-            <span class="gauge-label">Overall cringe</span>
+            <span class="gauge-label">Overall</span>
             <span class="gauge-track"><span class="gauge-fill"></span></span>
             <span class="gauge-value">0</span>
           </div>
@@ -235,6 +238,7 @@
     </div>
   </template>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+  <script src="nav.js" defer></script>
   <script src="app.js"></script>
 </body>
 </html>

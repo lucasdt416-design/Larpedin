@@ -16,6 +16,13 @@ const TONE_EMOJI = {
   "Gen Z intern": "💅",
 };
 
+// The gallery API has no author names, so each post gets a stable fake one.
+const FAKE_NAMES = [
+  "Chad Synergy", "Karen Pivot", "Brayden Disrupt", "Ashleigh Leverage", "Tyler Bandwidth",
+  "Madison Runway", "Kyle Ecosystem", "Jordan Blockchain", "Taylor Thoughtleader", "Morgan Hustle",
+  "Derek Paradigm", "Skyler Scale", "Brittany Bootstrap", "Logan Learnings", "Avery Alignment",
+];
+
 // ---------- QR code ----------
 
 // Point at whatever URL this page is served from, except when running locally.
@@ -89,7 +96,9 @@ function buildCard(p) {
   const card = $("gallery-card-template").content.firstElementChild.cloneNode(true);
   const q = (sel) => card.querySelector(sel);
 
+  const name = FAKE_NAMES[p.id % FAKE_NAMES.length];
   q(".avatar").textContent = TONE_EMOJI[p.tone] || "💼";
+  q(".post-author").textContent = name;
   q(".post-headline").textContent = p.headline || "Anonymous Larper";
   q(".gallery-tone").textContent = `${p.tone} · level ${p.level}`;
   q(".gallery-original").textContent = `What they actually did: ${p.text}`;

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <!--
   LarpedIn live gallery — class reference for the designer (style.css).
-  Shares .app-header, .brand, .tagline, .error-banner, .avatar, .post-headline,
-  .post-meta, .parody-label, .post-body, .see-more, .badge with index.html.
+  Shares .intro, .intro-title, .tagline, .intro-link, .error-banner, .avatar,
+  .post-author, .post-headline, .post-meta, .parody-label, .post-body,
+  .see-more, .badge with index.html. Top bar comes from nav.js.
 
     .gallery-page      <body> class for this page
-    .nav-link          link between the composer and the gallery
     .gallery-layout    two columns: QR panel + feed
     .qr-panel          "Scan to post" box
     .qr-code           element the QR image is drawn into
@@ -28,13 +28,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="gallery-page">
-  <header class="app-header">
-    <a class="brand" href="/">LarpedIn</a>
-    <p class="tagline">Live gallery: the most delusional posts, voted by you.</p>
-    <a class="nav-link" href="/">Make your own →</a>
-  </header>
+  <main>
+    <section class="intro">
+      <h1 class="intro-title">Hall of Larp</h1>
+      <p class="tagline">The most delusional posts, live, voted by you. <a class="intro-link" href="/">Make your own →</a></p>
+    </section>
 
-  <main class="gallery-layout">
+    <div class="gallery-layout">
     <aside class="qr-panel" aria-label="Scan to post">
       <h2>Scan to post</h2>
       <div class="qr-code" id="qr" role="img" aria-label="QR code to open LarpedIn"></div>
@@ -46,6 +46,7 @@
       <p class="gallery-empty" id="empty" hidden>No posts yet. Scan the code and be the first to larp.</p>
       <ol class="gallery-feed" id="feed" aria-live="polite"></ol>
     </section>
+    </div>
   </main>
 
   <template id="gallery-card-template">
@@ -53,6 +54,7 @@
       <header class="post-header">
         <div class="avatar" aria-hidden="true"></div>
         <div class="post-author-block">
+          <span class="post-author"></span>
           <span class="post-headline"></span>
           <span class="post-meta"><span class="gallery-tone"></span> · <span class="parody-label">Parody</span></span>
         </div>
@@ -69,6 +71,7 @@
   </template>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="nav.js" defer></script>
   <script src="gallery.js"></script>
 </body>
 </html>
