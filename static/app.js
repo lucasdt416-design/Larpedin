@@ -745,7 +745,11 @@ async function downloadCard(card, btn, post) {
         clone.querySelector(".see-more").hidden = true;
         const footer = doc.createElement("p");
         footer.className = "export-footer";
-        footer.textContent = `LarpedIn · parody · ${location.host}`;
+        const brand = doc.createElement("img");
+        brand.src = "/icons/wordmark.png";
+        brand.alt = "LarpedIn";
+        brand.width = 96;
+        footer.append(brand, ` · parody · ${location.host}`);
         clone.append(footer);
       },
     });

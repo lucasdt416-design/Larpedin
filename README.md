@@ -1,4 +1,4 @@
-# LarpedIn
+<h1><img src="static/icons/wordmark.png" alt="LarpedIn" width="230"></h1>
 
 LarpedIn is a parody professional network. You type something ordinary that you did. The app turns it into a self-important post, profile and comment section, like the ones on LinkedIn. The hackathon theme was "help people larp". LarpedIn helps you larp as a thought leader.
 

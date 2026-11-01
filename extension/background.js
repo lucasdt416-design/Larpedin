@@ -65,7 +65,9 @@ function showCard(state, msg, siteUrl) {
         a:hover { text-decoration: underline; }`);
     const card = h("div", "card"); card.setAttribute("role", "dialog"); card.setAttribute("aria-label", "Delarp");
     const top = h("div", "top"); const x = h("button", "x", "×"); x.setAttribute("aria-label", "Close");
-    top.append(h("span", "brand", "Delarp"), h("span", "chip", "parody"), x);
+    const icon = h("img"); icon.src = chrome.runtime.getURL("icons/icon48.png");
+    icon.alt = "LarpedIn"; icon.width = icon.height = 24;
+    top.append(icon, h("span", "brand", "Delarp"), h("span", "chip", "parody"), x);
     const row = h("div", "row"); const link = h("a", "", "Made with LarpedIn");
     link.target = "_blank"; link.rel = "noopener";
     row.append(h("button", "copy", "Copy"), link);

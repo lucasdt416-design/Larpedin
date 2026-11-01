@@ -9,7 +9,7 @@ body {background:var(--paper);color:#212d36;font-family:Arial,Helvetica,sans-ser
 body .lnav {background:#f2fbff;box-shadow:none;border-color:var(--rule)}
 body .lnav-in {max-width:1176px;padding:0 28px;height:62px;gap:16px}
 body .lnav-brand {gap:9px;font:700 25px/1 Arial,sans-serif;letter-spacing:-1.7px;color:var(--brand)}
-.lnav-brand::before {content:"";width:34px;height:34px;background:url('/icons/fold.svg') center/contain}
+.lnav-brand img {display:block;width:157px;height:auto}
 body .lnav-chip {background:none;border:0;border-left:1px solid var(--rule);border-radius:0;font:10px/1.2 monospace;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;color:#53626b}
 body .lnav-links {gap:8px;align-items:stretch}
 body .lnav-link {font:600 13px Arial,sans-serif;padding:0 10px;border-radius:0;min-width:0}

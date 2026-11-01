@@ -702,7 +702,10 @@ def card_png(name, headline, body, tag):
     if tag:
         d.rounded_rectangle((80, 520, 120 + font(size=26).getlength(tag), 566), radius=23, fill="#0a66c2")
         d.text((100, 543), tag, font=font(size=26), fill="white", anchor="lm")
-    d.text((1120, 543), "LarpedIn (parody)", font=font(size=24), fill="#999999", anchor="rm")
+    with Image.open(os.path.join(app.static_folder, "icons", "wordmark.png")) as logo:
+        logo.thumbnail((180, 40), Image.Resampling.LANCZOS)
+        img.paste(logo, (1120 - logo.width, 543 - logo.height // 2), logo)
+    d.text((1120, 573), "PARODY", font=font(size=12), fill="#666666", anchor="rm")
     buf = io.BytesIO()
     img.save(buf, "PNG")
     buf.seek(0)

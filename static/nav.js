@@ -79,8 +79,11 @@
   nav.setAttribute("aria-label", "Main");
   var inner = el("div", "lnav-in");
 
-  // Plain-text wordmark: no boxed "in", which would imitate LinkedIn's logo.
-  var brand = el("a", "lnav-brand", "LarpedIn");
+  var brand = el("a", "lnav-brand");
+  var logo = el("img");
+  logo.src = "/icons/wordmark.png";
+  logo.alt = "LarpedIn";
+  brand.appendChild(logo);
   brand.href = "/";
   brand.setAttribute("aria-label", "LarpedIn home");
   inner.appendChild(brand);
