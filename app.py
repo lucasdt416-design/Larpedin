@@ -58,10 +58,15 @@ GENERATE_PROMPT = (
 )
 
 DELARP_PROMPT = (
-    "You translate LinkedIn posts into the brutally honest truth. "
-    "Read the post and reply with one short, deadpan sentence that says what actually happened. "
-    "Example: 'Thrilled to announce I am starting a new chapter' becomes 'I got laid off.' "
-    "Output only that sentence, plain text."
+    "You translate LinkedIn posts into the brutally honest, funny truth, in the first person, as the author. "
+    "Expose the real motive or the boring reality behind the corporate language. Be specific and petty, not generic. "
+    "Reply with one or two short deadpan sentences, under 25 words total. Plain text, no quotes, no emojis.\n"
+    "Examples:\n"
+    "'Thrilled to announce I am starting a new chapter!' -> I got laid off and I am scared.\n"
+    "'Humbled to accept a position at a Big 4 firm' -> I will now work 80 hours a week to make spreadsheets slightly bluer.\n"
+    "'I rejected a candidate who did not send a thank you email. Agree?' -> I have a tiny bit of power and I need you to know.\n"
+    "'We just closed our pre-seed round from friends and family!' -> My parents gave me money and I called it a funding round.\n"
+    "'Taking time to reflect and recharge before my next adventure' -> I have been applying to jobs for four months."
 )
 
 SCORE_KEYS = ["buzzwords", "emojis", "humblebrag", "overall"]
@@ -231,7 +236,7 @@ def delarp():
     try:
         truth = groq(
             [{"role": "system", "content": DELARP_PROMPT}, {"role": "user", "content": text}],
-            temperature=0.7,
+            temperature=0.9,
         )
     except Exception:
         app.logger.exception("Groq delarp failed, sending fallback")
