@@ -452,6 +452,28 @@ async function speakVerdict(text) {
     ttsWorks = true;
   }
 }
+
+// Prefill from the Hall of Larp ("Battle the top two" links to ?a=<id>&b=<id>), or the saved name.
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const ids = [q.get("a"), q.get("b")];
+  if (ids[0] && ids[1]) {
+    const posts = await Promise.all(ids.map(id =>
+      fetch("/api/post/" + encodeURIComponent(id)).then(r => (r.ok ? r.json() : null)).catch(() => null)));
+    posts.forEach((p, i) => {
+      if (!p) return;
+      const k = i ? "B" : "A";
+      $("name" + k).value = (p.name || "").slice(0, 40);
+      $("text" + k).value = (p.text || "").slice(0, 300);
+    });
+    if (posts.every(Boolean)) $("fight").focus();
+    return;
+  }
+  try {
+    const n = (JSON.parse(localStorage.getItem("larpedin.profile")) || {}).name;
+    if (n && n !== "Your Name" && !$("nameA").value) $("nameA").value = n.slice(0, 40);
+  } catch {}
+})();
 </script>
 </body>
 </html>
