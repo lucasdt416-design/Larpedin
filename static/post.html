@@ -176,6 +176,10 @@ function render(p) {
   post = p;
   const frag = document.getElementById("tpl").content.cloneNode(true);
   $(frag, ".headline").textContent = p.headline || "";
+  const who = (p.name || "").trim() || "A LarpedIn Visionary";
+  $(frag, ".name").textContent = who;
+  $(frag, ".avatar").textContent = p.name ? initials(p.name) : "LV";
+  document.querySelector(".speaker").textContent = who;
   const body = $(frag, ".body"), more = $(frag, ".more");
   body.textContent = p.post || "";
   if ((p.post || "").length > 220 || (p.post || "").split("\n").length > 5) {

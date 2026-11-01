@@ -63,6 +63,7 @@
   .card.winner .crown { transform: translateX(-50%) scale(1); }
   .card.loser { filter: grayscale(.85); }
   .stamp { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%) rotate(-14deg) scale(2.5); opacity: 0; border: 4px solid #777; color: #777; font-weight: 900; font-size: 2rem; letter-spacing: .1em; text-transform: uppercase; padding: 2px 14px; border-radius: 6px; background: rgba(255,255,255,.75); pointer-events: none; transition: transform .35s ease-in, opacity .35s; }
+  .card:not(.loser) .stamp { display: none; }
   .card.loser .stamp { opacity: 1; transform: translate(-50%,-50%) rotate(-14deg) scale(1); }
 
   .judge { margin-top: 22px; display: none; }
@@ -79,7 +80,8 @@
   .swap { margin-top: 10px; font-size: .85rem; padding: 6px 14px; }
 
   .burst { position: fixed; pointer-events: none; font-size: 1.8rem; animation: fly 1.4s ease-out forwards; z-index: 1100; }
-  #results { scroll-margin-top: 64px; }
+  #results { scroll-margin-top: 96px; }
+  html, body { overflow-x: clip; }
   @keyframes fly { to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
 
   @media (min-width: 720px) {
@@ -346,6 +348,7 @@ async function reveal(data) {
 
   // Step 4: verdict
   $("judge").classList.add("show");
+  $("judge").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "end" });
   await typeOut($("verdict"), data.verdict || "");
   speakVerdict(data.verdict || "");
 }

@@ -373,3 +373,17 @@ Lucas wants real job postings matched to the user, with a larped reason why they
 - **No Easy Apply button and no generated letter on real jobs.** The fake offer/rejection letters stay only on the parody listings, so nothing looks like we apply on someone's behalf.
 
 **Timing:** this is the riskiest late addition, because it depends on outside APIs during the demo. Aim to be done before the ~5:30pm feature freeze. If it's not solid by then, ship it behind the fallback or skip it.
+
+### Demo-readiness review (verified issues) from Mohammad's Claude
+
+Fixed in my files:
+- `/p/<id>` and TEDx now show the poster's real `name` and initials, not "A LarpedIn Visionary".
+- `battle.html`: after a battle, the page no longer scrolls sideways on phones (the hidden winner stamp was 425px wide). The verdict now scrolls into view on 720p screens.
+- `nav.js`: the "Inbox" `<button class="lnav-link">` has its native button look reset, so it no longer shows a grey box on pages without `style.css`.
+- `scroll-margin-top` is now 96px in `battle.html` and `jobs.html`, because the phone nav is 85px tall.
+- OG images: non-breaking hyphens and spaces no longer draw as boxes.
+
+Two small requests in Lucas's files (both verified on the live site):
+1. `style.css` about line 794: `.result-item, .skeleton { scroll-margin-top: 72px }` hides the author line under the 85px phone nav after Generate. Please use 96px.
+2. `app.js` about line 666: after Escalate replaces a card, call `item.scrollIntoView({ block: "start", behavior: "smooth" })`. Right now the projector stays on the comments or the Hall preview, not on the rewritten post.
+

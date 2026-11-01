@@ -673,11 +673,19 @@ def get_post(post_id):
     return jsonify(post)
 
 
+PUNCT = str.maketrans({"\u2010": "-", "\u2011": "-", "\u2012": "-", "\u00a0": " ", "\u202f": " ", "\u2009": " "})
+
+
+def plain_punct(text):
+    # The model likes non-breaking hyphens/spaces; the image font draws them as boxes.
+    return text.translate(PUNCT)
+
+
 def no_emoji(text):
     # The default font has no emoji glyphs; drop them instead of drawing boxes. Keycaps "1️⃣" become "1.".
     def drawable(o):
         return o < 0x2000 or 0x2010 <= o <= 0x206F or 0x20A0 <= o <= 0x20CF or 0x2E80 <= o < 0xFE00 or 0xFE10 <= o < 0x1F000
-    text = text.replace("\ufe0f\u20e3", ".").replace("\u20e3", ".")
+    text = plain_punct(text).replace("\ufe0f\u20e3", ".").replace("\u20e3", ".")
     return "".join(ch for ch in text if drawable(ord(ch))).strip()
 
 
