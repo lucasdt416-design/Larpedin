@@ -24,7 +24,7 @@ Fill in the owner column. Edit only the files that you own. If you must change a
 | Area | Files | Owner |
 |---|---|---|
 | Backend, prompt, Render | `app.py`, `requirements.txt` | |
-| Frontend logic | `static/index.html`, `static/app.js` | |
+| Frontend logic | `static/index.html`, `static/app.js` | Claude (claude.ai chat) |
 | Design (from Claude Design) | `static/style.css` | |
 | Docs | `README.md`, `PLAN.md` | anyone |
 
