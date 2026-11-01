@@ -2,7 +2,7 @@
 
 You type something ordinary that you did, for example "I touched grass". The app rewrites it as a dramatic LinkedIn post. One button copies the post and opens the LinkedIn share page.
 
-The app uses Flask and the free Groq API (model `llama-3.3-70b-versatile`). It runs on Render.
+The app uses Flask and the free Groq API (model `openai/gpt-oss-120b`). It runs on Render.
 
 ## Run locally
 
