@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{og_title}}</title>
+<meta name="description" content="{{og_description}}">
+<meta property="og:title" content="{{og_title}}">
+<meta property="og:description" content="{{og_description}}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{{og_image}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{og_image}}">
+<meta name="twitter:title" content="{{og_title}}">
+<meta name="twitter:description" content="{{og_description}}">
+<meta name="theme-color" content="#0a66c2">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f4f2ee; color: rgba(0,0,0,.9); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: #0a66c2; }
+  .top { background: #fff; border-bottom: 1px solid #e0dfdc; padding: 10px 16px; display: flex; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 5; }
+  .brand { font-weight: 800; font-size: 20px; color: #0a66c2; text-decoration: none; letter-spacing: -.5px; }
+  .tag { font-size: 11px; font-weight: 600; color: #666; border: 1px solid #ccc; border-radius: 99px; padding: 1px 8px; }
+  main { max-width: 560px; margin: 16px auto 40px; padding: 0 12px; }
+  .card { background: #fff; border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04); margin-bottom: 12px; }
+  .pad { padding: 16px; }
+  .author { display: flex; gap: 10px; align-items: flex-start; }
+  .avatar { flex: none; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg,#0a66c2,#5aa0e6); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: 17px; }
+  .avatar.sm { width: 36px; height: 36px; font-size: 13px; background: linear-gradient(135deg,#915907,#e7a33e); }
+  .name { font-weight: 600; }
+  .muted { color: rgba(0,0,0,.6); font-size: 13px; }
+  .follow { margin-left: auto; color: #0a66c2; font-weight: 600; background: none; border: 0; font-size: 15px; cursor: pointer; padding: 0; }
+  .body { white-space: pre-wrap; word-wrap: break-word; margin: 12px 0 0; }
+  .body.clamp { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+  .more { background: none; border: 0; color: rgba(0,0,0,.6); font: inherit; cursor: pointer; padding: 0; float: right; }
+  .more:hover { color: #0a66c2; text-decoration: underline; }
+  .reacts { display: flex; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid #e8e8e8; }
+  .actions { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px; }
+  .btn { flex: 1 1 auto; min-height: 44px; border: 0; background: none; border-radius: 4px; font: 600 14px system-ui, sans-serif; color: rgba(0,0,0,.6); cursor: pointer; padding: 8px 10px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn:hover { background: rgba(0,0,0,.06); }
+  .btn.primary { background: #0a66c2; color: #fff; border-radius: 99px; }
+  .btn.primary:hover { background: #004182; }
+  .btn.outline { border: 1px solid #0a66c2; color: #0a66c2; border-radius: 99px; }
+  .btn.tedx { background: #e62b1e; color: #fff; border-radius: 99px; }
+  .btn.tedx:hover { background: #b81f15; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .comment { display: flex; gap: 8px; margin-top: 12px; }
+  .bubble { background: #f2f2f2; border-radius: 0 8px 8px 8px; padding: 8px 12px; flex: 1; }
+  .bubble p { margin: 4px 0 0; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .bar { margin: 8px 0; }
+  .bar .row { display: flex; justify-content: space-between; font-size: 13px; text-transform: capitalize; }
+  .track { height: 8px; background: #e8e8e8; border-radius: 99px; overflow: hidden; margin-top: 3px; }
+  .fill { height: 100%; width: 0; background: #0a66c2; border-radius: 99px; transition: width .9s ease; }
+  .fill.overall { background: linear-gradient(90deg,#e7a33e,#e62b1e); }
+  .badge { display: inline-block; margin-top: 10px; background: #fff4e0; color: #915907; border: 1px solid #f0c47a; border-radius: 99px; padding: 4px 12px; font-weight: 700; font-size: 13px; }
+  .votes { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .votes strong { font-size: 22px; }
+  .cta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cta .tedx { grid-column: 1 / -1; }
+  .gone { text-align: center; padding: 40px 20px; }
+  .gone .big { font-size: 48px; }
+  .skel { height: 14px; background: #eee; border-radius: 4px; margin: 10px 0; }
+  .foot { text-align: center; font-size: 12px; color: rgba(0,0,0,.5); }
+
+  /* TEDx stage */
+  #stage { position: fixed; inset: 0; z-index: 50; background: radial-gradient(ellipse 60% 55% at 50% 35%, rgba(255,240,210,.22), rgba(0,0,0,0) 70%), #0b0b0b; color: #fff; display: none; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 64px 20px 120px; }
+  #stage.on { display: flex; }
+  #stage::after { content: ""; position: absolute; left: 50%; bottom: -60px; transform: translateX(-50%); width: min(120vw, 900px); height: 160px; border-radius: 50%; background: radial-gradient(ellipse at center, #c8231a 0%, #8c120c 60%, #5a0a06 100%); box-shadow: 0 -10px 60px rgba(230,43,30,.35); }
+  .tedtag { position: absolute; top: 16px; left: 16px; font-weight: 900; font-size: 20px; letter-spacing: -.5px; }
+  .tedtag b { color: #e62b1e; }
+  .tedtag span { font-weight: 300; }
+  #closeStage { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 99px; padding: 10px 16px; font: 600 14px system-ui, sans-serif; cursor: pointer; z-index: 2; }
+  #speech { position: relative; z-index: 1; max-width: 760px; max-height: 100%; overflow-y: auto; font-size: clamp(20px, 4.2vw, 34px); line-height: 1.35; font-weight: 600; white-space: pre-wrap; text-align: center; text-shadow: 0 2px 20px rgba(0,0,0,.6); }
+  #speech .w { color: rgba(255,255,255,.35); transition: color .15s; }
+  #speech .w.said { color: rgba(255,255,255,.85); }
+  #speech .w.now { color: #fff; background: #e62b1e; border-radius: 4px; box-shadow: 0 0 0 3px #e62b1e; }
+  #speech.plain .w { color: #fff; }
+  .speaker { position: relative; z-index: 1; margin-top: 18px; font-size: 13px; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: 2px; }
+  .ovation { position: absolute; z-index: 3; bottom: 40px; font-size: 34px; animation: rise 3s ease-out forwards; pointer-events: none; }
+  .ovation-label { position: absolute; z-index: 3; top: 40%; font-size: clamp(26px, 6vw, 48px); font-weight: 900; animation: pop .5s ease-out; text-align: center; }
+  @keyframes rise { to { transform: translateY(-90vh) rotate(25deg); opacity: 0; } }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .fill, #speech .w { transition: none; }
+    .ovation { display: none; }
+    .ovation-label { animation: none; }
+  }
+</style>
+<script src="/nav.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">LarpedIn</a>
+  <span class="tag">parody</span>
+</header>
+
+<main id="main">
+  <div class="card pad" aria-busy="true">
+    <div class="skel" style="width:40%"></div><div class="skel"></div><div class="skel"></div><div class="skel" style="width:70%"></div>
+  </div>
+</main>
+
+<template id="tpl">
+  <article class="card">
+    <div class="pad">
+      <div class="author">
+        <div class="avatar" aria-hidden="true">LV</div>
+        <div>
+          <div class="name">A LarpedIn Visionary</div>
+          <div class="muted headline"></div>
+          <div class="muted">3h • 🌐</div>
+        </div>
+        <button class="follow" type="button">+ Follow</button>
+      </div>
+      <div class="body clamp"></div>
+      <button class="more" type="button" hidden>...see more</button>
+      <div style="clear:both"></div>
+    </div>
+    <div class="reacts muted"><span class="reactline"></span><span class="ccount"></span></div>
+    <div class="pad comments" style="padding-top:4px"></div>
+  </article>
+
+  <section class="card pad">
+    <h2>Cringe report</h2>
+    <div class="bars"></div>
+    <span class="badge"></span>
+  </section>
+
+  <section class="card pad votes">
+    <div><strong class="vcount">0</strong> <span class="muted">upvotes</span></div>
+    <button class="btn primary upvote" type="button">👍 Upvote</button>
+  </section>
+
+  <section class="card pad cta">
+    <button class="btn outline copy" type="button">🔗 Copy link</button>
+    <a class="btn outline" href="/">✍️ Make your own</a>
+    <button class="btn tedx" type="button">🎤 Present at TEDx</button>
+  </section>
+  <p class="foot">LarpedIn is a parody. No careers were harmed.</p>
+</template>
+
+<div id="stage" role="dialog" aria-modal="true" aria-label="TEDx presentation">
+  <div class="tedtag"><b>TEDx</b><span>LarpedIn</span></div>
+  <button id="closeStage" type="button">✕ Close</button>
+  <div id="speech"></div>
+  <div class="speaker">A LarpedIn Visionary</div>
+</div>
+
+<script>
+const FAMOUS = ["Bill Gates", "Oprah", "Elon Musk", "Satya Nadella", "Your Mom", "Gary Vee", "Taylor Swift", "Sam Altman", "Mark Cuban", "Your Old Manager"];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const $ = (root, sel) => root.querySelector(sel);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const initials = s => (s || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "?";
+const id = (location.pathname.match(/\/p\/(\d+)/) || [])[1];
+const main = document.getElementById("main");
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let post = null;
+
+function gone() {
+  main.replaceChildren();
+  const c = el("div", "card gone");
+  c.append(el("div", "big", "🌤️"), el("h2", null, "This post went back to being a normal day"),
+    el("p", "muted", "Posts reset when the server restarts. Probably for the best."));
+  const a = el("a", "btn primary", "Larp a new one");
+  a.href = "/";
+  c.append(a);
+  main.append(c);
+}
+
+function render(p) {
+  post = p;
+  const frag = document.getElementById("tpl").content.cloneNode(true);
+  $(frag, ".headline").textContent = p.headline || "";
+  const body = $(frag, ".body"), more = $(frag, ".more");
+  body.textContent = p.post || "";
+  if ((p.post || "").length > 220 || (p.post || "").split("\n").length > 5) {
+    more.hidden = false;
+    more.onclick = () => { body.classList.remove("clamp"); more.remove(); };
+  } else body.classList.remove("clamp");
+
+  $(frag, ".follow").onclick = e => { e.target.textContent = "✓ Following"; };
+  const n = (1000 + Math.floor(Math.random() * 9000)).toLocaleString();
+  $(frag, ".reactline").textContent = `👏❤️💡 ${pick(FAMOUS)} and ${n} others`;
+  const comments = p.comments || [];
+  $(frag, ".ccount").textContent = comments.length ? `${comments.length} comment${comments.length > 1 ? "s" : ""}` : "";
+  const cbox = $(frag, ".comments");
+  for (const c of comments) {
+    const row = el("div", "comment");
+    const b = el("div", "bubble");
+    b.append(el("div", "name", c.name), el("div", "muted", c.title), el("p", null, c.text));
+    row.append(el("div", "avatar sm", initials(c.name)), b);
+    cbox.append(row);
+  }
+  if (!comments.length) cbox.remove();
+
+  const bars = $(frag, ".bars"), fills = [];
+  for (const k of ["buzzwords", "emojis", "humblebrag", "overall"]) {
+    const v = Math.max(0, Math.min(100, Number((p.score || {})[k]) || 0));
+    const bar = el("div", "bar"), row = el("div", "row"), track = el("div", "track"), fill = el("div", "fill" + (k === "overall" ? " overall" : ""));
+    row.append(el("span", null, k), el("strong", null, v + "%"));
+    track.setAttribute("role", "progressbar");
+    track.setAttribute("aria-label", k);
+    track.setAttribute("aria-valuenow", v);
+    track.append(fill); bar.append(row, track); bars.append(bar);
+    fills.push([fill, v]);
+  }
+  $(frag, ".badge").textContent = "🏅 " + (p.badge || "Suspiciously Normal");
+
+  const vcount = $(frag, ".vcount"), up = $(frag, ".upvote");
+  vcount.textContent = p.votes || 0;
+  const key = "larpedin-voted-" + p.id;
+  if (localStorage.getItem(key)) { up.disabled = true; up.textContent = "✓ Upvoted"; }
+  up.onclick = async () => {
+    up.disabled = true;
+    try {
+      const r = await fetch(`/api/gallery/${p.id}/vote`, { method: "POST" });
+      if (r.status === 404) { up.textContent = "Post expired"; return; }
+      if (!r.ok) throw new Error();
+      vcount.textContent = (await r.json()).votes;
+      localStorage.setItem(key, "1");
+      up.textContent = "✓ Upvoted";
+    } catch { up.disabled = false; up.textContent = "Try again"; }
+  };
+
+  const copy = $(frag, ".copy");
+  copy.onclick = async () => {
+    try { await navigator.clipboard.writeText(location.href); copy.textContent = "✅ Copied!"; }
+    catch { copy.textContent = "Copy failed, use the address bar"; }
+    setTimeout(() => { copy.textContent = "🔗 Copy link"; }, 2000);
+  };
+
+  const tedx = $(frag, ".tedx");
+  if (!("speechSynthesis" in window)) tedx.remove();
+  else tedx.onclick = present;
+
+  main.replaceChildren(frag);
+  requestAnimationFrame(() => requestAnimationFrame(() => fills.forEach(([f, v]) => { f.style.width = v + "%"; })));
+}
+
+// ---- TEDx mode ----
+const stage = document.getElementById("stage"), speech = document.getElementById("speech");
+let voice = null, timers = [], utter = null, opener = null;
+function loadVoice() {
+  const vs = speechSynthesis.getVoices();
+  // Prefer on-device voices: Chrome's network "Google" voices cut out after ~15s and never fire onend.
+  const en = vs.filter(v => /^en/i.test(v.lang)), local = en.filter(v => v.localService);
+  voice = local.find(v => /Daniel|Alex|Samantha/i.test(v.name)) || local.find(v => /^en[-_]US/i.test(v.lang)) || local[0] || en[0] || null;
+}
+if ("speechSynthesis" in window) { loadVoice(); speechSynthesis.addEventListener("voiceschanged", loadVoice); }
+
+function present() {
+  const text = post.post || "";
+  speech.replaceChildren();
+  speech.classList.add("plain");
+  speech.scrollTop = 0;
+  const words = []; // [startIndex, span]
+  for (const m of text.matchAll(/\S+|\s+/g)) {
+    if (/^\s/.test(m[0])) { speech.append(m[0]); continue; }
+    const s = el("span", "w", m[0]);
+    words.push([m.index, s]);
+    speech.append(s);
+  }
+  opener = document.activeElement;
+  stage.classList.add("on");
+  document.body.style.overflow = "hidden";
+  document.getElementById("closeStage").focus();
+
+  speechSynthesis.cancel();
+  // Strip emoji so the voice doesn't read "clapping hands sign"; same length keeps charIndex aligned.
+  // Kept in a global so Chrome doesn't garbage-collect it mid-speech (which drops onboundary/onend).
+  const u = utter = new SpeechSynthesisUtterance(text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length)));
+  u.rate = 0.9; u.pitch = 0.9; u.lang = "en-US";
+  if (voice) u.voice = voice;
+  let cur = null;
+  u.onboundary = e => {
+    if (e.name && e.name !== "word") return;
+    speech.classList.remove("plain");
+    let i = words.length - 1;
+    while (i > 0 && words[i][0] > e.charIndex) i--;
+    if (cur) { cur.classList.remove("now"); }
+    for (let j = 0; j <= i; j++) words[j][1].classList.add("said");
+    cur = words[i] && words[i][1];
+    if (cur) { cur.classList.add("now"); cur.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" }); }
+  };
+  u.onend = () => {
+    if (!stage.classList.contains("on")) return;
+    if (cur) cur.classList.remove("now");
+    speech.classList.add("plain");
+    ovation();
+  };
+  speechSynthesis.speak(u);
+}
+
+function ovation() {
+  const label = el("div", "ovation-label", "👏 standing ovation");
+  stage.append(label);
+  if (reduced) return;
+  for (let i = 0; i < 40; i++) {
+    timers.push(setTimeout(() => {
+      const e = el("div", "ovation", pick(["👏", "👏", "👏", "🙌", "🔥", "💯", "🌹"]));
+      e.style.left = Math.random() * 95 + "vw";
+      e.style.animationDuration = 2 + Math.random() * 2 + "s";
+      stage.append(e);
+      timers.push(setTimeout(() => e.remove(), 4200));
+    }, i * 90));
+  }
+}
+
+function closeStage() {
+  speechSynthesis.cancel();
+  timers.forEach(clearTimeout); timers = [];
+  stage.querySelectorAll(".ovation, .ovation-label").forEach(e => e.remove());
+  stage.classList.remove("on");
+  document.body.style.overflow = "";
+  if (opener) opener.focus();
+}
+document.getElementById("closeStage").onclick = closeStage;
+addEventListener("keydown", e => { if (e.key === "Escape" && stage.classList.contains("on")) closeStage(); });
+
+(async () => {
+  if (!id) return gone();
+  try {
+    const r = await fetch("/api/post/" + id);
+    if (!r.ok) return gone();
+    render(await r.json());
+  } catch { gone(); }
+})();
+</script>
+</body>
+</html>

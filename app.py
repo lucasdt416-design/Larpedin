@@ -5,8 +5,12 @@ import os
 import random
 import threading
 
+import io
+import textwrap
+
 import requests
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory
+from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
@@ -388,12 +392,13 @@ def battle():
         out["fallback"] = False
     except Exception:
         app.logger.exception("Groq battle failed, sending fallback")
+        winner = random.choice("ab")
         out = {
             k: {"post": random.choice(FALLBACK_POSTS).format(text=v["text"]),
-                "headline": "Visionary | Professional Larper", "score": 70 + i * 5}
-            for i, (k, v) in enumerate(sides.items())
+                "headline": "Visionary | Professional Larper", "score": 80 if k == winner else 70}
+            for k, v in sides.items()
         }
-        out.update(winner="b", verdict="Both of you are deeply delusional. One of you is slightly more delusional.", fallback=True)
+        out.update(winner=winner, verdict="Both of you are deeply delusional. One of you is slightly more delusional.", fallback=True)
     for k in ("a", "b"):
         out[k]["name"] = sides[k]["name"]
         out[k]["text"] = sides[k]["text"]
@@ -410,6 +415,48 @@ def get_post(post_id):
         return jsonify(dict(post))
 
 
+def no_emoji(text):
+    # The default font has no emoji glyphs; drop them instead of drawing boxes. Keycaps "1️⃣" become "1.".
+    def drawable(o):
+        return o < 0x2000 or 0x2010 <= o <= 0x206F or 0x20A0 <= o <= 0x20CF or 0x2E80 <= o < 0xFE00 or 0xFE10 <= o < 0x1F000
+    text = text.replace("\ufe0f\u20e3", ".").replace("\u20e3", ".")
+    return "".join(ch for ch in text if drawable(ord(ch))).strip()
+
+
+@app.get("/og/<int:post_id>.png")
+def og_image(post_id):
+    with LOCK:
+        post = dict(GALLERY.get(post_id) or {})
+    font = ImageFont.load_default
+    img = Image.new("RGB", (1200, 630), "#f4f2ee")
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle((40, 40, 1160, 590), radius=16, fill="white", outline="#dcdad6", width=2)
+    d.ellipse((80, 80, 170, 170), fill="#0a66c2")
+    d.text((125, 125), "LV", font=font(size=38), fill="white", anchor="mm")
+    d.text((195, 88), "A LarpedIn Visionary", font=font(size=34), fill="#191919")
+    headline = no_emoji(post.get("headline", "Visionary | Professional Larper"))
+    d.text((195, 134), textwrap.shorten(headline, 60), font=font(size=24), fill="#666666")
+    body = no_emoji(post.get("post", "This post went back to being a normal day."))
+    lines = []
+    for para in body.splitlines():
+        lines += textwrap.wrap(para, 58) if para.strip() else []
+    y = 205
+    for line in lines[:8]:
+        d.text((80, y), line, font=font(size=30), fill="#191919")
+        y += 40
+    if len(lines) > 8:
+        d.text((80, y), "...see more", font=font(size=28), fill="#666666")
+    if post:
+        tag = f"{post['badge']}  |  Cringe {post['score']['overall']}/100"
+        d.rounded_rectangle((80, 520, 100 + font(size=26).getlength(tag) + 20, 566), radius=23, fill="#0a66c2")
+        d.text((110, 543), tag, font=font(size=26), fill="white", anchor="lm")
+    d.text((1120, 543), "LarpedIn (parody)", font=font(size=24), fill="#999999", anchor="rm")
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png", max_age=300)
+
+
 @app.get("/p/<int:post_id>")
 def permalink(post_id):
     # Fill link-preview meta tags server-side so iMessage/Slack/Discord previews show the post.
@@ -419,7 +466,10 @@ def permalink(post_id):
         page = f.read()
     title = f"{post['headline']} on LarpedIn" if post else "LarpedIn"
     desc = post["post"][:200] if post else "Turn your ordinary day into a LinkedIn masterpiece."
-    return page.replace("{{og_title}}", html.escape(title)).replace("{{og_description}}", html.escape(desc))
+    image = f"{request.host_url}og/{post_id}.png"
+    return (page.replace("{{og_title}}", html.escape(title))
+            .replace("{{og_description}}", html.escape(desc))
+            .replace("{{og_image}}", html.escape(image)))
 
 
 if __name__ == "__main__":

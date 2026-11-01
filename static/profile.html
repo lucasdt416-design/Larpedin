@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Larp your whole profile · LarpedIn</title>
+<meta name="description" content="Turn your real life into an absurdly inflated professional profile. A parody.">
+<style>
+  :root {
+    --bg: #f4f2ee; --card: #fff; --blue: #0a66c2; --blue-dark: #004182;
+    --text: rgba(0,0,0,.9); --muted: rgba(0,0,0,.6); --line: rgba(0,0,0,.08);
+    --green: #057642; --shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--blue); }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 16px 12px 48px; }
+  #result { scroll-margin-top: 64px; }
+  .pname:focus { outline: none; }
+  .card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); margin-bottom: 10px; overflow: hidden; }
+  .pad { padding: 18px 20px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 0 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 16px; }
+  label.f { display: block; font-weight: 600; font-size: 14px; margin: 14px 0 6px; }
+  input[type=text], textarea { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid rgba(0,0,0,.4);
+    border-radius: 6px; background: #fff; color: inherit; }
+  textarea { min-height: 110px; resize: vertical; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  input[type=range] { width: 100%; accent-color: var(--blue); }
+  .lvl { font-size: 14px; color: var(--muted); margin-top: 4px; min-height: 1.4em; }
+  .lvl b { color: var(--text); }
+  .btn { font: inherit; font-weight: 600; border-radius: 999px; padding: 8px 18px; cursor: pointer;
+    border: 1px solid var(--blue); background: #fff; color: var(--blue); transition: background .15s, box-shadow .15s; }
+  .btn:hover { background: rgba(10,102,194,.08); box-shadow: inset 0 0 0 1px var(--blue); }
+  .btn.primary { background: var(--blue); color: #fff; }
+  .btn.primary:hover { background: var(--blue-dark); }
+  .btn.ghost { border-color: rgba(0,0,0,.6); color: var(--muted); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  .go { width: 100%; margin-top: 18px; padding: 12px; font-size: 16px; }
+  .err { background: #fde8e8; color: #9b1c1c; border-radius: 8px; padding: 10px 14px; margin: 12px 0 0; }
+  .err:empty { display: none; }
+  .note { background: #eef3f8; color: var(--muted); font-size: 13px; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; }
+  [hidden] { display: none !important; }
+
+  /* Loading */
+  .status { text-align: center; font-weight: 600; color: var(--blue); padding: 14px; }
+  .sk { background: linear-gradient(90deg, #eee 25%, #f6f6f6 50%, #eee 75%); background-size: 200% 100%;
+    animation: shimmer 1.2s infinite linear; border-radius: 6px; }
+  .sk-banner { height: 120px; border-radius: 0; }
+  .sk-avatar { width: 110px; height: 110px; border-radius: 50%; margin: -60px 0 0 20px; border: 4px solid #fff; }
+  .sk-line { height: 14px; margin: 12px 20px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* Profile header */
+  .banner { height: 130px; background: linear-gradient(120deg, #0a66c2, #7b3fe4 55%, #f5a623); position: relative; }
+  .banner::after { content: "Hustling since birth"; position: absolute; right: 14px; bottom: 10px;
+    color: rgba(255,255,255,.85); font-weight: 800; font-style: italic; font-size: 13px; letter-spacing: .5px; }
+  .head { padding: 0 20px 18px; position: relative; }
+  .avatar { width: 128px; height: 128px; border-radius: 50%; border: 4px solid #fff; margin-top: -72px;
+    background: linear-gradient(135deg, #5b8def, #0a66c2); color: #fff; display: grid; place-items: center;
+    font-size: 46px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.15); position: relative; }
+  .avatar .ring { position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); background: var(--green);
+    color: #fff; font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 999px; border: 2px solid #fff; white-space: nowrap; }
+  .pname { font-size: 24px; font-weight: 700; margin: 12px 0 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .verified { font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; }
+  .headline { font-size: 16px; margin: 0 0 4px; }
+  .meta { color: var(--muted); font-size: 14px; margin: 0 0 4px; }
+  .meta strong { color: var(--blue); font-weight: 600; }
+  .open { display: inline-block; background: #e7f3ec; color: var(--green); border: 1px solid #b7dfc6; border-radius: 8px;
+    padding: 8px 12px; font-size: 14px; margin: 10px 0 0; }
+  .open b { display: block; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .pill-badge { position: absolute; right: 20px; top: 12px; font-size: 12px; color: var(--muted); }
+
+  /* Sections */
+  .about { white-space: pre-wrap; margin: 0; }
+  .entry { display: flex; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+  .entry:first-of-type { border-top: 0; padding-top: 0; }
+  .logo { flex: 0 0 48px; width: 48px; height: 48px; border-radius: 4px; display: grid; place-items: center;
+    color: #fff; font-weight: 800; font-size: 17px; letter-spacing: -.5px; }
+  .entry h3 { font-size: 16px; margin: 0; }
+  .entry .co { margin: 0; font-size: 14px; }
+  .dim { margin: 0; font-size: 13px; color: var(--muted); }
+  .entry ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; }
+  .entry li { margin: 3px 0; }
+  .skill { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .skill:first-of-type { border-top: 0; padding-top: 0; }
+  .skill .info { flex: 1; min-width: 0; }
+  .skill h3 { font-size: 15px; margin: 0; }
+  .skill .count { font-size: 13px; color: var(--muted); display: inline-block; }
+  .skill .count.bump { animation: bump .45s ease; color: var(--green); }
+  .skill .btn { padding: 5px 14px; font-size: 14px; }
+  .skill .btn.done { background: var(--green); border-color: var(--green); color: #fff; }
+  @keyframes bump { 30% { transform: scale(1.35); } 100% { transform: scale(1); } }
+  .plus { position: absolute; font-weight: 800; color: var(--green); pointer-events: none; animation: floatup .8s ease forwards; }
+  @keyframes floatup { to { transform: translateY(-26px); opacity: 0; } }
+  .rec { border-top: 1px solid var(--line); padding: 14px 0; }
+  .rec:first-of-type { border-top: 0; padding-top: 0; }
+  .rec .who { display: flex; gap: 10px; align-items: center; }
+  .rec .mini { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; }
+  .rec .who p { margin: 0; }
+  .rec blockquote { margin: 10px 0 0; padding: 10px 14px; background: #f8f8f8; border-left: 3px solid var(--blue);
+    border-radius: 0 6px 6px 0; font-style: italic; }
+  .bottom { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 16px 0; }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1d2226; color: #fff;
+    padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 10; }
+  .foot { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+
+  @media (min-width: 640px) {
+    .wrap { padding: 24px 16px 60px; }
+    .banner { height: 180px; }
+    .avatar { width: 152px; height: 152px; font-size: 56px; margin-top: -92px; }
+    .pad { padding: 22px 24px; }
+    .head { padding: 0 24px 22px; }
+  }
+  @media (max-width: 380px) {
+    .actions .btn { flex: 1; padding: 8px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <form id="form" class="card pad" novalidate>
+    <h1>Larp your whole profile</h1>
+    <p class="sub">Tell us your real life. We'll make recruiters weep.</p>
+    <label class="f" for="name">Your name</label>
+    <input id="name" type="text" maxlength="60" autocomplete="name" placeholder="Anonymous Visionary">
+    <label class="f" for="text">What is your life actually like?</label>
+    <textarea id="text" maxlength="800"></textarea>
+    <label class="f" for="level">Cringe level</label>
+    <input id="level" type="range" min="1" max="10" value="7">
+    <div class="lvl" id="lvl" aria-live="polite"></div>
+    <button class="btn primary go" id="go" type="submit">Build my profile</button>
+    <p class="err" id="err" role="alert"></p>
+  </form>
+
+  <section id="loading" hidden aria-busy="true">
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="card">
+      <div class="sk sk-banner"></div>
+      <div class="sk sk-avatar"></div>
+      <div class="sk sk-line" style="width:50%"></div>
+      <div class="sk sk-line" style="width:80%"></div>
+      <div class="sk sk-line" style="width:35%;margin-bottom:22px"></div>
+    </div>
+    <div class="card pad"><div class="sk sk-line" style="margin:0 0 12px;width:30%"></div><div class="sk sk-line" style="margin:0 0 10px"></div><div class="sk sk-line" style="margin:0;width:70%"></div></div>
+  </section>
+
+  <main id="result" hidden></main>
+
+  <p class="foot">A parody. Not affiliated with any real professional network. All achievements are fake, like most.</p>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const form = $("form"), nameEl = $("name"), textEl = $("text"), levelEl = $("level");
+  const go = $("go"), err = $("err"), loading = $("loading"), statusEl = $("status"), result = $("result");
+
+  const LEVEL_LABELS = [
+    "Basically a normal person", "Says 'circle back' sometimes", "Has a ring light",
+    "Full corporate voice", "Every job taught them a lesson", "Compares self to Steve Jobs",
+    "Delusional", "Unhinged visionary", "Talks to the universe about B2B", "Cried in an Uber about synergy",
+  ];
+  const PLACEHOLDERS = [
+    "I'm a student who mostly sleeps",
+    "I work at Chipotle and play Valorant",
+    "I babysit my cousins and watch anime",
+    "I failed calc twice and run a meme account",
+    "I walk my neighbor's dog for $10",
+  ];
+  const STATUS = [
+    "Inflating job titles...", "Fabricating metrics...", "Endorsing you for Synergy...",
+    "Converting naps into 'strategic downtime'...", "Adding 'Founder' to everything...",
+    "Hiring fake references...", "Rounding 3 followers up to 50K...", "Leveraging your core competencies...",
+  ];
+
+  // Rotating placeholder, stops once the user types.
+  let ph = 0;
+  textEl.placeholder = "e.g. " + PLACEHOLDERS[0];
+  setInterval(() => {
+    if (textEl.value) return;
+    ph = (ph + 1) % PLACEHOLDERS.length;
+    textEl.placeholder = "e.g. " + PLACEHOLDERS[ph];
+  }, 2800);
+
+  const showLevel = () => {
+    const v = +levelEl.value;
+    $("lvl").replaceChildren(el("b", null, v + "/10"), " · " + LEVEL_LABELS[v - 1]);
+    levelEl.setAttribute("aria-valuetext", v + " of 10, " + LEVEL_LABELS[v - 1]);
+  };
+  levelEl.addEventListener("input", showLevel);
+
+  // Tiny DOM helper: always textContent, never innerHTML.
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  const initials = (s) => (String(s).match(/[\p{L}\p{N}]+/gu) || ["?"]).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+  function color(s) {
+    let h = 0;
+    for (const c of String(s)) h = (h * 31 + c.codePointAt(0)) >>> 0;
+    return `hsl(${h % 360} 55% 42%)`;
+  }
+  const fmt = (n) => Number(n || 0).toLocaleString();
+  const arr = (a) => (Array.isArray(a) ? a : []);
+
+  function toast(msg) {
+    const t = el("div", "toast", msg);
+    t.setAttribute("role", "status");
+    document.body.append(t);
+    setTimeout(() => t.remove(), 2200);
+  }
+
+  showLevel();
+
+  let timer = null;
+  function setLoading(on) {
+    go.disabled = on;
+    go.textContent = on ? "Building..." : "Build my profile";
+    loading.hidden = !on;
+    clearInterval(timer);
+    if (on) {
+      let i = 0;
+      statusEl.textContent = STATUS[0];
+      timer = setInterval(() => { statusEl.textContent = STATUS[++i % STATUS.length]; }, 1400);
+    }
+  }
+
+  let current = null;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.textContent = "";
+    if (!textEl.value.trim()) { err.textContent = "Tell us what your life is actually like first."; textEl.focus(); return; }
+    setLoading(true);
+    result.hidden = true;
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nameEl.value.trim(), text: textEl.value.trim(), level: +levelEl.value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "The hustle server tripped. Try again.");
+      current = data;
+      render(data);
+      form.hidden = true;
+      result.hidden = false;
+      result.scrollIntoView({ block: "start" });
+      result.querySelector(".pname").focus({ preventScroll: true });
+    } catch (ex) {
+      err.textContent = ex.message || "Network error. Try again.";
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function section(title) {
+    const c = el("section", "card pad");
+    c.append(el("h2", null, title));
+    return c;
+  }
+
+  function render(d) {
+    result.replaceChildren();
+    if (d.fallback) result.append(el("p", "note", "Our AI is busy networking, so here's a pre-larped profile."));
+
+    // Header card
+    const top = el("section", "card");
+    const head = el("div", "head");
+    const av = el("div", "avatar", initials(d.name));
+    av.append(el("span", "ring", "#OPENTOWORK"));
+    const nm = el("h1", "pname", d.name);
+    nm.tabIndex = -1;
+    nm.append(el("span", "verified", "✓ Self-verified"));
+    head.append(av, nm, el("p", "headline", d.headline), el("p", "meta", d.location));
+    const meta = el("p", "meta");
+    meta.append(el("strong", null, fmt(d.followers) + " followers"), " · ", el("strong", null, "500+ connections"));
+    head.append(meta);
+    const open = el("div", "open");
+    open.append(el("b", null, "Open to"), d.open_to || "");
+    head.append(open);
+    const acts = el("div", "actions");
+    const fake = (label, cls, msg) => {
+      const b = el("button", "btn " + cls, label);
+      b.type = "button";
+      b.onclick = () => toast(msg);
+      return b;
+    };
+    acts.append(
+      fake("Connect", "primary", "Connection request sent to their ego."),
+      fake("Message", "", "Their inbox is full of recruiter DMs."),
+      fake("More", "ghost", "There is no more. This is everything."),
+    );
+    head.append(acts);
+    top.append(el("div", "banner"), head);
+    result.append(top);
+
+    // About
+    if (d.about) {
+      const s = section("About");
+      s.append(el("p", "about", d.about));
+      result.append(s);
+    }
+
+    // Experience
+    const ex = arr(d.experience);
+    if (ex.length) {
+      const s = section("Experience");
+      for (const x of ex) {
+        const row = el("div", "entry");
+        const logo = el("div", "logo", initials(x.company));
+        logo.style.background = color(x.company);
+        logo.setAttribute("aria-hidden", "true");
+        const body = el("div");
+        body.append(el("h3", null, x.title), el("p", "co", x.company), el("p", "dim", x.dates), el("p", "dim", x.location));
+        const ul = el("ul");
+        for (const b of arr(x.bullets)) ul.append(el("li", null, b));
+        if (ul.children.length) body.append(ul);
+        row.append(logo, body);
+        s.append(row);
+      }
+      result.append(s);
+    }
+
+    // Education
+    const ed = arr(d.education);
+    if (ed.length) {
+      const s = section("Education");
+      for (const x of ed) {
+        const row = el("div", "entry");
+        const logo = el("div", "logo", initials(x.school));
+        logo.style.background = color(x.school);
+        logo.setAttribute("aria-hidden", "true");
+        const body = el("div");
+        body.append(el("h3", null, x.school), el("p", "co", x.degree), el("p", "dim", x.dates));
+        row.append(logo, body);
+        s.append(row);
+      }
+      result.append(s);
+    }
+
+    // Skills with endorse
+    const sk = arr(d.skills);
+    if (sk.length) {
+      const s = section("Skills");
+      for (const x of sk) {
+        const row = el("div", "skill");
+        const info = el("div", "info");
+        let n = Number(x.endorsements) || 0;
+        const count = el("span", "count", `Endorsed by ${fmt(n)} people`);
+        info.append(el("h3", null, x.name), count);
+        const b = el("button", "btn", "Endorse");
+        b.type = "button";
+        b.setAttribute("aria-label", "Endorse " + x.name);
+        b.style.position = "relative";
+        b.onclick = () => {
+          n += 1;
+          x.endorsements = n;
+          count.textContent = `Endorsed by ${fmt(n)} people`;
+          count.classList.remove("bump"); void count.offsetWidth; count.classList.add("bump");
+          b.textContent = "Endorsed ✓"; b.classList.add("done");
+          const p = el("span", "plus", "+1");
+          p.style.left = "40%"; p.style.top = "-6px";
+          b.append(p);
+          setTimeout(() => p.remove(), 800);
+        };
+        row.append(info, b);
+        s.append(row);
+      }
+      result.append(s);
+    }
+
+    // Recommendations
+    const rc = arr(d.recommendations);
+    if (rc.length) {
+      const s = section("Recommendations");
+      for (const x of rc) {
+        const r = el("div", "rec");
+        const who = el("div", "who");
+        const mini = el("div", "mini", initials(x.name));
+        mini.style.background = color(x.name);
+        mini.setAttribute("aria-hidden", "true");
+        const t = el("div");
+        t.append(el("p", null, x.name), el("p", "dim", x.title), el("p", "dim", x.relation));
+        t.firstChild.style.fontWeight = "600";
+        who.append(mini, t);
+        r.append(who, el("blockquote", null, "“" + x.text + "”"));
+        s.append(r);
+      }
+      result.append(s);
+    }
+
+    // Bottom actions
+    const bottom = el("div", "bottom");
+    const copy = el("button", "btn primary", "Copy profile as text");
+    copy.type = "button";
+    copy.onclick = async () => {
+      try { await navigator.clipboard.writeText(asText(current)); toast("Copied. Go paste it somewhere brave."); }
+      catch { toast("Couldn't copy. Your browser is gatekeeping."); }
+    };
+    const again = el("button", "btn", "Start over");
+    again.type = "button";
+    again.onclick = () => {
+      result.hidden = true;
+      result.replaceChildren();
+      form.hidden = false;
+      window.scrollTo({ top: 0 });
+      textEl.focus();
+    };
+    bottom.append(copy, again);
+    result.append(bottom);
+  }
+
+  function asText(d) {
+    const L = [d.name, d.headline, `${d.location} · ${fmt(d.followers)} followers · 500+ connections`, `Open to: ${d.open_to}`, "", "ABOUT", d.about, "", "EXPERIENCE"];
+    for (const x of arr(d.experience)) {
+      L.push(`${x.title} at ${x.company} (${x.dates}, ${x.location})`);
+      for (const b of arr(x.bullets)) L.push(`• ${b}`);
+      L.push("");
+    }
+    L.push("EDUCATION");
+    for (const x of arr(d.education)) L.push(`${x.school}: ${x.degree} (${x.dates})`);
+    L.push("", "SKILLS", arr(d.skills).map((s) => `${s.name} (${fmt(s.endorsements)})`).join(" · "), "", "RECOMMENDATIONS");
+    for (const x of arr(d.recommendations)) L.push(`"${x.text}" - ${x.name}, ${x.title}`);
+    L.push("", "Generated by LarpedIn (a parody)");
+    return L.join("\n");
+  }
+})();
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>

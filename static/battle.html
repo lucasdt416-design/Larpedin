@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Larp Battle · LarpedIn</title>
+<script src="nav.js" defer></script>
+<style>
+  :root {
+    --bg: #f4f2ee; --card: #fff; --blue: #0a66c2; --text: #191919; --muted: #666;
+    --a: #0a66c2; --a-tint: #e8f1fb; --b: #d93a3a; --b-tint: #fdecec; --gold: #f5b800;
+    --line: #e0dfdc; --r: 8px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.4; }
+  main { max-width: 980px; margin: 0 auto; padding: 20px 14px 60px; }
+  header { text-align: center; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: clamp(1.8rem, 6vw, 2.8rem); letter-spacing: -0.02em; }
+  .sub { margin: 4px 0 0; color: var(--muted); font-size: 1.05rem; }
+  .parody { display: inline-block; margin-top: 8px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); border: 1px solid #c8c6c2; border-radius: 99px; padding: 2px 8px; }
+
+  .arena { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: stretch; }
+  .panel { background: var(--card); border-radius: var(--r); padding: 14px; border: 1px solid var(--line); border-top: 5px solid; }
+  .panel.a { border-top-color: var(--a); background: linear-gradient(var(--a-tint), var(--card) 70%); }
+  .panel.b { border-top-color: var(--b); background: linear-gradient(var(--b-tint), var(--card) 70%); }
+  .panel h2 { margin: 0 0 8px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .panel.a h2 { color: var(--a); } .panel.b h2 { color: var(--b); }
+  label { display: block; font-size: 0.85rem; font-weight: 600; margin: 8px 0 4px; }
+  input[type=text], textarea { width: 100%; font: inherit; font-size: 16px; padding: 10px; border: 1px solid #b8b6b2; border-radius: var(--r); background: #fff; }
+  textarea { min-height: 96px; resize: vertical; }
+  input[type=text]:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+  .vs { display: flex; align-items: center; justify-content: center; }
+  .vs span { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; font-weight: 900; font-size: 1.5rem; color: #fff; background: linear-gradient(135deg, var(--a) 50%, var(--b) 50%); box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+  .vs.pulse span { animation: pulse 0.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.25); box-shadow: 0 0 0 14px rgba(10,102,194,.15); } }
+
+  .controls { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; margin-top: 12px; text-align: center; }
+  .slider-row { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  input[type=range] { width: min(320px, 100%); accent-color: var(--blue); }
+  #levelOut { font-weight: 800; min-width: 3ch; }
+  .fight { margin-top: 12px; width: 100%; max-width: 420px; font: inherit; font-size: 1.6rem; font-weight: 900; letter-spacing: 0.12em; color: #fff; border: 0; border-radius: 99px; padding: 14px; cursor: pointer; background: linear-gradient(90deg, var(--a), var(--b)); box-shadow: 0 6px 18px rgba(0,0,0,.18); transition: transform .1s; }
+  .fight:hover { transform: translateY(-2px); } .fight:active { transform: scale(.98); }
+  .fight:disabled { opacity: .6; cursor: wait; transform: none; }
+  .error { color: #b00020; background: #fdecec; border: 1px solid #f3b5b5; border-radius: var(--r); padding: 8px 10px; margin: 10px auto 0; max-width: 520px; }
+  .status { margin-top: 12px; font-size: 1.3rem; font-weight: 800; min-height: 1.6em; }
+
+  #results { margin-top: 18px; }
+  .cards { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .card { position: relative; background: var(--card); border-radius: var(--r); border: 1px solid var(--line); padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); opacity: 0; transform: translateY(16px); transition: opacity .5s, transform .5s, box-shadow .5s, filter .5s; }
+  .card.show { opacity: 1; transform: none; }
+  .card.side-a { border-left: 4px solid var(--a); } .card.side-b { border-left: 4px solid var(--b); }
+  .who { display: flex; gap: 10px; align-items: center; }
+  .avatar { flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; }
+  .side-a .avatar { background: var(--a); } .side-b .avatar { background: var(--b); }
+  .name { font-weight: 700; } .headline { font-size: .8rem; color: var(--muted); } .meta { font-size: .75rem; color: var(--muted); }
+  .post { white-space: pre-wrap; margin: 12px 0; font-size: .95rem; }
+  .score { display: flex; align-items: baseline; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .score b { font-size: 2.2rem; font-variant-numeric: tabular-nums; }
+  .score small { color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-size: .7rem; font-weight: 700; }
+  .crown { position: absolute; top: -26px; left: 50%; transform: translateX(-50%) scale(0); font-size: 2.4rem; transition: transform .5s cubic-bezier(.2,1.6,.4,1); }
+  .card.winner { box-shadow: 0 0 0 3px var(--gold), 0 0 28px rgba(245,184,0,.6); }
+  .card.winner .crown { transform: translateX(-50%) scale(1); }
+  .card.loser { filter: grayscale(.85); }
+  .stamp { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%) rotate(-14deg) scale(2.5); opacity: 0; border: 4px solid #777; color: #777; font-weight: 900; font-size: 2rem; letter-spacing: .1em; text-transform: uppercase; padding: 2px 14px; border-radius: 6px; background: rgba(255,255,255,.75); pointer-events: none; transition: transform .35s ease-in, opacity .35s; }
+  .card.loser .stamp { opacity: 1; transform: translate(-50%,-50%) rotate(-14deg) scale(1); }
+
+  .judge { margin-top: 22px; display: none; }
+  .judge.show { display: block; }
+  .judge-name { font-weight: 800; margin-bottom: 6px; }
+  .bubble { position: relative; background: var(--card); border: 2px solid var(--text); border-radius: 14px; padding: 14px 16px; font-size: 1.1rem; min-height: 3em; }
+  .bubble::before { content: ""; position: absolute; top: -12px; left: 28px; border: 12px solid transparent; border-top: 0; border-bottom-color: var(--text); }
+  .bubble::after { content: ""; position: absolute; top: -8px; left: 31px; border: 9px solid transparent; border-top: 0; border-bottom-color: var(--card); }
+  .fallback-note { font-size: .8rem; color: var(--muted); margin-top: 6px; }
+  .actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+  .actions button, .swap { font: inherit; font-weight: 700; border-radius: 99px; padding: 8px 18px; cursor: pointer; border: 1px solid var(--blue); color: var(--blue); background: #fff; }
+  .actions button.primary { background: var(--blue); color: #fff; }
+  .swap { margin-top: 10px; font-size: .85rem; padding: 6px 14px; }
+
+  .burst { position: fixed; pointer-events: none; font-size: 1.8rem; z-index: 50; animation: fly 1.4s ease-out forwards; }
+  @keyframes fly { to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
+
+  @media (min-width: 720px) {
+    .arena { grid-template-columns: 1fr 80px 1fr; }
+    .cards { grid-template-columns: 1fr 1fr; }
+    .vs span { width: 72px; height: 72px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>⚔️ Larp Battle</h1>
+    <p class="sub">Two contestants. One LinkedIn. Zero shame.</p>
+    <span class="parody">Parody · not affiliated with LinkedIn</span>
+  </header>
+
+  <form id="form" novalidate>
+    <div class="arena">
+      <section class="panel a" aria-label="Blue corner">
+        <h2>🔵 Blue corner</h2>
+        <label for="nameA">Name</label>
+        <input id="nameA" type="text" maxlength="40" placeholder="Contestant A" autocomplete="off">
+        <label for="textA">What did you actually do today?</label>
+        <textarea id="textA" maxlength="300" placeholder="I ate cereal for dinner"></textarea>
+      </section>
+      <div class="vs" id="vs" aria-hidden="true"><span>VS</span></div>
+      <section class="panel b" aria-label="Red corner">
+        <h2>🔴 Red corner</h2>
+        <label for="nameB">Name</label>
+        <input id="nameB" type="text" maxlength="40" placeholder="Contestant B" autocomplete="off">
+        <label for="textB">What did you actually do today?</label>
+        <textarea id="textB" maxlength="300" placeholder="I took a 3 hour nap"></textarea>
+      </section>
+    </div>
+
+    <div class="controls">
+      <div class="slider-row">
+        <label for="level" style="margin:0">Cringe level</label>
+        <input id="level" type="range" min="1" max="10" value="7">
+        <span id="levelOut">7</span>
+      </div>
+      <button type="button" class="swap" id="swap">⇄ Swap sides</button><br>
+      <button type="submit" class="fight" id="fight">FIGHT</button>
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="error" id="error" role="alert" hidden></div>
+    </div>
+  </form>
+
+  <section id="results" hidden>
+    <div class="cards">
+      <article class="card side-a" id="cardA"></article>
+      <article class="card side-b" id="cardB"></article>
+    </div>
+    <div class="judge" id="judge">
+      <div class="judge-name">⚖️ The Honorable Judge of LinkedIn</div>
+      <div class="bubble" id="verdict" aria-live="polite"></div>
+      <div class="fallback-note" id="fbNote" hidden>The judge's AI is napping, so this is a backup verdict.</div>
+    </div>
+    <div class="actions">
+      <button type="button" class="primary" id="rematch">🔁 Rematch</button>
+      <button type="button" id="swap2">⇄ Swap sides</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wait = ms => new Promise(r => setTimeout(r, reduced ? 0 : ms));
+let busy = false;
+
+$("level").addEventListener("input", e => { $("levelOut").textContent = e.target.value; });
+
+function swapSides() {
+  for (const [x, y] of [["nameA", "nameB"], ["textA", "textB"]]) {
+    const t = $(x).value; $(x).value = $(y).value; $(y).value = t;
+  }
+}
+$("swap").addEventListener("click", swapSides);
+$("swap2").addEventListener("click", () => { swapSides(); resetResults(); });
+
+$("rematch").addEventListener("click", () => {
+  $("textA").value = ""; $("textB").value = "";
+  resetResults();
+  $("textA").focus();
+});
+
+function resetResults() {
+  if (busy) return;
+  $("results").hidden = true;
+  $("status").textContent = "";
+  $("error").hidden = true;
+  window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+}
+
+function showError(msg) {
+  $("error").textContent = msg;
+  $("error").hidden = false;
+}
+
+function initials(name) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => [...w][0].toUpperCase()).join("") || "?";
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function buildCard(card, side) {
+  card.className = card.className.replace(/\b(show|winner|loser)\b/g, "").trim();
+  card.replaceChildren();
+  card.append(el("div", "crown", "👑"), el("div", "stamp", "ratio'd"));
+  const who = el("div", "who");
+  const info = el("div");
+  info.append(el("div", "name", side.name), el("div", "headline", side.headline), el("div", "meta", "1st • 3h • 🌐"));
+  who.append(el("div", "avatar", initials(side.name)), info);
+  const score = el("div", "score");
+  const num = el("b", null, "0");
+  score.append(num, el("small", null, "/100 delusion score"));
+  card.append(who, el("p", "post", side.post), score);
+  return num;
+}
+
+function countUp(node, target, ms) {
+  if (reduced) { node.textContent = target; return Promise.resolve(); }
+  return new Promise(res => {
+    const start = performance.now();
+    (function step(now) {
+      const t = Math.min(1, (now - start) / ms);
+      node.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
+      t < 1 ? requestAnimationFrame(step) : res();
+    })(start);
+  });
+}
+
+function burst(card) {
+  if (reduced) return;
+  const r = card.getBoundingClientRect();
+  const emojis = ["🎉", "👑", "✨", "🏆", "💼", "🚀", "🙌", "🔥"];
+  for (let i = 0; i < 28; i++) {
+    const s = el("span", "burst", emojis[i % emojis.length]);
+    s.style.left = (r.left + r.width / 2) + "px";
+    s.style.top = (r.top + 20) + "px";
+    s.style.setProperty("--dx", (Math.random() * 360 - 180) + "px");
+    s.style.setProperty("--dy", (Math.random() * -260 + 60) + "px");
+    s.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+    document.body.append(s);
+    setTimeout(() => s.remove(), 1500);
+  }
+}
+
+async function typeOut(node, text) {
+  node.textContent = "";
+  if (reduced) { node.textContent = text; return; }
+  for (const ch of text) {
+    node.textContent += ch;
+    await new Promise(r => setTimeout(r, 28));
+  }
+}
+
+async function dramaticWait(fetchPromise) {
+  // Countdown runs for at least ~3s so the room gets its drama, even if the server is fast.
+  const lines = ["3…", "2…", "1…", "Judges are deliberating…"];
+  let done = false;
+  fetchPromise.finally(() => { done = true; });
+  for (const line of lines) {
+    $("status").textContent = line;
+    await wait(800);
+  }
+  const extra = ["Consulting the algorithm…", "Counting buzzwords…", "Checking for humblebrags…"];
+  for (let i = 0; !done; i++) {
+    await wait(1500);
+    if (!done) $("status").textContent = extra[i % extra.length];
+  }
+  return fetchPromise;
+}
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (busy) return;
+  $("error").hidden = true;
+  const a = { name: $("nameA").value.trim(), text: $("textA").value.trim() };
+  const b = { name: $("nameB").value.trim(), text: $("textB").value.trim() };
+  if (!a.text || !b.text) {
+    showError(`${(!a.text ? a.name || "Blue corner" : b.name || "Red corner")} has not said what they did yet.`);
+    return;
+  }
+  busy = true;
+  $("fight").disabled = true;
+  $("results").hidden = true;
+  $("vs").classList.add("pulse");
+
+  const req = fetch("/api/battle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ a, b, level: +$("level").value }),
+  }).then(async r => {
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `Server error (${r.status}).`);
+    return data;
+  });
+
+  let data;
+  try {
+    data = await dramaticWait(req);
+  } catch (err) {
+    showError(err.message === "Failed to fetch" ? "Could not reach the server. Try again." : err.message);
+    $("status").textContent = "";
+    $("vs").classList.remove("pulse");
+    $("fight").disabled = false;
+    busy = false;
+    return;
+  }
+  $("vs").classList.remove("pulse");
+  $("status").textContent = "The results are in!";
+  await reveal(data);
+  $("fight").disabled = false;
+  busy = false;
+});
+
+async function reveal(data) {
+  const cardA = $("cardA"), cardB = $("cardB");
+  const numA = buildCard(cardA, data.a);
+  const numB = buildCard(cardB, data.b);
+  $("judge").classList.remove("show");
+  $("verdict").textContent = "";
+  $("fbNote").hidden = !data.fallback;
+  $("results").hidden = false;
+  $("results").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+
+  // Step 1: cards
+  await wait(150);
+  cardA.classList.add("show");
+  await wait(350);
+  cardB.classList.add("show");
+  await wait(1400);
+
+  // Step 2: scores count up together
+  $("status").textContent = "Measuring delusion…";
+  await Promise.all([countUp(numA, data.a.score, 1800), countUp(numB, data.b.score, 1800)]);
+  await wait(600);
+
+  // Step 3: winner and loser
+  const win = data.winner === "a" ? cardA : cardB;
+  const lose = win === cardA ? cardB : cardA;
+  win.classList.add("winner");
+  lose.classList.add("loser");
+  burst(win);
+  $("status").textContent = `👑 ${data[data.winner].name} wins!`;
+  await wait(1300);
+
+  // Step 4: verdict
+  $("judge").classList.add("show");
+  await typeOut($("verdict"), data.verdict || "");
+}
+</script>
+</body>
+</html>

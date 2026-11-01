@@ -73,6 +73,9 @@ assert p["name"] == "Mo" and len(p["experience"]) == 4 and p["fallback"] is Fals
 assert c.post("/api/profile", json={"name": "Mo"}).status_code == 400
 assert c.get(f"/api/post/{r['id']}").json["comments"]
 assert c.get("/api/post/99999").status_code == 404
+page = c.get(f"/p/{r['id']}").get_data(as_text=True)
+assert "{{" not in page and f"/og/{r['id']}.png" in page and "Visionary on LarpedIn" in page
+assert c.get(f"/og/{r['id']}.png").mimetype == "image/png"
 
 b = c.post("/api/battle", json={"a": {"name": "Mo", "text": "ate"}, "b": {"text": "slept"}}).json
 assert b["winner"] == "a" and b["a"]["score"] == 100 and b["a"]["name"] == "Mo" and b["b"]["name"] == "Contestant B"
