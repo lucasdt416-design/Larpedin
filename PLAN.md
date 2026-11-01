@@ -87,7 +87,7 @@ Status 400 `{"error": "message"}` for empty or missing input. Show `error` to th
 5. Tone dropdown with all 9 tones.
 6. Delarp mode toggle that uses the same text box and shows `truth`.
 7. Cringe score gauges and the `badge`.
-8. `gallery.html`: polls `/api/gallery` every 5 seconds, upvote buttons, and a QR code that points to https://larpedin.onrender.com.
+8. `gallery.html`: polls `/api/gallery` every 5 seconds, upvote buttons, and a QR code that points to https://larpedin-p1fd.onrender.com (or `location.origin`, so it follows any URL change).
 9. "Copy + open LinkedIn" copies only `post`.
 
 Show all model text with `textContent`, never `innerHTML`. Gallery posts come from the public.
