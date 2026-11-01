@@ -25,3 +25,10 @@ pre { white-space: pre-wrap; font: inherit; background: #f9f9f9; padding: 16px; 
 .comment { display: flex; flex-direction: column; margin-top: 8px; }
 .cringe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
 .cringe-label { margin-top: 0; }
+.cringe-report { margin-top: 12px; }
+.badge { font-weight: 600; }
+.gauge { display: grid; grid-template-columns: 8em 1fr 3em; align-items: center; gap: 8px; }
+.gauge-track { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+.gauge-fill { display: block; height: 100%; width: calc(var(--pct, 0) * 1%); background: #0a66c2; transition: width 1.2s ease-out; }
+.gauge-value { text-align: right; }
+@media (prefers-reduced-motion: reduce) { .gauge-fill { transition: none; } }

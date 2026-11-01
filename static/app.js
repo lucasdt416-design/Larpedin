@@ -228,6 +228,17 @@ function renderCard(data, container) {
     seeMore.textContent = expanded ? "see less" : "...see more";
   });
 
+  if (data.score) {
+    q(".badge").textContent = data.badge || "";
+    q(".badge").hidden = !data.badge;
+    item.querySelectorAll(".gauge").forEach((gauge) => {
+      const value = Math.max(0, Math.min(100, Number(data.score[gauge.dataset.key]) || 0));
+      gauge.setAttribute("aria-valuenow", String(value));
+      gauge.querySelector(".gauge-value").dataset.target = value;
+    });
+    q(".cringe-report").hidden = false;
+  }
+
   const comments = Array.isArray(data.comments) ? data.comments : [];
   const counts = {
     like: randInt(1200, 9800),
@@ -278,6 +289,12 @@ function renderCard(data, container) {
   // Only offer "see more" if the clamped text actually overflows.
   seeMore.hidden = body.scrollHeight <= body.clientHeight + 1;
   animateCount(q(".reaction-count"), counts.like);
+  item.querySelectorAll(".gauge").forEach((gauge) => {
+    const value = Number(gauge.querySelector(".gauge-value").dataset.target || 0);
+    animateCount(gauge.querySelector(".gauge-value"), value);
+    // Set after insertion so a CSS transition on the fill width can play.
+    requestAnimationFrame(() => gauge.style.setProperty("--pct", value));
+  });
   return item;
 }
 

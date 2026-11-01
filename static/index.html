@@ -42,6 +42,11 @@
     .post-body         post text, line breaks preserved; clamped to ~5 lines
                        unless .is-expanded
     .see-more          "...see more" / "see less" toggle
+    .cringe-report     score block on the card (hidden if no score)
+    .badge             e.g. "Certified Lunatic"
+    .gauge             one score row; data-key = buzzwords|emojis|humblebrag|overall
+                       JS sets --pct (0-100) on .gauge for the fill width
+    .gauge-label / .gauge-track / .gauge-fill / .gauge-value
     .post-stats        row with reactions (left) and counts (right)
     .reactions         reaction emoji + like count
     .reaction-emojis   the stacked reaction emoji
@@ -117,6 +122,29 @@
         </header>
         <div class="post-body"></div>
         <button type="button" class="see-more" aria-expanded="false" hidden>...see more</button>
+        <section class="cringe-report" aria-label="Cringe score" hidden>
+          <span class="badge"></span>
+          <div class="gauge" data-key="buzzwords" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Buzzwords">
+            <span class="gauge-label">Buzzwords</span>
+            <span class="gauge-track"><span class="gauge-fill"></span></span>
+            <span class="gauge-value">0</span>
+          </div>
+          <div class="gauge" data-key="emojis" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Emojis">
+            <span class="gauge-label">Emojis</span>
+            <span class="gauge-track"><span class="gauge-fill"></span></span>
+            <span class="gauge-value">0</span>
+          </div>
+          <div class="gauge" data-key="humblebrag" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Humblebrag">
+            <span class="gauge-label">Humblebrag</span>
+            <span class="gauge-track"><span class="gauge-fill"></span></span>
+            <span class="gauge-value">0</span>
+          </div>
+          <div class="gauge" data-key="overall" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Overall cringe">
+            <span class="gauge-label">Overall cringe</span>
+            <span class="gauge-track"><span class="gauge-fill"></span></span>
+            <span class="gauge-value">0</span>
+          </div>
+        </section>
         <div class="post-stats">
           <span class="reactions"><span class="reaction-emojis" aria-hidden="true">👍❤️👏</span> <span class="reaction-count">0</span></span>
           <span class="post-counts"><span class="comment-count"></span> · <span class="repost-count"></span></span>
