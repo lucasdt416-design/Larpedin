@@ -365,17 +365,16 @@ def generate():
         "events, people, results, companies or statistics."
     )
     try:
-        for attempt in range(3):
+        # At most one retry, and only for a broken layout: every retry spends Groq free-tier quota (~8K tokens/min).
+        for attempt in range(2):
             out = json.loads(llm(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
                 temperature=min(0.85, 0.55 + 0.03 * level),
                 schema=GENERATE_SCHEMA,
             ))
-            flagged = str(out.get("claims_check", "")).strip().strip(".").lower()
-            clean = flagged in ("", "none", "n/a", "[]", "empty", "no")
-            if clean and post_shape_ok(str(out.get("post", ""))):
+            if post_shape_ok(str(out.get("post", ""))):
                 break
-            app.logger.info("retrying post (claims_check=%r, shape ok=%s)", flagged[:80], post_shape_ok(str(out.get("post", ""))))
+            app.logger.info("retrying post: layout off (claims_check=%r)", str(out.get("claims_check", ""))[:80])
         result = {
             "post": tidy_post(out["post"]),
             "headline": str(out["headline"]).strip(),
