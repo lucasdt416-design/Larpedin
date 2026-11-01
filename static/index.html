@@ -79,12 +79,13 @@
     .action-bar        Like / Comment / Repost / Send row
     .action-btn        one action; .is-active when toggled on
     .post-comments     list of fake comments (only if backend sends them)
-    .comment / .comment-author / .comment-title / .comment-text
+    .comment / .comment-avatar (initials) / .comment-author / .comment-title / .comment-text
     .truth-card        Delarp result card
     .truth-label       "What actually happened"
     .truth-text        the honest one-liner
     .post-actions      real buttons under the card (Copy + open LinkedIn)
     .share-btn         "Copy + open LinkedIn"
+    .escalate-btn      rewrite this post one cringe level higher, in place
     .copy-btn          copy the post text only
     .link-btn          copy a shareable /p/<id> link (hidden if no id)
     .download-btn      save the .post-card as a PNG (html2canvas)
@@ -239,6 +240,7 @@
       </article>
       <div class="post-actions">
         <button type="button" class="share-btn">Copy + open LinkedIn</button>
+        <button type="button" class="escalate-btn">📈 Escalate</button>
         <button type="button" class="copy-btn">Copy</button>
         <button type="button" class="link-btn" hidden>🔗 Share link</button>
         <button type="button" class="download-btn">📸 Download image</button>

@@ -262,7 +262,9 @@ async function postJSON(url, body, requiredField) {
   return data;
 }
 
-const generate = (text, tone, level) => postJSON("/api/generate", { text, tone, level }, "post");
+// previous: an earlier post to escalate (backend makes it even more delusional).
+const generate = (text, tone, level, previous) =>
+  postJSON("/api/generate", previous ? { text, tone, level, previous } : { text, tone, level }, "post");
 
 const STATUS_LINES = [
   "Synergizing...",
@@ -292,7 +294,7 @@ function setBusy(busy) {
   const btn = $("generate");
   btn.disabled = busy;
   $("try-all").disabled = busy;
-  document.querySelectorAll(".regen-btn").forEach((b) => (b.disabled = busy));
+  document.querySelectorAll(".regen-btn, .escalate-btn").forEach((b) => (b.disabled = busy));
   btn.classList.toggle("is-loading", busy);
   btn.textContent = busy ? (mode === "delarp" ? "Delarping..." : "Larping...") : MODES[mode].button;
   $("result").classList.toggle("is-loading", busy);
@@ -362,9 +364,9 @@ function vibeLabel(t) {
   return pill ? pill.textContent.trim() : t;
 }
 
-// req: {text, tone, level, showVibe}
+// req: {text, tone, level, showVibe, previous}
 function generateTask(req) {
-  const task = async (slot) => renderCard(await generate(req.text, req.tone, req.level), slot, req);
+  const task = async (slot) => renderCard(await generate(req.text, req.tone, req.level, req.previous), slot, req);
   task.label = vibeLabel(req.tone);
   return task;
 }
@@ -532,6 +534,11 @@ function renderCard(data, slot, req) {
     for (const c of comments) {
       const li = document.createElement("li");
       li.className = "comment";
+      const avatar = document.createElement("span");
+      avatar.className = "comment-avatar";
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = initials(c.name || "?");
+      li.append(avatar);
       for (const [cls, text] of [["comment-author", c.name], ["comment-title", c.title], ["comment-text", c.text]]) {
         const span = document.createElement("span");
         span.className = cls;
@@ -570,6 +577,15 @@ function renderCard(data, slot, req) {
     q(".gallery-link").hidden = false;
   }
   q(".regen-btn").addEventListener("click", () => run(req.text, [generateTask(req)], item));
+
+  // Escalate: one level more cringe, rewriting this post, in place.
+  const nextLevel = Math.min(req.level + 1, 10);
+  q(".escalate-btn").textContent = req.level >= 10 ? "📈 Escalate (max)" : `📈 Escalate to ${nextLevel}`;
+  q(".escalate-btn").addEventListener("click", () => {
+    $("level").value = nextLevel;
+    updateLevel();
+    run(req.text, [generateTask({ ...req, level: nextLevel, previous: data.post })], item);
+  });
 
   slot.replaceWith(item);
 

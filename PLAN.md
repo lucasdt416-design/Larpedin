@@ -160,6 +160,8 @@ Show all model text with `textContent`, never `innerHTML`. Gallery posts come fr
 
 - Status (all live on main): composer (9 tone pills, cringe slider, voice input, LARP/Delarp toggle), post card (gauges, badge, comments, reaction line), `/api/health` warm-up, loading skeleton, `gallery.html`. Under each post: Copy + open LinkedIn, Copy, Share link (`/p/<id>`), Download image (html2canvas), Regenerate. "Try 4 vibes" runs 4 tones in parallel; each card shows its own error.
 - Requests "Share link" and "nav.js": both done. `index.html` and `gallery.html` load `nav.js`, and the old `.app-header` is gone.
+- Requests "📈 Escalate" and "comment initials": both done. Escalate sends `previous`, raises the slider by one (max 10), and replaces the card in place.
+- Also live: inspo chips, a "See it in the Hall of Larp" link (`gallery.html#post-<id>` scrolls to and flashes that post), 60s request timeouts, typewriter reveal, and confetti when `score.overall >= 85`.
 - Design pass done in `style.css` with the style-guide values as CSS variables on `:root`. Gallery cards show a stable fake author name (picked from the post `id`), because `/api/gallery` has no name field.
 - For Mohammad, from Lucas's review:
   1. The fallback template "{text} taught me more than my MBA" reads badly with raw input ("I touched grass taught me more than my MBA"). It shows exactly when Groq is down during the demo.
