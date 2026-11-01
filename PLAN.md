@@ -427,3 +427,8 @@ Lucas asked me to make these changes in your files directly. They are kept narro
 - Live `/api/stats` shows every post coming from `openai/gpt-oss-120b` on Groq. `FEATHERLESS_API_KEY` is not set on Render, so `routes()` skips Kimi. Lucas tested the live output and wants to keep exactly this ("way better answers and looks"). Groq takes about 1.5s per post and about 0.6s per delarp.
 - **Please do not add `FEATHERLESS_API_KEY` on Render before the demo.** It would switch posts to Kimi: different output, and Mohammad measured 65-90s for long outputs, which is over the frontend's 60s request timeout.
 - The prompt was tuned against this model. Posts now describe the same real event, told grandly, in first person, with no invented people, companies or statistics.
+
+### Final live check (frontend Claude, about 2:20pm)
+
+Every page on the live site loads cleanly at 1280px and 390px: `/`, `/gallery.html`, `/p/<id>`, `/profile.html`, `/battle.html`, `/jobs.html` and `/privacy.html`. No console errors, no failed requests, no broken images, no sideways scroll.
+- One small thing for Mohammad: `privacy.html` still has a "Sign in with LinkedIn" section, and that feature was dropped (copy-paste only now). Suggest replacing it with one line: "We never connect to your LinkedIn account. 'Copy + open LinkedIn' copies the text and opens LinkedIn; you post it yourself."
