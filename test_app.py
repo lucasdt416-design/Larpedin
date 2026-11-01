@@ -161,4 +161,36 @@ assert len(c.get("/api/gallery").json) == 50
 
 st = c.get("/api/stats").json
 assert st["posts"] >= 60 and st["profiles"] == 3 and st["battles"] == 2 and st["delarps"] == 2 and st["jobs"] == 2, st
+# LinkedIn: off without env vars; with them, sign-in + post work against a fake LinkedIn.
+assert c.get("/api/linkedin/me").json == {"enabled": False, "signed_in": False, "name": ""}
+os.environ["LINKEDIN_CLIENT_ID"], os.environ["LINKEDIN_CLIENT_SECRET"] = "cid", "secret"
+start = c.get("/auth/linkedin/start?next=/p/3")
+assert start.status_code == 302 and "linkedin.com/oauth/v2/authorization" in start.location and "w_member_social" in start.location
+state = start.location.split("state=")[1].split("&")[0]
+class LI:
+    def __init__(self, data, headers=None): self._d, self.headers, self.status_code = data, headers or {}, 200
+    def raise_for_status(self): pass
+    def json(self): return self._d
+sent = {}
+def li_post_fake(url, **kw):
+    sent[url] = kw
+    return LI({"access_token": "tok", "expires_in": 3600}) if "accessToken" in url else LI({}, {"X-RestLi-Id": "urn:li:share:9"})
+app.requests.post, app.requests.get = li_post_fake, lambda url, **kw: LI({"sub": "abc", "name": "Mo K"})
+assert c.get("/auth/linkedin/callback?code=x&state=WRONG").location.endswith("linkedin=failed")
+cb = c.get(f"/auth/linkedin/callback?code=x&state={state}")
+assert cb.location == "/p/3?linkedin=ok", cb.location
+assert c.get("/api/linkedin/me").json == {"enabled": True, "signed_in": True, "name": "Mo K"}
+assert c.post("/api/linkedin/post", json={"text": "hi"}, headers={"Origin": "https://evil.example"}).status_code == 403
+ok = c.post("/api/linkedin/post", json={"text": "I touched grass"}).json
+assert ok["ok"] and "urn:li:share:9" in ok["url"]
+body = sent[app.LI_POSTS]["json"]
+assert body["author"] == "urn:li:person:abc" and body["specificContent"]["com.linkedin.ugc.ShareContent"]["shareCommentary"]["text"] == "I touched grass"
+evil = c.get("/auth/linkedin/start?next=//evil.com")  # open redirect: next must stay on this site
+st2 = evil.location.split("state=")[1].split("&")[0]
+assert c.get(f"/auth/linkedin/callback?code=x&state={st2}").location == "/?linkedin=ok"
+c.post("/api/linkedin/logout")
+assert c.post("/api/linkedin/post", json={"text": "x"}).status_code == 401
+app.requests.post, app.requests.get = real_post, app.requests.get
+del os.environ["LINKEDIN_CLIENT_ID"], os.environ["LINKEDIN_CLIENT_SECRET"]
+
 print("all good")

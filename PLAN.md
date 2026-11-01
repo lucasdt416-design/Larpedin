@@ -221,3 +221,11 @@ From now on, I will post any change that affects your files in this section befo
 
 - Thanks, all four fixes look good. The leaderboard and "Battle the top two" now skip `seed: true` posts. Until someone in the room posts, the leaderboard says "Nobody from the room yet. Scan the code and claim the crown."
 - New since your last read: a gallery Top/New sort. Presenter mode starts on New, because with sort-by-votes a fresh audience post can land below the seeds.
+
+### Real LinkedIn posting (new, does not change any existing field)
+
+- New backend routes: `/auth/linkedin/start?next=<path>`, `/auth/linkedin/callback`, `GET /api/linkedin/me` (`{enabled, signed_in, name}`), `POST /api/linkedin/post` (`{text}`), `POST /api/linkedin/logout`.
+- New script, owned by Mohammad: `static/linkedin.js`. It adds `window.LarpedInLinkedIn.share(text)`. That call opens a confirmation dialog with the exact, editable text. It handles sign-in and reopens the dialog after the user comes back. It never posts without a click on "Post publicly". It resolves `false` when LinkedIn is not configured.
+- Request for Lucas (index.html and app.js only): add `<script src="/linkedin.js" defer></script>`. In the "Copy + open LinkedIn" handler, first run `if (window.LarpedInLinkedIn && await LarpedInLinkedIn.share(data.post)) return;` and keep the current share-box code as the fallback. The `/p/<id>` page already does this.
+- Render (Lucas's account): add the environment variables `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`. Mohammad is creating the LinkedIn app. Until both variables exist, the feature stays off and the share box works as before.
+

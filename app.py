@@ -3,6 +3,8 @@ import itertools
 import json
 import os
 import random
+import secrets
+import time
 import re
 import threading
 import zlib
@@ -12,7 +14,7 @@ import io
 import textwrap
 
 import requests
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, jsonify, redirect, request, send_file, send_from_directory
 from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__, static_folder="static", static_url_path="")
@@ -762,6 +764,130 @@ def get_profile(profile_id):
     if not prof:
         return jsonify(error="That profile is gone. Profiles reset when the server restarts."), 404
     return jsonify(prof)
+
+
+# ---- Real LinkedIn posting (Sign In with LinkedIn + Share on LinkedIn) ----
+# Off unless LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET are set in Render; the site then keeps the share box.
+LI_AUTH = "https://www.linkedin.com/oauth/v2/authorization"
+LI_TOKEN = "https://www.linkedin.com/oauth/v2/accessToken"
+LI_USERINFO = "https://api.linkedin.com/v2/userinfo"
+LI_POSTS = "https://api.linkedin.com/v2/ugcPosts"
+LI_SESSIONS = {}  # ponytail: in-memory sessions, a restart signs everyone out; fine without a database
+
+
+def li_enabled():
+    return bool(os.environ.get("LINKEDIN_CLIENT_ID") and os.environ.get("LINKEDIN_CLIENT_SECRET"))
+
+
+def base_url():
+    # Render terminates TLS at its proxy, so force https everywhere except local dev.
+    url = request.host_url.rstrip("/")
+    local = request.host.split(":")[0] in ("localhost", "127.0.0.1")
+    return url if local else url.replace("http://", "https://", 1)
+
+
+def li_redirect_uri():
+    return base_url() + "/auth/linkedin/callback"
+
+
+def li_session():
+    sess = LI_SESSIONS.get(request.cookies.get("li_sid", ""))
+    return sess if sess and sess["exp"] > time.time() else None
+
+
+def safe_next(path):
+    return path if isinstance(path, str) and path.startswith("/") and not path.startswith("//") else "/"
+
+
+@app.get("/auth/linkedin/start")
+def li_start():
+    if not li_enabled():
+        return redirect("/")
+    state = secrets.token_urlsafe(24)
+    params = {
+        "response_type": "code", "client_id": os.environ["LINKEDIN_CLIENT_ID"], "redirect_uri": li_redirect_uri(),
+        "state": state, "scope": "openid profile w_member_social",
+    }
+    resp = redirect(LI_AUTH + "?" + requests.compat.urlencode(params))
+    resp.set_cookie("li_state", state + "|" + safe_next(request.args.get("next")), max_age=600,
+                    httponly=True, secure=base_url().startswith("https"), samesite="Lax")
+    return resp
+
+
+@app.get("/auth/linkedin/callback")
+def li_callback():
+    state, _, nxt = request.cookies.get("li_state", "").partition("|")
+    nxt = safe_next(nxt)
+    sep = "&" if "?" in nxt else "?"
+    if not li_enabled() or not state or request.args.get("state") != state or not request.args.get("code"):
+        return redirect(nxt + sep + "linkedin=failed")
+    try:
+        tok = requests.post(LI_TOKEN, data={
+            "grant_type": "authorization_code", "code": request.args["code"], "redirect_uri": li_redirect_uri(),
+            "client_id": os.environ["LINKEDIN_CLIENT_ID"], "client_secret": os.environ["LINKEDIN_CLIENT_SECRET"],
+        }, timeout=15)
+        tok.raise_for_status()
+        token = tok.json()["access_token"]
+        me = requests.get(LI_USERINFO, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+        me.raise_for_status()
+        me = me.json()
+    except (requests.RequestException, KeyError, ValueError) as e:
+        app.logger.warning("LinkedIn sign-in failed: %s", e)
+        return redirect(nxt + sep + "linkedin=failed")
+    sid = secrets.token_urlsafe(32)
+    with LOCK:
+        LI_SESSIONS[sid] = {"token": token, "sub": me["sub"], "name": me.get("name", ""),
+                            "exp": time.time() + int(tok.json().get("expires_in", 3600))}
+    resp = redirect(nxt + sep + "linkedin=ok")
+    resp.set_cookie("li_sid", sid, max_age=86400, httponly=True,
+                    secure=base_url().startswith("https"), samesite="Lax")
+    resp.delete_cookie("li_state")
+    return resp
+
+
+@app.get("/api/linkedin/me")
+def li_me():
+    sess = li_session()
+    return jsonify(enabled=li_enabled(), signed_in=bool(sess), name=sess["name"] if sess else "")
+
+
+@app.post("/api/linkedin/post")
+def li_post():
+    # Same-origin JSON only (SameSite=Lax cookie + Origin check), so other sites cannot post as the user.
+    origin = request.headers.get("Origin")
+    if origin and origin.rstrip("/") not in (base_url(), request.host_url.rstrip("/")):
+        return jsonify(error="Cross-site request blocked."), 403
+    sess = li_session()
+    if not sess:
+        return jsonify(error="Sign in with LinkedIn first.", signed_in=False), 401
+    _, text = text_from_request(2900)
+    if not text:
+        return jsonify(error="Nothing to post."), 400
+    body = {
+        "author": f"urn:li:person:{sess['sub']}",
+        "lifecycleState": "PUBLISHED",
+        "specificContent": {"com.linkedin.ugc.ShareContent": {
+            "shareCommentary": {"text": text}, "shareMediaCategory": "NONE"}},
+        "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
+    }
+    try:
+        r = requests.post(LI_POSTS, json=body, timeout=20, headers={
+            "Authorization": f"Bearer {sess['token']}", "X-Restli-Protocol-Version": "2.0.0"})
+        r.raise_for_status()
+    except requests.RequestException as e:
+        app.logger.warning("LinkedIn post failed: %s %s", e, getattr(getattr(e, "response", None), "text", "")[:300])
+        return jsonify(error="LinkedIn did not accept the post. Try the share box instead."), 502
+    post_id = r.headers.get("X-RestLi-Id", "")
+    return jsonify(ok=True, url=f"https://www.linkedin.com/feed/update/{post_id}/" if post_id else "https://www.linkedin.com/feed/")
+
+
+@app.post("/api/linkedin/logout")
+def li_logout():
+    with LOCK:
+        LI_SESSIONS.pop(request.cookies.get("li_sid", ""), None)
+    resp = jsonify(ok=True)
+    resp.delete_cookie("li_sid")
+    return resp
 
 
 load_seeds()

@@ -91,6 +91,7 @@
   }
 </style>
 <script src="/nav.js" defer></script>
+<script src="/linkedin.js" defer></script>
 </head>
 <body>
 
@@ -134,6 +135,7 @@
   <section class="card pad cta">
     <button class="btn outline copy" type="button">🔗 Copy link</button>
     <a class="btn outline" href="/">✍️ Make your own</a>
+    <button class="btn primary to-li" type="button">📣 Post to LinkedIn</button>
     <button class="btn tedx" type="button">🎤 Present at TEDx</button>
   </section>
   <p class="foot">LarpedIn is a parody. No careers were harmed.</p>
@@ -228,6 +230,12 @@ function render(p) {
     try { await navigator.clipboard.writeText(location.href); copy.textContent = "✅ Copied!"; }
     catch { copy.textContent = "Copy failed, use the address bar"; }
     setTimeout(() => { copy.textContent = "🔗 Copy link"; }, 2000);
+  };
+
+  const toLi = $(frag, ".to-li");
+  toLi.onclick = async () => {
+    const handled = window.LarpedInLinkedIn && await window.LarpedInLinkedIn.share(p.post);
+    if (!handled) window.open("https://www.linkedin.com/feed/?shareActive=true&text=" + encodeURIComponent(p.post), "_blank", "noopener");
   };
 
   const tedx = $(frag, ".tedx");
