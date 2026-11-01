@@ -67,6 +67,7 @@ EMOJI_RULES = [
     "paragraph or the takeaway line, never at the start of a line, never in the numbered skills or the hashtag line.",
 ]
 
+# LOCKED by Lucas until the demo: don't change this prompt, the layout or the reveal rule (see PLAN.md).
 GENERATE_PROMPT = (
     "You ghostwrite LinkedIn posts for someone who is LARPING: making something ordinary they did sound impressive WITHOUT lying. "
     "Write in the first person as {voice}\n"
