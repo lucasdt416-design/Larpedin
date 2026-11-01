@@ -331,6 +331,7 @@ async function run(text, tasks, replaceItem = null) {
     slots = tasks.map(() => $("results").appendChild(newSkeleton()));
   }
   $("result").hidden = false;
+  slots[0].scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   const multi = $("results").children.length > 1;
   try {
     await Promise.all(tasks.map(async (task, i) => {
@@ -572,8 +573,19 @@ function renderCard(data, slot, req) {
 
   slot.replaceWith(item);
 
-  // Only offer "see more" if the clamped text actually overflows.
-  seeMore.hidden = body.scrollHeight <= body.clientHeight + 1;
+  // Only offer "see more" if the clamped text actually overflows (measured with the full text).
+  const overflows = body.scrollHeight > body.clientHeight + 1;
+  seeMore.hidden = true;
+  if (reduceMotion) {
+    seeMore.hidden = !overflows;
+  } else {
+    item.setAttribute("aria-busy", "true");
+    typeOut(body, data.post, () => {
+      seeMore.hidden = !overflows;
+      item.removeAttribute("aria-busy");
+    });
+  }
+  if (Number(data.score?.overall) >= 85) setTimeout(() => burst(q(".badge")), 700);
   animateCount(q(".reaction-count"), counts.like);
   item.querySelectorAll(".gauge").forEach((gauge) => {
     const value = Number(gauge.querySelector(".gauge-value").dataset.target || 0);
@@ -582,6 +594,49 @@ function renderCard(data, slot, req) {
     requestAnimationFrame(() => gauge.style.setProperty("--pct", value));
   });
   return item;
+}
+
+// Reveal text a few characters per frame (~1.5s total) like it's being written live.
+function typeOut(el, text, done) {
+  const chars = [...text]; // keeps emoji surrogate pairs intact
+  const step = Math.max(2, Math.ceil(chars.length / 90));
+  let i = 0;
+  el.textContent = "";
+  el.classList.add("is-typing");
+  const tick = () => {
+    i = Math.min(chars.length, i + step);
+    if (i < chars.length && el.isConnected) {
+      el.textContent = chars.slice(0, i).join("");
+      requestAnimationFrame(tick);
+    } else {
+      el.textContent = text;
+      el.classList.remove("is-typing");
+      done();
+    }
+  };
+  requestAnimationFrame(tick);
+}
+
+const CONFETTI = ["🎉", "💼", "📈", "🚀", "🙌", "✨", "🏆"];
+
+// Emoji burst from an element, for "Certified Lunatic" level cringe.
+function burst(anchor) {
+  if (reduceMotion || !anchor.isConnected) return;
+  const r = anchor.getBoundingClientRect();
+  for (let i = 0; i < 24; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti";
+    piece.setAttribute("aria-hidden", "true");
+    piece.textContent = CONFETTI[i % CONFETTI.length];
+    // Page coordinates, so the burst stays on the badge even if the page is still scrolling.
+    piece.style.left = `${r.left + scrollX + r.width / 2}px`;
+    piece.style.top = `${r.top + scrollY + r.height / 2}px`;
+    piece.style.setProperty("--dx", `${Math.round((Math.random() * 2 - 1) * 240)}px`);
+    piece.style.setProperty("--dy", `${-Math.round(80 + Math.random() * 180)}px`);
+    piece.style.setProperty("--rot", `${Math.round((Math.random() * 2 - 1) * 360)}deg`);
+    piece.addEventListener("animationend", () => piece.remove());
+    document.body.append(piece);
+  }
 }
 
 async function downloadCard(card, btn) {

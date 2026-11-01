@@ -748,3 +748,34 @@ main {
 }
 .gallery-link:hover { background: var(--hover); color: var(--text); text-decoration: none; }
 .gallery-card { scroll-margin-top: 80px; }
+
+/* ---------- Typing + confetti ---------- */
+
+.post-body.is-typing::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--blue);
+  animation: caret 0.8s steps(1) infinite;
+}
+@keyframes caret { 50% { opacity: 0; } }
+
+.confetti {
+  position: absolute;
+  z-index: 1100;
+  pointer-events: none;
+  font-size: 22px;
+  line-height: 1;
+  margin: -11px 0 0 -11px;
+  animation: confetti 1.5s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+}
+@keyframes confetti {
+  0% { transform: translate(0, 0) rotate(0) scale(0.6); opacity: 1; }
+  45% { transform: translate(calc(var(--dx) * 0.7), var(--dy)) rotate(calc(var(--rot) * 0.5)) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 320px)) rotate(var(--rot)) scale(1); opacity: 0; }
+}
+
+.result-item, .skeleton { scroll-margin-top: 72px; }
