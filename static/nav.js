@@ -15,7 +15,6 @@
     ".lnav *{box-sizing:border-box;}",
     ".lnav-in{display:flex;align-items:center;gap:8px;max-width:1000px;margin:0 auto;padding:6px 12px;height:52px;white-space:nowrap;}",
     ".lnav-brand{display:flex;align-items:center;gap:1px;text-decoration:none;color:#0a66c2;font-weight:800;font-size:20px;letter-spacing:-.5px;flex-shrink:0;}",
-    ".lnav-box{display:inline-block;background:#0a66c2;color:#fff;border-radius:4px;padding:0 4px;margin-left:2px;font-size:.9em;line-height:1.3;}",
     ".lnav-chip{font-size:10px;color:#666;background:#f4f2ee;border:1px solid #e0dfdc;border-radius:999px;padding:2px 7px;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}",
     ".lnav-links{display:flex;align-items:stretch;gap:2px;margin-left:auto;height:100%;}",
     ".lnav-link{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:56px;padding:0 8px;text-decoration:none;color:#666;font-size:12px;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;transition:color .15s,background .15s;}",
@@ -65,10 +64,10 @@
   nav.setAttribute("aria-label", "Main");
   var inner = el("div", "lnav-in");
 
-  var brand = el("a", "lnav-brand", "Larped");
+  // Plain-text wordmark: no boxed "in", which would imitate LinkedIn's logo.
+  var brand = el("a", "lnav-brand", "LarpedIn");
   brand.href = "/";
   brand.setAttribute("aria-label", "LarpedIn home");
-  brand.appendChild(el("span", "lnav-box", "in"));
   inner.appendChild(brand);
 
   var chip = el("span", "lnav-chip", "parody");
@@ -99,9 +98,13 @@
 
   document.body.insertBefore(nav, document.body.firstChild);
 
+  // Storage can throw in private / blocked-storage browsers; the gags must never break the nav.
+  function getFlag(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function setFlag(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
   // ---- Premium gag ----
   function markPremium() {
-    if (localStorage.getItem("lnavPremium") && !nav.querySelector(".lnav-prem")) {
+    if (getFlag("lnavPremium") && !nav.querySelector(".lnav-prem")) {
       brand.after(el("span", "lnav-prem", "PREMIUM"));
     }
   }
@@ -137,7 +140,7 @@
     modal.addEventListener("click", function (e) { if (e.target === modal) close(); });
     no.addEventListener("click", close);
     yes.addEventListener("click", function () {
-      localStorage.setItem("lnavPremium", "1");
+      setFlag("lnavPremium", "1");
       markPremium();
       while (card.firstChild) card.removeChild(card.firstChild);
       card.appendChild(el("div", "", "🎉"));
@@ -174,7 +177,7 @@
     var body = el("div");
     body.appendChild(el("b", "", "LarpedIn notification"));
     body.appendChild(document.createTextNode(n[1]));
-    if (n[2] && !localStorage.getItem("lnavPremium")) {
+    if (n[2] && !getFlag("lnavPremium")) {
       body.appendChild(document.createElement("br"));
       var cta = el("button", "lnav-cta", "See offer");
       cta.type = "button";

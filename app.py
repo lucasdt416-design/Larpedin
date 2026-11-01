@@ -50,7 +50,7 @@ LEVELS = [
 GENERATE_PROMPT = (
     "You write parody LinkedIn posts. The user tells you something small and ordinary they did. "
     "Rewrite it as a LinkedIn post in the voice of {voice}. Cringe level {level}/10: {intensity}. "
-    "Use short one-line paragraphs, a fake life lesson, a numbered list of 3 takeaways, "
+    "Use short one-line paragraphs, one obviously absurd life lesson (never print a label like 'Life lesson:' or 'Fake life lesson:'), a numbered list of 3 takeaways, "
     "a few emojis, and 3-5 hashtags at the end. Keep it under 200 words. "
     "The post is plain text with no markdown or asterisks. "
     "Also write an absurd LinkedIn headline for the author that is specific to what they did and to the voice. "
@@ -110,13 +110,13 @@ GENERATE_SCHEMA = {
 
 FALLBACK_POSTS = [
     "I did something today.\n\n{text}.\n\nMost people would call it ordinary.\n\nI call it a masterclass in leadership.\n\n3 takeaways:\n1. Show up.\n2. Stay humble.\n3. Post about it.\n\n#Growth #Leadership #Grateful",
-    "Unpopular opinion:\n\n{text} taught me more than my MBA.\n\nI will not be taking questions. 🙏\n\nAgree?\n\n#Mindset #Hustle #Journey",
+    "Unpopular opinion:\n\nToday I did this: {text}.\n\nIt taught me more than my MBA.\n\nI will not be taking questions. 🙏\n\nAgree?\n\n#Mindset #Hustle #Journey",
     "5:00 AM. Cold shower. Then I did this:\n\n{text}.\n\nWhile you were sleeping, I was compounding. 📈\n\nThe grind does not care about your feelings.\n\n#Grindset #5AMClub #NoDaysOff",
     "I almost didn't share this.\n\nBut vulnerability is leadership. 🥹\n\nToday, {text}.\n\nI cried. My team cried. The intern is still crying.\n\nGrateful for this journey.\n\n#Authenticity #Grateful #Leadership",
-    "Everyone asks me how I stay so productive.\n\nThe secret? {text}.\n\nThat's it. That's the post.\n\n(DM me for my $499 course on it.) 💼\n\n#Productivity #Founder #Mindset",
+    "Everyone asks me how I stay so productive.\n\nHere is my secret. Today: {text}.\n\nThat's it. That's the post.\n\n(DM me for my $499 course on it.) 💼\n\n#Productivity #Founder #Mindset",
     "My 4-year-old asked me: 'Why do you work so hard?'\n\nI didn't answer. I just showed her: {text}.\n\nShe understood. Now she is a VP.\n\n#Parenting #Leadership #Legacy",
-    "Hot take 🔥\n\n{text} is the new MBA.\n\nI said what I said.\n\nRepost if you agree. ♻️\n\n#Disruption #FutureOfWork #Agree",
-    "Today I learned that {text} is basically B2B sales.\n\nYou show up. You add value. You follow up.\n\nHumbled. Honored. Hiring.\n\n#Sales #Growth #Hiring",
+    "Hot take 🔥\n\nWhat I did today: {text}.\n\nThat is the new MBA.\n\nI said what I said.\n\nRepost if you agree. ♻️\n\n#Disruption #FutureOfWork #Agree",
+    "Today: {text}.\n\nTurns out that is basically B2B sales.\n\nYou show up. You add value. You follow up.\n\nHumbled. Honored. Hiring.\n\n#Sales #Growth #Hiring",
 ]
 
 FALLBACK_HEADLINES = [
@@ -157,7 +157,7 @@ def load_seeds():
     with open(path, encoding="utf-8") as f:
         for i, p in enumerate(json.load(f)):
             pid = next(NEXT_ID)
-            GALLERY[pid] = {**clean_post(p), "id": pid, "votes": p.get("votes", 0), "fallback": False}
+            GALLERY[pid] = {**clean_post(p), "id": pid, "votes": p.get("votes", 0), "fallback": False, "seed": True}
 
 
 STATS = {"posts": 0, "profiles": 0, "battles": 0, "delarps": 0, "jobs": 0, "tokens": 0, "by_model": {}}
@@ -251,7 +251,7 @@ def generate():
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
         "Rewrite it to be even more delusional and self-important. Keep the same story, but escalate it: "
-        "bigger claims, a bigger fake life lesson, and a career pivot nobody asked for."
+        "bigger claims, an even more absurd life lesson, and a career pivot nobody asked for."
     )
     try:
         out = json.loads(groq(
@@ -343,10 +343,10 @@ def stats():
 
 @app.get("/api/gallery")
 def gallery():
-    keys = ["id", "name", "text", "tone", "level", "post", "headline", "comments", "score", "badge", "votes"]
+    keys = ["id", "name", "text", "tone", "level", "post", "headline", "comments", "score", "badge", "votes", "seed"]
     with LOCK:
         posts = sorted(GALLERY.values(), key=lambda p: (p["votes"], p["id"]), reverse=True)
-        return jsonify([{k: p[k] for k in keys} for p in posts])
+        return jsonify([{k: p.get(k, False) if k == "seed" else p[k] for k in keys} for p in posts])
 
 
 @app.post("/api/gallery/<int:post_id>/vote")

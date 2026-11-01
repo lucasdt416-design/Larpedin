@@ -95,7 +95,7 @@ assert c.post("/api/delarp", json={"text": "Thrilled to announce"}).json == {"tr
 assert c.post(f"/api/gallery/{r['id']}/vote").json == {"votes": 1}
 assert c.post("/api/gallery/9999/vote").status_code == 404
 g = c.get("/api/gallery").json
-assert g[0]["id"] == r["id"] and g[0]["level"] == 10 and g[0]["tone"] == "recruiter"
+assert g[0]["id"] == r["id"] and g[0]["level"] == 10 and g[0]["tone"] == "recruiter" and g[0]["seed"] is False
 
 p = c.post("/api/profile", json={"name": "Mo", "text": "I wash dishes"}).json
 assert p["name"] == "Mo" and len(p["experience"]) == 4 and p["fallback"] is False
