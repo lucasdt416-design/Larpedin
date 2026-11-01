@@ -14,6 +14,7 @@ Edit only the files that you own. If you must change another person's file, ask 
 |---|---|---|
 | Backend, prompts, Render | `app.py`, `requirements.txt`, `render.yaml` | Mohammad (Claude Code) |
 | Frontend logic | `static/index.html`, `static/app.js`, `static/gallery.html` | Lucas (Claude chat / Codex) |
+| New pages | `static/post.html`, `static/profile.html`, `static/nav.js`, `static/pages.css` | Mohammad (Claude Code) |
 | Design | `static/style.css` | Lucas |
 | Docs | `README.md`, `PLAN.md` | anyone |
 
@@ -78,6 +79,32 @@ Returns `{"votes": 4}`. Unknown id returns 404 `{"error": "..."}`.
 
 Status 400 `{"error": "message"}` for empty or missing input. Show `error` to the user. Groq problems do not return errors from `/api/generate`, they return a fallback post.
 
+## New endpoints (live)
+
+### `POST /api/profile`
+
+Request: `{"name": "Mo", "text": "I am a student who washes dishes at home", "level": 7}`
+Response: `{name, headline, location, about, open_to, followers, experience: [{title, company, dates, location, bullets: [str]}], education: [{school, degree, dates}], skills: [{name, endorsements}], recommendations: [{name, title, relation, text}], fallback}`
+
+### `GET /api/post/<id>`
+
+Returns one gallery post with all its fields, or 404.
+
+### `GET /p/<id>`
+
+Shareable page for one post (`static/post.html`). Link previews in iMessage, Slack and Discord show the headline and the post.
+
+## Mohammad's Claude is building (do not build these in index.html)
+
+- `post.html`: shareable post page at `/p/<id>`, with a "Present at TEDx" mode that reads the post out loud.
+- `profile.html`: "Larp your whole profile" generator.
+- `nav.js`: a shared top nav. Lucas, please add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html`.
+
+## Requests for Lucas (small, in your files)
+
+- After a post is generated, show a "Share link" button that copies `location.origin + "/p/" + data.id`.
+- Add `<script src="nav.js" defer></script>` to `index.html` and `gallery.html`.
+
 ## Frontend tasks (Lucas)
 
 1. Warm-up ping to `/api/health` on page load.
@@ -87,8 +114,7 @@ Status 400 `{"error": "message"}` for empty or missing input. Show `error` to th
 5. Tone dropdown with all 9 tones.
 6. Delarp mode toggle that uses the same text box and shows `truth`.
 7. Cringe score gauges and the `badge`.
-8. `gallery.html`: polls `/api/gallery` every 5 seconds, upvote buttons, and a QR code that points to https://larpedin-p1fd.onrender.com (or `location.origin`, so it follows any URL change).
-9. "Copy + open LinkedIn" copies only `post`.
+8. "Copy + open LinkedIn" copies only `post`.
 
 Show all model text with `textContent`, never `innerHTML`. Gallery posts come from the public.
 

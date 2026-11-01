@@ -1,3 +1,4 @@
+import html
 import itertools
 import json
 import os
@@ -10,7 +11,9 @@ from flask import Flask, jsonify, request, send_from_directory
 app = Flask(__name__, static_folder="static", static_url_path="")
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b shut down 2026-08-16
+# Each model has its own free rate limit (~8K tokens/min), so on 429 try the next one.
+# llama-3.3-70b shut down 2026-08-16; check console.groq.com/docs/deprecations before changing.
+MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
 
 TONES = {
     "thought leader": "a visionary thought leader who turns everything into a business lesson",
@@ -100,17 +103,21 @@ LOCK = threading.Lock()
 
 
 def groq(messages, temperature, schema=None):
-    body = {"model": MODEL, "temperature": temperature, "reasoning_effort": "low", "messages": messages}
+    body = {"temperature": temperature, "reasoning_effort": "low", "messages": messages}
     if schema:
         body["response_format"] = {"type": "json_schema", "json_schema": schema}
-    r = requests.post(
-        GROQ_URL,
-        headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
-        json=body,
-        timeout=30,
-    )
-    r.raise_for_status()
-    return r.json()["choices"][0]["message"]["content"].strip()
+    for i, model in enumerate(MODELS):
+        r = requests.post(
+            GROQ_URL,
+            headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
+            json={**body, "model": model},
+            timeout=30,
+        )
+        if r.status_code == 429 and i + 1 < len(MODELS):
+            app.logger.warning("%s rate limited, trying %s", model, MODELS[i + 1])
+            continue
+        r.raise_for_status()
+        return r.json()["choices"][0]["message"]["content"].strip()
 
 
 def badge(overall):
@@ -210,7 +217,7 @@ def delarp():
 
 @app.get("/api/gallery")
 def gallery():
-    keys = ["id", "text", "tone", "level", "post", "headline", "score", "badge", "votes"]
+    keys = ["id", "text", "tone", "level", "post", "headline", "comments", "score", "badge", "votes"]
     with LOCK:
         posts = sorted(GALLERY.values(), key=lambda p: (p["votes"], p["id"]), reverse=True)
         return jsonify([{k: p[k] for k in keys} for p in posts])
@@ -224,6 +231,116 @@ def vote(post_id):
             return jsonify(error="That post is gone."), 404
         post["votes"] += 1
         return jsonify(votes=post["votes"])
+
+
+PROFILE_PROMPT = (
+    "You build parody LinkedIn profiles. The user tells you their name and what their life is actually like. "
+    "Inflate everything into an absurd, self-important LinkedIn profile, cringe level {level}/10: {intensity}. "
+    "Every job must be a ridiculous reframing of something ordinary from their real life "
+    "(for example, being the family dishwasher becomes 'Head of Ceramic Hygiene Operations'). "
+    "Write 3 or 4 experience entries, newest first, each with 2 or 3 bullet points full of fake metrics. "
+    "Write 1 or 2 education entries, 6 skills with endorsement counts, and 2 recommendations from fake people. "
+    "Plain text only, no markdown. Keep the about section under 80 words."
+)
+
+
+def strict(props):
+    return {"type": "object", "additionalProperties": False, "required": list(props), "properties": props}
+
+
+STR, INT = {"type": "string"}, {"type": "integer"}
+
+
+def array_of(item):
+    return {"type": "array", "items": item}
+
+
+PROFILE_SCHEMA = {
+    "name": "larp_profile",
+    "strict": True,
+    "schema": strict({
+        "headline": STR,
+        "location": STR,
+        "about": STR,
+        "open_to": STR,
+        "followers": INT,
+        "experience": array_of(strict({
+            "title": STR, "company": STR, "dates": STR, "location": STR, "bullets": array_of(STR),
+        })),
+        "education": array_of(strict({"school": STR, "degree": STR, "dates": STR})),
+        "skills": array_of(strict({"name": STR, "endorsements": INT})),
+        "recommendations": array_of(strict({"name": STR, "title": STR, "relation": STR, "text": STR})),
+    }),
+}
+
+FALLBACK_PROFILE = {
+    "headline": "Visionary | Professional Larper | Open to Synergy",
+    "location": "Greater Hustle Area",
+    "about": "I turn ordinary days into extraordinary narratives. Passionate about growth, grit and posting about both.",
+    "open_to": "Board seats, podcasts, and being called a thought leader",
+    "followers": 50000,
+    "experience": [{
+        "title": "Founder & Chief Vibes Officer", "company": "Self-Employed (Spiritually)",
+        "dates": "2024 - Present", "location": "Remote (My Room)",
+        "bullets": ["Scaled personal brand 400% by posting daily", "Disrupted the concept of a normal Tuesday"],
+    }],
+    "education": [{"school": "University of Life", "degree": "MBA in Grindset", "dates": "2020 - 2024"}],
+    "skills": [{"name": "Synergy", "endorsements": 99}, {"name": "Thought Leadership", "endorsements": 87}],
+    "recommendations": [{
+        "name": "Chad Synergy", "title": "VP of Vibes", "relation": "Managed them directly (in a dream)",
+        "text": "One of the most visionary people I have ever pretended to know.",
+    }],
+}
+
+
+@app.post("/api/profile")
+def profile():
+    data, text = text_from_request(800)
+    name = str(data.get("name", "")).strip()[:60] or "Anonymous Visionary"
+    if not text:
+        return jsonify(error="Tell us what your life is actually like first."), 400
+    try:
+        level = max(1, min(10, int(data.get("level", 7))))
+    except (TypeError, ValueError):
+        level = 7
+    system = PROFILE_PROMPT.format(level=level, intensity=LEVELS[level - 1])
+    try:
+        out = json.loads(groq(
+            [{"role": "system", "content": system}, {"role": "user", "content": f"Name: {name}\nMy real life: {text}"}],
+            temperature=0.5 + 0.06 * level,
+            schema=PROFILE_SCHEMA,
+        ))
+        out["experience"] = out["experience"][:4]
+        out["education"] = out["education"][:2]
+        out["skills"] = out["skills"][:8]
+        out["recommendations"] = out["recommendations"][:3]
+        out["fallback"] = False
+    except Exception:
+        app.logger.exception("Groq profile failed, sending fallback")
+        out = {**FALLBACK_PROFILE, "fallback": True}
+    out["name"] = name
+    return jsonify(out)
+
+
+@app.get("/api/post/<int:post_id>")
+def get_post(post_id):
+    with LOCK:
+        post = GALLERY.get(post_id)
+        if not post:
+            return jsonify(error="That post is gone. Posts reset when the server restarts."), 404
+        return jsonify(dict(post))
+
+
+@app.get("/p/<int:post_id>")
+def permalink(post_id):
+    # Fill link-preview meta tags server-side so iMessage/Slack/Discord previews show the post.
+    with LOCK:
+        post = GALLERY.get(post_id)
+    with open(os.path.join(app.static_folder, "post.html"), encoding="utf-8") as f:
+        page = f.read()
+    title = f"{post['headline']} on LarpedIn" if post else "LarpedIn"
+    desc = post["post"][:200] if post else "Turn your ordinary day into a LinkedIn masterpiece."
+    return page.replace("{{og_title}}", html.escape(title)).replace("{{og_description}}", html.escape(desc))
 
 
 if __name__ == "__main__":
