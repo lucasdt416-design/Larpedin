@@ -620,7 +620,16 @@ function renderCard(data, slot, req) {
   send.hidden = !shareUrl;
   send.title = "Copy a link to send";
   send.addEventListener("click", () => copyText(shareUrl, "Post link copied."));
-  q('[data-action="repost"]').addEventListener("click", () => shareToLinkedIn(data.post));
+  // The action bar is part of the fake post (a gag), so Repost only bumps the fake
+  // count. Real LinkedIn posting is reachable only from the labelled .share-btn below.
+  const repost = q('[data-action="repost"]');
+  repost.setAttribute("aria-pressed", "false");
+  repost.addEventListener("click", () => {
+    const on = repost.classList.toggle("is-active");
+    repost.setAttribute("aria-pressed", String(on));
+    counts.repost += on ? 1 : -1;
+    showCounts();
+  });
 
   q(".share-btn").addEventListener("click", () => shareToLinkedIn(data.post));
   q(".copy-btn").addEventListener("click", () => copyText(data.post, "Copied!"));

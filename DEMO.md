@@ -41,4 +41,4 @@ Switch to the Hall of Larp presenter tab and invite the room to scan the QR code
 - **Can it handle a whole room?** We sent 12 requests at the same time and all 12 returned real posts in 3 to 5 seconds.
 - **How does the AI return a whole card?** One call with a strict JSON schema returns the post, headline, comments and scores together.
 - **Where is the data stored?** In memory. A restart clears it. No accounts and no database.
-- **Is it real LinkedIn?** No. It is a parody with no LinkedIn logo, and every page says so. It never posts for you. "Copy + open LinkedIn" only fills the share box, and you decide whether to post.
+- **Is it real LinkedIn?** No. It is a parody with no LinkedIn logo, and every page says so. It never posts on its own. Real posting is kept apart from the jokes. Only the labelled "Post to LinkedIn…" button can reach LinkedIn. It either opens LinkedIn's own share box, or, if you signed in, shows the exact text and posts only after you click "Post publicly". The Like and Repost buttons on the fake card are part of the gag and never touch real LinkedIn.

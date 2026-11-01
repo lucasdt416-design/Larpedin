@@ -96,8 +96,10 @@
     .truth-original    the pasted post, quoted and clamped to 3 lines
     .truth-label       "What actually happened"
     .truth-text        the honest one-liner
-    .post-actions      real buttons under the card (Copy + open LinkedIn)
-    .share-btn         "Copy + open LinkedIn"
+    .post-actions      real buttons under the card (Post to LinkedIn…, Copy, ...)
+    .share-btn         "Post to LinkedIn…": the ONLY control that can reach real
+                       LinkedIn posting (confirm dialog via linkedin.js, else the
+                       share box). Fake-card buttons must never call it.
     .escalate-btn      rewrite this post one cringe level higher, in place
     .copy-btn          copy the post text only
     .link-btn          copy a shareable /p/<id> link (hidden if no id)
@@ -274,7 +276,7 @@
         <ul class="post-comments" hidden></ul>
       </article>
       <div class="post-actions">
-        <button type="button" class="share-btn">Copy + open LinkedIn</button>
+        <button type="button" class="share-btn" title="Real LinkedIn. You will see the exact text and confirm before anything is posted.">Post to LinkedIn…</button>
         <button type="button" class="escalate-btn">Escalate</button>
         <button type="button" class="copy-btn">Copy</button>
         <button type="button" class="link-btn" hidden>Share link</button>

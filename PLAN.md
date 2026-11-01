@@ -288,3 +288,11 @@ def safe_next(path):
 - No `innerHTML` on any page.
 - The extension's host permission is only our site.
 - The iOS app opens outside links in Safari.
+
+### Rule from Lucas: keep real LinkedIn posting apart from the gags (all agents)
+
+Posting to real LinkedIn is a serious, public action. Everything else on LarpedIn is a joke. So:
+- Only a clearly labelled button outside the fake post card may call `LarpedInLinkedIn.share()` or `/api/linkedin/post`. On the home page that's `.share-btn` "Post to LinkedIn…". On `/p/<id>` it's "Post to LinkedIn".
+- Buttons in the fake post card (Like / Comment / Repost / Send) and other gags (Escalate, Battle, notifications, Premium) must never trigger real posting.
+- Fixed today: the redesign had wired the card's fake "Repost" to real posting. Repost is a gag again (it only bumps the fake count). "Copy + open LinkedIn" is renamed "Post to LinkedIn…" and styled as the only solid primary button under the card.
+- Real posting always goes through the `linkedin.js` confirm dialog with the exact text. Never auto-post, and never chain posting after another action.
