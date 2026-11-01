@@ -193,11 +193,13 @@ function focusLinkedPost() {
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 function renderLeaderboard(posts) {
+  // Only real posts from the room can win; seed posts just fill the wall.
   const top = posts
-    .filter((p) => p.score)
+    .filter((p) => p.score && !p.seed)
     .sort((a, b) => b.score.overall - a.score.overall || b.votes - a.votes)
     .slice(0, 3);
-  $("leaderboard").hidden = top.length === 0;
+  $("leaderboard").hidden = false;
+  $("leaderboard-empty").hidden = top.length > 0;
   $("leaderboard-list").replaceChildren(...top.map((p, i) => {
     const row = document.createElement("li");
     row.className = "leaderboard-row";

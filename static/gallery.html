@@ -13,6 +13,7 @@
     .leaderboard       "Most cringe in the room" box (top 3 by score.overall)
     .leaderboard-header / .leaderboard-title
     .battle-link       <a> to /battle.html?a=<id>&b=<id> for the top two
+    .leaderboard-empty shown until someone in the room posts (seed posts don't count)
     .leaderboard-list  <ol> of rows
     .leaderboard-row   one row; data-rank="1|2|3"
     .leaderboard-rank / .leaderboard-name / .leaderboard-text / .leaderboard-score
@@ -65,6 +66,7 @@
           <h2 class="leaderboard-title" id="leaderboard-title">🏆 Most cringe in the room</h2>
           <a class="battle-link" id="battle-link" hidden>⚔️ Battle the top two</a>
         </div>
+        <p class="leaderboard-empty" id="leaderboard-empty" hidden>Nobody from the room yet. Scan the code and claim the crown.</p>
         <ol class="leaderboard-list" id="leaderboard-list"></ol>
       </section>
       <p class="gallery-empty" id="empty" hidden>No posts yet. Scan the code and be the first to larp.</p>

@@ -963,3 +963,4 @@ main {
 .sort-btn { padding: 6px 14px; border-radius: var(--pill); font-size: 14px; font-weight: 600; color: var(--muted); }
 .sort-btn:hover:not(.is-active) { color: var(--text); }
 .sort-btn.is-active { background: var(--blue); color: #fff; }
+.leaderboard-empty { margin: 0; color: var(--muted); }
