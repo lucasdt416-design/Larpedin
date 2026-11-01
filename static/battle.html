@@ -315,6 +315,7 @@ $("form").addEventListener("submit", async e => {
 });
 
 async function reveal(data) {
+  const voiceP = $("judgeVoice").checked && voiceWorks !== false && (data.verdict || "").trim() ? fetchVoice(cleanText(data.verdict || ""), 8000) : null; // ready by the time typing ends
   const cardA = $("cardA"), cardB = $("cardB");
   const numA = buildCard(cardA, data.a);
   const numB = buildCard(cardB, data.b);
@@ -350,13 +351,26 @@ async function reveal(data) {
   $("judge").classList.add("show");
   $("judge").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "end" });
   await typeOut($("verdict"), data.verdict || "");
-  speakVerdict(data.verdict || "");
+  speakVerdict(data.verdict || "", voiceP);
 }
 
 // ---- Judge voice: Orpheus (Groq) first, browser voice as fallback ----
 // ttsWorks: null = untested, false = failed once this session, so skip it.
 let ttsWorks = null, run = 0, audio = null;
 const aborts = new Set();
+// ElevenLabs (/api/voice) is tried before Orpheus; same null/false meaning as ttsWorks.
+let voiceWorks = null;
+const cleanText = t => t.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
+// POST /api/voice as the judge; resolves to {audio, ...} or null on failure/timeout/abort (never throws).
+// Not in `aborts` yet: speakVerdict's own stopSpeech() must not cancel it, so it adds .ac itself.
+function fetchVoice(text, ms) {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  const p = fetch("/api/voice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, role: "judge" }), signal: ac.signal })
+    .then(r => (r.ok ? r.json() : null)).catch(() => null).finally(() => clearTimeout(t));
+  p.ac = ac;
+  return p;
+}
+const b64Blob = (b64, type) => new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type });
 $("judgeVoice").checked = localStorage.getItem("larpedin-judge-voice") !== "0";
 $("judgeVoice").addEventListener("change", e => {
   localStorage.setItem("larpedin-judge-voice", e.target.checked ? "1" : "0");
@@ -522,17 +536,31 @@ function stopSpeech() {
   if ("speechSynthesis" in window) speechSynthesis.cancel();
 }
 
-async function speakVerdict(text) {
+async function speakVerdict(text, voiceP) {
   stopSpeech();
   if (!$("judgeVoice").checked) return;
   const gen = run;
-  const clean = text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
+  const clean = cleanText(text);
   ooh(); // the crowd reacts, then the judge speaks
   const intro = new Promise(r => setTimeout(r, actx ? 1200 : 0));
   const speakFrom = from => {
     if (!("speechSynthesis" in window) || !clean.slice(from).trim()) return;
     intro.then(() => speakLines(clean, from, gen, { rate: 0.95, pitch: 0.8 }));
   };
+  // 1) ElevenLabs, prefetched in reveal(); 2) Orpheus chunks; 3) the browser voice.
+  if (voiceP) {
+    aborts.add(voiceP.ac); // Rematch/Swap/FIGHT now cancel it
+    const d = await voiceP;
+    aborts.delete(voiceP.ac);
+    await intro;
+    if (gen !== run) return;
+    if (d && d.audio) {
+      const ok = await playBlob(b64Blob(d.audio, d.mime || "audio/mpeg"));
+      if (gen !== run) return;
+      if (ok) { voiceWorks = true; return; }
+    }
+    voiceWorks = false;
+  }
   const parts = chunks(clean, 182); // 200-char API limit minus the tag
   if (ttsWorks === false || !parts.length) return speakFrom(0);
 

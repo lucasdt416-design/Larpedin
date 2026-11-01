@@ -147,6 +147,7 @@
   <button id="closeStage" type="button">✕ Close</button>
   <div id="speech"></div>
   <div class="speaker">A LarpedIn Visionary</div>
+  <div class="speaker" id="waitLine" hidden>The speaker is taking the stage…</div>
 </div>
 
 <script>
@@ -253,7 +254,7 @@ function render(p) {
 
   const tedx = $(frag, ".tedx");
   if (!("speechSynthesis" in window)) tedx.remove();
-  else tedx.onclick = present;
+  else { tedx.onclick = present; tedx.onmouseenter = tedx.onfocus = warmVoice; }
 
   main.replaceChildren(frag);
   requestAnimationFrame(() => requestAnimationFrame(() => fills.forEach(([f, v]) => { f.style.width = v + "%"; })));
@@ -265,6 +266,30 @@ let voice = null, timers = [], utter = null, opener = null;
 // Orpheus (Groq) is preferred; null = untested, false = failed once this session, so skip it.
 let ttsWorks = null, run = 0, audio = null;
 const aborts = new Set();
+// ElevenLabs (/api/voice) is tried before Orpheus; same null/false meaning as ttsWorks.
+let voiceWorks = null, warmP = null, raf = 0;
+// Strip emoji so the voice doesn't read "clapping hands sign"; same length keeps char indexes aligned.
+const cleanText = t => t.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
+const voiceBody = text => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, role: "tedx" }) });
+const voiceOk = t => voiceWorks !== false && t.trim() && t.trim().length <= 2500;
+// Hover/focus on the TEDx button: one request per page load to fill the server cache, result ignored.
+function warmVoice() {
+  const t = cleanText(post.post || "");
+  if (!warmP && voiceOk(t)) warmP = fetch("/api/voice", voiceBody(t)).catch(() => {});
+}
+// POST /api/voice; resolves to {audio, starts, ...} or null on any failure/timeout/abort (never throws).
+// Waits for a running warm-up first so the real request hits the cache instead of paying twice.
+async function fetchVoice(text, ms) {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  aborts.add(ac);
+  try {
+    await Promise.race([warmP, new Promise(r => ac.signal.addEventListener("abort", r))]);
+    const r = await fetch("/api/voice", { ...voiceBody(text), signal: ac.signal });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+  finally { clearTimeout(t); aborts.delete(ac); }
+}
+const b64Blob = (b64, type) => new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type });
 // Best English voice: Premium/Enhanced, then named favourites, then any en-*.
 // (Network "Google" voices cut out after ~15s, but we speak one short sentence at a time.)
 function bestVoice() {
@@ -420,6 +445,8 @@ function playBlob(blob) {
 
 function stopSpeech() {
   run++;
+  cancelAnimationFrame(raf);
+  document.getElementById("waitLine").hidden = true;
   stopSounds();
   aborts.forEach(a => a.abort());
   if (audio) {
@@ -452,8 +479,7 @@ function present() {
   unlockAudio(); // still inside the TEDx button tap
   const gen = run;
   const intro = new Promise(r => setTimeout(r, sting())); // speech waits for the sting; TTS fetch doesn't
-  // Strip emoji so the voice doesn't read "clapping hands sign"; same length keeps charIndex aligned.
-  const clean = text.replace(/\p{Extended_Pictographic}/gu, m => " ".repeat(m.length));
+  const clean = cleanText(text);
   let cur = null;
   const finish = () => {
     if (gen !== run || !stage.classList.contains("on")) return;
@@ -474,34 +500,71 @@ function present() {
   };
   const speakFrom = from => intro.then(() => speakLines(clean, from, gen, { rate: 0.9, pitch: 0.9, onWord, onDone: finish }));
 
-  const TAGS = ["[dramatic] ", "[dramatic] ", "[excited] ", "[dramatic] ", "[dramatic] ", "[whisper] "];
-  const parts = chunks(clean, 189); // 200-char API limit minus the longest tag
-  if (ttsWorks === false || !parts.length) return speakFrom(0);
-
-  // Any failure: remember it, drop the prefetch, and let the browser voice finish from this chunk.
-  const fallback = from => { ttsWorks = false; aborts.forEach(a => a.abort()); speakFrom(from); };
-  (async () => {
-    const say = k => tts(TAGS[k % TAGS.length] + parts[k][2], "troy", k ? 15000 : 4000);
-    let next = say(0);
-    for (let k = 0; k < parts.length; k++) {
-      const blob = await next;
+  // 1) ElevenLabs: the whole post in one request, words lit from per-character start times.
+  if (voiceOk(clean)) {
+    const wait = document.getElementById("waitLine");
+    wait.hidden = false;
+    const voiceP = fetchVoice(clean, 12000); // runs in parallel with the sting
+    return (async () => {
+      const d = await voiceP;
       await intro;
       if (gen !== run) return;
-      const [s, e] = parts[k];
-      if (!blob) return fallback(s);
-      next = k + 1 < parts.length ? say(k + 1) : null; // prefetch while this one plays
-      const mine = words.filter(([i]) => i >= s && i < e).map(w => w[1]);
-      speech.classList.remove("plain");
-      mine.forEach(w => w.classList.add("chunk"));
-      if (mine[0]) mine[0].scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
-      const ok = await playBlob(blob);
-      if (gen !== run) return;
-      mine.forEach(w => { w.classList.remove("chunk"); if (ok) w.classList.add("said"); });
-      if (!ok) return fallback(s);
-      ttsWorks = true;
-    }
-    finish();
-  })();
+      wait.hidden = true;
+      if (d && d.audio) {
+        // The server trims the text, so starts[0] is the first non-space char of clean.
+        const lead = clean.length - clean.trimStart().length, starts = d.starts || [];
+        const at = i => starts[Math.min(Math.max(i - lead, 0), starts.length - 1)];
+        let i = -1;
+        const tick = () => {
+          let k = i;
+          while (k + 1 < words.length && at(words[k + 1][0]) <= audio.currentTime) k++;
+          if (k !== i) onWord(words[(i = k)][0]);
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        const ok = await playBlob(b64Blob(d.audio, d.mime || "audio/mpeg"));
+        cancelAnimationFrame(raf);
+        if (gen !== run) return;
+        if (ok) { voiceWorks = true; words.forEach(w => w[1].classList.add("said")); return finish(); }
+        words.forEach(w => w[1].classList.remove("said", "now"));
+      }
+      voiceWorks = false;
+      orpheus();
+    })();
+  }
+  orpheus();
+
+  // 2) Orpheus in chunks, 3) the browser voice.
+  function orpheus() {
+    const TAGS = ["[dramatic] ", "[dramatic] ", "[excited] ", "[dramatic] ", "[dramatic] ", "[whisper] "];
+    const parts = chunks(clean, 189); // 200-char API limit minus the longest tag
+    if (ttsWorks === false || !parts.length) return speakFrom(0);
+
+    // Any failure: remember it, drop the prefetch, and let the browser voice finish from this chunk.
+    const fallback = from => { ttsWorks = false; aborts.forEach(a => a.abort()); speakFrom(from); };
+    (async () => {
+      const say = k => tts(TAGS[k % TAGS.length] + parts[k][2], "troy", k ? 15000 : 4000);
+      let next = say(0);
+      for (let k = 0; k < parts.length; k++) {
+        const blob = await next;
+        await intro;
+        if (gen !== run) return;
+        const [s, e] = parts[k];
+        if (!blob) return fallback(s);
+        next = k + 1 < parts.length ? say(k + 1) : null; // prefetch while this one plays
+        const mine = words.filter(([i]) => i >= s && i < e).map(w => w[1]);
+        speech.classList.remove("plain");
+        mine.forEach(w => w.classList.add("chunk"));
+        if (mine[0]) mine[0].scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+        const ok = await playBlob(blob);
+        if (gen !== run) return;
+        mine.forEach(w => { w.classList.remove("chunk"); if (ok) w.classList.add("said"); });
+        if (!ok) return fallback(s);
+        ttsWorks = true;
+      }
+      finish();
+    })();
+  }
 }
 
 function ovation() {
