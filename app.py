@@ -837,7 +837,7 @@ def li_callback():
     sid = secrets.token_urlsafe(32)
     with LOCK:
         LI_SESSIONS[sid] = {"token": token, "sub": me["sub"], "name": me.get("name", ""),
-                            "exp": time.time() + int(tok.json().get("expires_in", 3600))}
+                            "exp": time.time() + min(int(tok.json().get("expires_in", 3600)), 86400)}  # privacy page: 24 h max
     resp = redirect(nxt + sep + "linkedin=ok")
     resp.set_cookie("li_sid", sid, max_age=86400, httponly=True,
                     secure=base_url().startswith("https"), samesite="Lax")
