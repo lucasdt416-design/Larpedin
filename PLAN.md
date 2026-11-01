@@ -4,7 +4,7 @@ Shared plan for all humans and agents on this repo (Claude Code, Claude chat and
 
 ## What the app does
 
-The user types what they did, picks a tone and a cringe level, and gets a parody LinkedIn-style post with a headline, fake comments and a cringe score. Delarp mode does the reverse: paste a real LinkedIn post and get the honest version. A gallery shows everyone's posts, and people can upvote them. The app does not use the LinkedIn API.
+The user types what they did and picks a tone and a cringe level. The app writes a parody LinkedIn-style post with a headline, fake comments and a cringe score. Delarp mode does the reverse: paste a real LinkedIn post and get the honest version. A gallery shows everyone's posts, and people can upvote them. The app does not use the LinkedIn API.
 
 ## Files and owners
 
@@ -23,7 +23,7 @@ Do not change this contract without telling the other person. Until an endpoint 
 
 ### `GET /api/health`
 
-Returns `{"ok": true}`. Call it when the page loads. Render's free plan sleeps, and the first request can take about 50 seconds. Disable the Generate button and show "Warming up the hustle..." until this answers.
+Returns `{"ok": true}`. When the page loads, call it. Render's free plan sleeps, and the first request can take about 50 seconds. Disable the Generate button and show "Warming up the hustle..." until this answers.
 
 ### `POST /api/generate`
 
@@ -54,7 +54,7 @@ Response, status 200:
 
 - `comments` has 0 to 3 items. It can be empty.
 - All `score` values are whole numbers from 0 to 100.
-- `fallback` is `true` when Groq failed and the server sent a canned post. Show it the same way.
+- If Groq fails, the server sends a canned post and sets `fallback` to `true`. Show it the same way.
 - `id` is the post's id in the gallery.
 
 ### `POST /api/delarp`
