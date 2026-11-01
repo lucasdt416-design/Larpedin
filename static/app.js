@@ -55,6 +55,61 @@ $("text").addEventListener("keydown", (e) => {
   }
 });
 
+// ---------- Voice input ----------
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+
+function stopListening() {
+  if (recognition) recognition.stop();
+}
+
+if (SpeechRecognition) {
+  const mic = $("mic");
+  mic.hidden = false;
+
+  mic.addEventListener("click", () => {
+    if (recognition) {
+      stopListening();
+      return;
+    }
+    clearError();
+    const before = $("text").value.trim();
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onresult = (e) => {
+      const spoken = Array.from(e.results, (r) => r[0].transcript).join("");
+      $("text").value = (before ? before + " " : "") + spoken.trim();
+    };
+    recognition.onerror = (e) => {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        showError("Microphone access was blocked. Allow it in your browser to talk.");
+      } else if (e.error !== "no-speech" && e.error !== "aborted") {
+        showError(`Voice input failed (${e.error}). Try typing instead.`);
+      }
+    };
+    recognition.onend = () => {
+      recognition = null;
+      mic.classList.remove("is-listening");
+      mic.setAttribute("aria-pressed", "false");
+      mic.setAttribute("aria-label", "Speak instead of typing");
+    };
+
+    try {
+      recognition.start();
+      mic.classList.add("is-listening");
+      mic.setAttribute("aria-pressed", "true");
+      mic.setAttribute("aria-label", "Stop listening");
+    } catch (err) {
+      recognition = null;
+      showError("Couldn't start voice input. Try typing instead.");
+    }
+  });
+}
+
 // ---------- Warm-up ----------
 
 // Render's free plan sleeps; the first request can take ~50s. Keep Generate
@@ -114,6 +169,7 @@ $("composer").addEventListener("submit", async (e) => {
   e.preventDefault();
   const btn = $("generate");
   if (btn.disabled) return;
+  stopListening();
   clearError();
   btn.disabled = true;
   btn.classList.add("is-loading");

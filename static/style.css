@@ -32,3 +32,9 @@ pre { white-space: pre-wrap; font: inherit; background: #f9f9f9; padding: 16px; 
 .gauge-fill { display: block; height: 100%; width: calc(var(--pct, 0) * 1%); background: #0a66c2; transition: width 1.2s ease-out; }
 .gauge-value { text-align: right; }
 @media (prefers-reduced-motion: reduce) { .gauge-fill { transition: none; } }
+.composer-field { display: flex; gap: 8px; align-items: flex-start; }
+.composer-field .composer-input { flex: 1; }
+.mic-btn { margin-top: 4px; flex-shrink: 0; }
+.mic-btn.is-listening { background: #b00020; animation: mic-pulse 1s ease-in-out infinite; }
+@keyframes mic-pulse { 50% { box-shadow: 0 0 0 8px rgba(176, 0, 32, 0.25); } }
+@media (prefers-reduced-motion: reduce) { .mic-btn.is-listening { animation: none; } }

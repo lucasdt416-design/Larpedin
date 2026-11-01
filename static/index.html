@@ -12,6 +12,9 @@
     .composer          the input card (form)
     .composer-label    label above the textarea
     .composer-input    textarea; placeholder rotates through examples
+    .composer-field    wraps the textarea + mic button
+    .mic-btn           voice input toggle; .is-listening while recording
+                       (hidden if the browser has no speech recognition)
     .vibe-label        "Pick a vibe" label
     .vibe-pills        group of the 4 vibe buttons
     .vibe-pill         one vibe button; .is-active = selected
@@ -78,7 +81,10 @@
   <main>
     <form class="composer" id="composer">
       <label class="composer-label" for="text">What did you do today?</label>
-      <textarea class="composer-input" id="text" rows="3" maxlength="500" placeholder="I touched grass"></textarea>
+      <div class="composer-field">
+        <textarea class="composer-input" id="text" rows="3" maxlength="500" placeholder="I touched grass"></textarea>
+        <button type="button" class="mic-btn" id="mic" aria-pressed="false" aria-label="Speak instead of typing" hidden><span aria-hidden="true">🎤</span></button>
+      </div>
 
       <span class="vibe-label" id="vibe-label">Pick a vibe</span>
       <div class="vibe-pills" role="group" aria-labelledby="vibe-label">
