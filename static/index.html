@@ -1,33 +1,66 @@
 <!DOCTYPE html>
+<!--
+  LarpedIn — class reference for the designer (style.css).
+  States are classes, never inline styles.
+
+  LAYOUT
+    .app-header        top bar
+    .brand             "LarpedIn" text wordmark (no LinkedIn logo/assets)
+    .tagline           one-line pitch under the wordmark
+
+  COMPOSER
+    .composer          the input card (form)
+    .composer-label    label above the textarea
+    .composer-input    textarea; placeholder rotates through examples
+    .vibe-label        "Pick a vibe" label
+    .vibe-pills        group of the 4 vibe buttons
+    .vibe-pill         one vibe button; .is-active = selected
+    .vibe-emoji        emoji inside a pill
+    .generate-btn      submit button; .is-loading while waiting
+    .shortcut-hint     "Ctrl/⌘ + Enter" hint text
+
+  FEEDBACK
+    .error-banner      inline error message (hidden when empty)
+
+  RESULT
+    .result            wrapper around the generated post + actions
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LarpedIn</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <header class="app-header">
+    <span class="brand">LarpedIn</span>
+    <p class="tagline">Tell us what you actually did. We'll make it LinkedIn-worthy.</p>
+  </header>
+
   <main>
-    <h1>LarpedIn</h1>
-    <p>Tell us what you actually did. We will make it LinkedIn-worthy.</p>
+    <form class="composer" id="composer">
+      <label class="composer-label" for="text">What did you do today?</label>
+      <textarea class="composer-input" id="text" rows="3" maxlength="500" placeholder="I touched grass"></textarea>
 
-    <label for="text">What did you do today?</label>
-    <textarea id="text" rows="3" placeholder="I touched grass"></textarea>
+      <span class="vibe-label" id="vibe-label">Pick a vibe</span>
+      <div class="vibe-pills" role="group" aria-labelledby="vibe-label">
+        <button type="button" class="vibe-pill is-active" data-tone="thought leader" aria-pressed="true"><span class="vibe-emoji" aria-hidden="true">🧠</span> Thought leader</button>
+        <button type="button" class="vibe-pill" data-tone="humble brag" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">😇</span> Humble brag</button>
+        <button type="button" class="vibe-pill" data-tone="hustle bro" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">💪</span> Hustle bro</button>
+        <button type="button" class="vibe-pill" data-tone="agree?" aria-pressed="false"><span class="vibe-emoji" aria-hidden="true">🤔</span> Agree?</button>
+      </div>
 
-    <label for="tone">Vibe</label>
-    <select id="tone">
-      <option>thought leader</option>
-      <option>humble brag</option>
-      <option>hustle bro</option>
-      <option>agree?</option>
-    </select>
+      <button type="submit" class="generate-btn" id="generate">Generate post</button>
+      <span class="shortcut-hint" id="shortcut-hint">Ctrl + Enter</span>
+    </form>
 
-    <button id="generate">Generate post</button>
+    <p class="error-banner" id="error" role="alert" hidden></p>
 
-    <p id="error" role="alert"></p>
-    <section id="result" hidden>
+    <section class="result" id="result" aria-live="polite" hidden>
       <pre id="post"></pre>
-      <button id="share">Copy + open LinkedIn</button>
+      <button type="button" id="share">Copy + open LinkedIn</button>
     </section>
   </main>
   <script src="app.js"></script>
