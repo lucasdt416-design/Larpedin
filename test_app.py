@@ -113,7 +113,7 @@ assert r["fallback"] is False and len(r["comments"]) == 3
 assert r["score"] == {"buzzwords": 100, "emojis": 0, "humblebrag": 90, "overall": 90}
 assert r["badge"] == "Certified Lunatic"
 c.post("/api/generate", json={"text": "touched grass", "previous": "OLD POST"})
-assert "OLD POST" in SEEN[-1] and "one level more inflated" in SEEN[-1]
+assert "OLD POST" in SEEN[-1] and "one level grander" in SEEN[-1]
 
 assert c.post("/api/delarp", json={"text": "Thrilled to announce"}).json == {"truth": "I got laid off."}
 

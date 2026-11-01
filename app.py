@@ -41,61 +41,63 @@ TONES = {
     "Gen Z intern": "a Gen Z intern who writes in slang and is way too confident",
 }
 
-# Cringe = how far the claimed accomplishment is inflated, never how surreal it gets.
+# Cringe = how grandly you present YOUR OWN event and what it proves about you. Never surreal,
+# never a different invented event.
 LEVELS = [
-    "resume-speak; it could pass as a real post",
-    "polished resume-speak with one quantified result",
-    "a proud milestone with two quantified results",
-    "a full LinkedIn achievement post: metrics, skills gained, gratitude",
-    "framed as leading an initiative with measurable impact",
-    "a career milestone: credit it for a promotion-worthy skill and thank a mentor",
-    "transformational: it changed how you lead teams, with bold metrics",
-    "an industry voice: you now teach it, with an invented framework that has a name",
-    "keynote material: board-level impact, still told as a completely straight achievement",
-    "maximum larp: an origin story, a named methodology and an upcoming talk, completely straight-faced",
+    "modest and sincere; it could pass as a real post",
+    "proud, with one small humblebrag",
+    "a proud milestone that claims a couple of real-sounding skills",
+    "full LinkedIn voice: grand framing, skills gained, gratitude, excited for what's next",
+    "confident: present it as proof you are ready for big things",
+    "very confident: treat it like a major career milestone with impressive-sounding skills",
+    "grandiose: a defining moment of your leadership journey",
+    "thought-leader mode: you now have advice for everyone based on it",
+    "visionary: clearly the start of something historic for you",
+    "maximum larp: legend-in-the-making energy, still completely straight-faced",
 ]
 
 GENERATE_PROMPT = (
-    "You ghostwrite LinkedIn posts for someone who is LARPING: they did something small and ordinary, "
-    "and they want to present it as a genuine professional accomplishment. Write in the voice of {voice}. "
-    "Inflation level {level}/10: {intensity}.\n"
-    "First fill real_event (what they actually did, plainly) and spin (the accomplishment they will claim, "
-    "a technically-true-but-dishonest reframe). Then write the post from that spin.\n"
-    "The post must contain, in this order: a hook announcing the achievement (for example 'I'm proud to share', "
-    "'After weeks of', 'Excited to announce'); the 'challenge' they faced; what they did, in professional verbs "
-    "(led, completed, navigated, shipped, optimized); one or two specific, plausible numbers (minutes, percent, "
-    "people, decisions); 3 numbered lessons, each tied to a real career skill (prioritization, resilience, "
-    "stakeholder management, execution, communication); thanks to a manager, mentor, professor or team; "
-    "and one engagement question. Then 3 to 5 hashtags.\n"
+    "You ghostwrite LinkedIn posts for someone who is LARPING: they did something ordinary and want to "
+    "present it as an impressive professional accomplishment. Write in the first person, in the voice of {voice}. "
+    "Grandness level {level}/10: {intensity}.\n"
+    "First fill real_event (exactly what they did, plainly) and spin (the same event described in the grandest "
+    "believable terms, plus what it supposedly proves about them). Then write the post from that spin.\n"
+    "The most important rule: stay about the exact event they described. Do not invent a different or bigger "
+    "event: no programs, launches, companies, teams, projects, hires or clients that they did not mention. "
+    "Larping means describing the SAME thing grandly and claiming what it says about you, not making things up.\n"
+    "Never invent or name specific people. Thank only unnamed groups (my professors, my family, my friends, "
+    "everyone who supported me). Only use numbers that describe the event itself (4 years, 20 minutes, one email); "
+    "never invent statistics, percentages or results.\n"
+    "The post: open by announcing it as an achievement ('I'm thrilled to announce', 'I'm proud to share'); "
+    "describe the event in its grandest true-ish terms; say what it taught you as 3 numbered lessons tied to real "
+    "career skills (time management, thinking ahead, collaboration, resilience, prioritization, communication); "
+    "a line of gratitude; that you're excited to continue your journey or for what's next. Then 3 to 5 hashtags.\n"
     "Tell it completely straight, like a real post someone might believe at first glance. "
-    "The humor is the gap between the claim and what really happened, never weirdness, so the reader must "
-    "see the gap: name the real event plainly somewhere in the post (for example 'a solid B-', "
-    "'a 20-minute nap', 'one email'). Never replace it with a bigger invented event. "
+    "The humor is the gap between the grand framing and the ordinary truth, never weirdness. "
     "Never use metaphors about the universe, destiny, blueprints, matrices, ecosystems, paradigms, "
-    "quantum anything or 'data points'. No cosmic signs, no talking objects, no impossible events. "
+    "quantum anything or 'data points'. No cosmic signs, no talking objects. "
     "Never print section labels like 'Challenge:' or 'Life lesson:'.\n"
-    "Put every sentence on its own line, and start the lessons with a line like 'What it taught me:'. "
+    "Put every sentence on its own line, and start the lessons with a line like 'Some lessons I'm taking with me:'. "
     "Always end with 3 to 5 hashtags on the last line. "
-    "Use fresh, varied names for any people you mention (never Alex Rivera or Maya Patel). "
-    "Plain text, no markdown, no asterisks, no emojis, under 200 words.\n"
+    "Plain text, no markdown, no asterisks, no emojis, under 180 words.\n"
     "Example (style only; their topic will be different). What they did: 'I assembled an IKEA shelf'. "
-    "Spin: delivered a complex infrastructure build solo, ahead of schedule. Post:\n"
-    "I'm proud to share that I just delivered a full infrastructure build, solo, in under 90 minutes.\n"
-    "Yes, it was an IKEA shelf. The scope was still real: 46 components, one Allen key, and instructions with no words.\n"
-    "I mapped dependencies, sequenced the work, and shipped with only 2 screws left over.\n"
-    "What it taught me:\n"
-    "1. Clear documentation beats raw talent.\n"
-    "2. Ship first, then decide which leftover parts were optional.\n"
-    "3. The right tool matters less than knowing how to use it.\n"
-    "Grateful to my roommate for holding the side panel at a critical moment.\n"
-    "What's the most complex thing you've built with no instructions?\n"
-    "#Execution #ProjectManagement #Leadership\n"
+    "Spin: single-handedly delivered a full furniture build from raw components. Post:\n"
+    "I'm proud to share that I have successfully completed a full furniture build, from raw components to finished product.\n"
+    "Yes, it was an IKEA shelf. I owned the project end to end, with only one Allen key and instructions with no words.\n"
+    "Some lessons I'm taking with me:\n"
+    "1. Attention to detail: every screw matters.\n"
+    "2. Problem solving: when the instructions are unclear, you lead anyway.\n"
+    "3. Patience: great things are built one step at a time.\n"
+    "Grateful to everyone who believed I could do this.\n"
+    "Excited to bring this builder mindset to whatever comes next.\n"
+    "#ProblemSolving #Ownership #GrowthMindset\n"
     "(Do not reuse the example's wording; write from their real event.)\n"
     "Also write the author's LinkedIn headline: an inflated but plausible title they 'earned' from what they did, "
-    "in ONE of these formats: a stack of 2 or 3 titles separated by pipes, a job title at an invented company, "
-    "or a short mission statement. Do not start with 'Visionary' or 'Chief', and do not use 'Whisperer'.\n"
-    "Also write 2 or 3 comments from fake connections with realistic names and job titles, reacting like real "
-    "LinkedIn commenters (congratulations, 'this resonates', or a humblebrag of their own).\n"
+    "as either a stack of 2 or 3 titles separated by pipes or a short mission statement. No company names. "
+    "Do not start with 'Visionary' or 'Chief', and do not use 'Whisperer'.\n"
+    "Also write 2 or 3 comments from fake connections reacting like real LinkedIn commenters (congratulations, "
+    "'this resonates', or a humblebrag of their own). The comments are the only place where names appear: give "
+    "each commenter a realistic name and job title.\n"
     "Finally, rate the post for buzzwords, emojis, humblebrag and overall cringe. "
     "Each rating is a percentage from 0 to 100, not a count: 0 means none at all, 100 means maximum. "
     "A level {level}/10 post should usually rate around {pct} overall."
@@ -313,8 +315,9 @@ def generate():
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
-        "Rewrite it one level more inflated. Keep the same real event and stay straight-faced and believable, "
-        "but claim a bigger accomplishment: bigger numbers, more people impacted, and a bigger career payoff."
+        "Rewrite it one level grander. Keep the exact same real event, first person, straight-faced. "
+        "Frame it more grandly and claim more about what it proves about you, but invent no new events, "
+        "people, companies or statistics."
     )
     try:
         out = json.loads(llm(
