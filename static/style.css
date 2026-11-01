@@ -1,0 +1,9 @@
+/* Placeholder styles. Real design comes from Claude Design. */
+body { font-family: system-ui, sans-serif; background: #f3f2ef; margin: 0; }
+main { max-width: 600px; margin: 40px auto; padding: 24px; background: #fff; border-radius: 8px; }
+label { display: block; margin-top: 16px; font-weight: 600; }
+textarea, select { width: 100%; box-sizing: border-box; padding: 8px; font: inherit; margin-top: 4px; }
+button { margin-top: 16px; padding: 10px 20px; background: #0a66c2; color: #fff; border: 0; border-radius: 20px; font: inherit; cursor: pointer; }
+button:disabled { opacity: 0.6; }
+pre { white-space: pre-wrap; font: inherit; background: #f9f9f9; padding: 16px; border-radius: 8px; }
+#error { color: #b00020; }

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LarpedIn</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>LarpedIn</h1>
+    <p>Tell us what you actually did. We will make it LinkedIn-worthy.</p>
+
+    <label for="text">What did you do today?</label>
+    <textarea id="text" rows="3" placeholder="I touched grass"></textarea>
+
+    <label for="tone">Vibe</label>
+    <select id="tone">
+      <option>thought leader</option>
+      <option>humble brag</option>
+      <option>hustle bro</option>
+      <option>agree?</option>
+    </select>
+
+    <button id="generate">Generate post</button>
+
+    <p id="error" role="alert"></p>
+    <section id="result" hidden>
+      <pre id="post"></pre>
+      <button id="share">Copy + open LinkedIn</button>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
