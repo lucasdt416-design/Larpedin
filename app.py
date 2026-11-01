@@ -57,6 +57,14 @@ LEVELS = [
 ]
 
 # Blind A/B (3 judges, 12 inputs): this vibe-first prompt won 34 of 36 judgments over the template prompt.
+# About half of posts get a couple of emojis, like real LinkedIn; kept out of the skills and hashtag lines
+# so post_shape_ok() still sees "1." and "#" at the start of those lines.
+EMOJI_RULES = [
+    "none in this post.",
+    "use 1 or 2 emojis a real LinkedIn poster would use (for example 🚀 ✅ 💡 🙌 📈 👇), only in the opening "
+    "paragraph or the takeaway line, never at the start of a line, never in the numbered skills or the hashtag line.",
+]
+
 GENERATE_PROMPT = (
     "You ghostwrite LinkedIn posts for someone who is LARPING: making something ordinary they did sound "
     "impressive WITHOUT lying. Write in the first person as {voice}\n"
@@ -78,6 +86,7 @@ GENERATE_PROMPT = (
     "- At levels 9-10 go all the way on what it means (legacy, 'they will teach this one day', a keynote you are "
     "'considering'), still about the same disguised event and still true.\n"
     "- No surreal or cosmic metaphors, no talking objects, no section labels, no markdown.\n"
+    "- Emojis: {emoji}\n"
     "STRUCTURE (always exactly these four parts, in this order, separated by exactly one blank line, with no other "
     "blank lines anywhere):\n"
     "1. An opening paragraph of 2 to 4 sentences, written as flowing prose on one line (not one sentence per line). "
@@ -346,7 +355,8 @@ def generate():
     except (TypeError, ValueError):
         level = 5
 
-    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10)
+    system = GENERATE_PROMPT.format(voice=TONES[tone], level=level, intensity=LEVELS[level - 1], pct=level * 10,
+                                    emoji=random.choice(EMOJI_RULES))
     previous = str(data.get("previous", "")).strip()[:2000]
     user = text if not previous else (
         f"What I actually did: {text}\n\nMy last post about it:\n{previous}\n\n"
