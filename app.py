@@ -72,8 +72,9 @@ GENERATE_PROMPT = (
     "- Never admit it was ordinary: no 'it may sound small', no 'technically it was', no plain-truth confession.\n"
     "- Pick the details that sound impressive and leave out the rest. Let the reader infer the importance.\n"
     "- Prestige that is actually true may be named (a well-known university, a city).\n"
-    "- Never add circumstances they did not state: no time of day, no 'alone' or 'without help', no audience, "
-    "no network, no outcome quality.\n"
+    "- Never add circumstances they did not state: no time of day, no 'alone' or 'without help', no audience or "
+    "anyone's reaction, no network. Never describe how good the result was (no perfect, flawless, golden, impressed).\n"
+    "- Also avoid the obvious related words that would give it away (for a pancake: no kitchen, batter, flip, pan).\n"
     "- At levels 9-10 go all the way on what it means (legacy, 'they will teach this one day', a keynote you are "
     "'considering'), still about the same disguised event and still true.\n"
     "- No surreal or cosmic metaphors, no talking objects, no section labels, no markdown.\n"
@@ -284,6 +285,13 @@ def llm(messages, temperature, schema=None, fast=False):
         return content
 
 
+def post_shape_ok(text):
+    # The agreed layout: paragraph, intro line + exactly 3 numbered skills, takeaway, hashtag line.
+    text = tidy_post(text)
+    last = text.split("\n")[-1].strip()
+    return len(re.findall(r"^\s*\d+[.)]", text, re.M)) == 3 and last.startswith("#") and text.count("\n\n") == 3
+
+
 def tidy_post(text):
     # Some models emit a literal backslash-n or stack blank lines; keep at most one blank line between parts.
     text = str(text).replace("\\n", "\n")
@@ -347,16 +355,17 @@ def generate():
         "events, people, results, companies or statistics."
     )
     try:
-        for attempt in range(2):
+        for attempt in range(3):
             out = json.loads(llm(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
                 temperature=min(0.85, 0.55 + 0.03 * level),
                 schema=GENERATE_SCHEMA,
             ))
             flagged = str(out.get("claims_check", "")).strip().strip(".").lower()
-            if flagged in ("", "none", "n/a", "[]", "empty", "no"):
+            clean = flagged in ("", "none", "n/a", "[]", "empty", "no")
+            if clean and post_shape_ok(str(out.get("post", ""))):
                 break
-            app.logger.info("claims_check flagged %r, retrying", flagged[:120])
+            app.logger.info("retrying post (claims_check=%r, shape ok=%s)", flagged[:80], post_shape_ok(str(out.get("post", ""))))
         result = {
             "post": tidy_post(out["post"]),
             "headline": str(out["headline"]).strip(),
