@@ -4,8 +4,10 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 1 --threads 8
+    startCommand: gunicorn app:app --workers 1 --threads 8 --timeout 120
     envVars:
+      - key: FEATHERLESS_API_KEY
+        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: LINKEDIN_CLIENT_ID

@@ -21,7 +21,11 @@ app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024  # every endpoint truncates long text anyway
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-# Each model has its own free rate limit (~8K tokens/min, ~200K/day), so if one fails try the next.
+FEATHERLESS_URL = "https://api.featherless.ai/v1/chat/completions"
+# Featherless (paid, better writers) goes first. Its $25 plan runs ONE big-model request at a time and
+# answers 429 to the rest, so a busy room spills over to Groq's free models instead of failing.
+FEATHERLESS_MODELS = [m for m in os.environ.get("FEATHERLESS_MODELS", "moonshotai/Kimi-K2-Instruct-0905").split(",") if m]
+# Each Groq model has its own free rate limit (~8K tokens/min, ~200K/day), so if one fails try the next.
 # llama-3.3-70b shut down 2026-08-16; check console.groq.com/docs/deprecations before changing.
 MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
 
@@ -203,33 +207,57 @@ def count(kind):
         STATS[kind] += 1
 
 
-def groq(messages, temperature, schema=None):
-    body = {"temperature": temperature, "messages": messages}
-    if schema:
-        body["response_format"] = {"type": "json_schema", "json_schema": schema}
-    for i, model in enumerate(MODELS):
-        extra = {"reasoning_effort": "low"} if model.startswith("openai/gpt-oss") else {}
+def routes(fast=False):
+    # (url, api key env var, model, supports strict json_schema); providers without a key are skipped.
+    # fast=True skips Featherless: Kimi needs ~65-90 s for the long profile/jobs JSON, too slow on stage.
+    out = [] if fast else [(FEATHERLESS_URL, "FEATHERLESS_API_KEY", m, False) for m in FEATHERLESS_MODELS]
+    out += [(GROQ_URL, "GROQ_API_KEY", m, True) for m in MODELS]
+    return [r for r in out if os.environ.get(r[1])]
+
+
+def parse_json(text, schema):
+    # Featherless has no strict JSON mode: accept code fences or chatter around one JSON object,
+    # and insist on the schema's required keys so a half answer moves on to the next model.
+    text = text.strip()
+    obj = json.loads(text[text.index("{"):text.rindex("}") + 1])
+    missing = [k for k in schema["schema"]["required"] if k not in obj]
+    if missing:
+        raise ValueError(f"missing keys {missing}")
+    return obj
+
+
+def llm(messages, temperature, schema=None, fast=False):
+    todo = routes(fast)
+    if not todo:
+        raise RuntimeError("no LLM API key configured")
+    for i, (url, key_env, model, strict) in enumerate(todo):
+        body = {"model": model, "temperature": temperature, "messages": messages}
+        if schema and strict:
+            body["response_format"] = {"type": "json_schema", "json_schema": schema}
+        elif schema:
+            body["messages"] = messages + [{"role": "system", "content":
+                "Reply with ONE JSON object only: no prose, no markdown fences. "
+                "It must match this JSON Schema exactly: " + json.dumps(schema["schema"])}]
+            body["max_tokens"] = 1800
+        if model.startswith("openai/gpt-oss"):
+            body["reasoning_effort"] = "low"
         try:
-            r = requests.post(
-                GROQ_URL,
-                headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
-                json={**body, **extra, "model": model},
-                timeout=30,
-            )
+            r = requests.post(url, headers={"Authorization": f"Bearer {os.environ[key_env]}"}, json=body,
+                              timeout=30 if url == GROQ_URL else 60)
             r.raise_for_status()
             data = r.json()
             content = (data["choices"][0]["message"].get("content") or "").strip()
             if not content:
                 raise ValueError("empty content")
             if schema:
-                json.loads(content)  # bad JSON from this model: try the next one
+                content = json.dumps(parse_json(content, schema))
         except (requests.RequestException, ValueError, KeyError, IndexError) as e:
-            if i + 1 == len(MODELS):
+            if i + 1 == len(todo):
                 raise
-            app.logger.warning("%s failed (%s), trying %s", model, e, MODELS[i + 1])
+            app.logger.warning("%s failed (%s), trying %s", model, str(e)[:200], todo[i + 1][2])
             continue
         with LOCK:
-            STATS["tokens"] += data.get("usage", {}).get("total_tokens", 0)
+            STATS["tokens"] += (data.get("usage") or {}).get("total_tokens", 0)
             STATS["by_model"][model] = STATS["by_model"].get(model, 0) + 1
         return content
 
@@ -289,7 +317,7 @@ def generate():
         "but claim a bigger accomplishment: bigger numbers, more people impacted, and a bigger career payoff."
     )
     try:
-        out = json.loads(groq(
+        out = json.loads(llm(
             [{"role": "system", "content": system}, {"role": "user", "content": user}],
             temperature=min(0.85, 0.55 + 0.03 * level),
             schema=GENERATE_SCHEMA,
@@ -333,7 +361,7 @@ def delarp():
     if not text:
         return jsonify(error="Paste a LinkedIn post first."), 400
     try:
-        truth = groq(
+        truth = llm(
             [{"role": "system", "content": DELARP_PROMPT}, {"role": "user", "content": text}],
             temperature=0.9,
         )
@@ -466,10 +494,11 @@ def profile():
         level = 7
     system = PROFILE_PROMPT.format(level=level, intensity=LEVELS[level - 1])
     try:
-        out = json.loads(groq(
+        out = json.loads(llm(
             [{"role": "system", "content": system}, {"role": "user", "content": f"Name: {name}\nMy real life: {text}"}],
             temperature=0.5 + 0.06 * level,
             schema=PROFILE_SCHEMA,
+            fast=True,
         ))
         out["experience"] = out["experience"][:4]
         out["education"] = out["education"][:2]
@@ -528,7 +557,7 @@ def battle():
         level = 7
     user = "\n".join(f"Contestant {k.upper()}: {v['name']} - {v['text']}" for k, v in sides.items())
     try:
-        out = json.loads(groq(
+        out = json.loads(llm(
             [{"role": "system", "content": BATTLE_PROMPT.format(level=level, intensity=LEVELS[level - 1])},
              {"role": "user", "content": user}],
             temperature=0.5 + 0.06 * level,
@@ -595,10 +624,11 @@ def jobs():
     if not text:
         return jsonify(error="Tell us who you are first."), 400
     try:
-        out = json.loads(groq(
+        out = json.loads(llm(
             [{"role": "system", "content": JOBS_PROMPT}, {"role": "user", "content": text}],
             temperature=0.9,
             schema=JOBS_SCHEMA,
+            fast=True,
         ))
         listings = out["jobs"][:4]
         for j in listings:

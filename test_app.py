@@ -25,11 +25,11 @@ def fake_post(url, headers, json, timeout):
     calls.append(json["model"])
     return Resp(429) if len(calls) == 1 else Resp(200, " ok ")
 real_post, app.requests.post = app.requests.post, fake_post
-assert app.groq([], 0.5) == "ok" and calls == app.MODELS[:2]
+assert app.llm([], 0.5) == "ok" and calls == app.MODELS[:2]
 calls.clear()
 app.requests.post = lambda *a, **k: Resp(429)
 try:
-    app.groq([], 0.5)
+    app.llm([], 0.5)
     raise AssertionError("expected HTTPError when every model is rate limited")
 except app.requests.HTTPError:
     pass
@@ -42,7 +42,7 @@ def null_then_good(url, headers, json, timeout):
         r.json = lambda: {"choices": [{"message": {"content": None}}]}
     return r
 app.requests.post = null_then_good
-assert app.groq([], 0.5) == "fine" and len(calls) == 2
+assert app.llm([], 0.5) == "fine" and len(calls) == 2
 
 # bad JSON from one model with a schema also falls through
 calls.clear()
@@ -50,7 +50,32 @@ def bad_then_good(url, headers, json, timeout):
     calls.append(json["model"])
     return Resp(200, "not json" if len(calls) == 1 else '{"a": 1}')
 app.requests.post = bad_then_good
-assert app.groq([], 0.5, schema={"name": "x"}) == '{"a": 1}' and len(calls) == 2
+assert app.llm([], 0.5, schema={"name": "x", "schema": {"required": ["a"]}}) == '{"a": 1}' and len(calls) == 2
+# Featherless first: fenced JSON is accepted, a 429 (one request at a time on the $25 plan) spills to Groq.
+os.environ["FEATHERLESS_API_KEY"] = "fl"
+SCH = {"name": "t", "schema": {"required": ["a"]}}
+hits = []
+def fl_then(url, headers, json, timeout):
+    hits.append((url, json["model"]))
+    if url == app.FEATHERLESS_URL:
+        assert "response_format" not in json and "JSON Schema" in json["messages"][-1]["content"]
+        return Resp(200, 'Sure! ```json\n{"a": 1}\n```')
+    return Resp(200, '{"a": 2}')
+app.requests.post = fl_then
+assert app.llm([], 0.5, schema=SCH) == '{"a": 1}' and hits[0][0] == app.FEATHERLESS_URL
+hits.clear()
+def fl_busy(url, headers, json, timeout):
+    hits.append(url)
+    return Resp(429) if url == app.FEATHERLESS_URL else Resp(200, '{"a": 2}')
+app.requests.post = fl_busy
+assert app.llm([], 0.5, schema=SCH) == '{"a": 2}' and hits == [app.FEATHERLESS_URL, app.GROQ_URL]
+def fl_missing(url, headers, json, timeout):
+    return Resp(200, '{"b": 1}') if url == app.FEATHERLESS_URL else Resp(200, '{"a": 3}')
+app.requests.post = fl_missing
+assert app.llm([], 0.5, schema=SCH) == '{"a": 3}'  # missing required key -> next model
+hits.clear(); app.requests.post = fl_busy
+assert app.llm([], 0.5, schema=SCH, fast=True) == '{"a": 2}' and hits == [app.GROQ_URL]  # fast skips Featherless
+del os.environ["FEATHERLESS_API_KEY"]
 app.requests.post = real_post
 
 FAKE = {
@@ -65,7 +90,7 @@ FAKE_PROFILE = {
     "skills": [{"name": "n", "endorsements": 1}], "recommendations": [],
 }
 SEEN = []
-def fake_groq(messages, temperature, schema=None):
+def fake_groq(messages, temperature, schema=None, fast=False):
     SEEN.append(messages[-1]["content"])
     if not schema:
         return "I got laid off."
@@ -77,7 +102,7 @@ def fake_groq(messages, temperature, schema=None):
         return json.dumps({"a": {"post": "p", "headline": "h", "score": 140}, "b": {"post": "q", "headline": "i", "score": 20},
                            "winner": "a", "verdict": "v"})
     return json.dumps(FAKE_PROFILE if schema["name"] == "larp_profile" else FAKE)
-app.groq = fake_groq
+app.llm = fake_groq
 c = app.app.test_client()
 
 assert c.get("/api/health").json == {"ok": True, "boot": app.BOOT_ID}
@@ -147,7 +172,7 @@ assert bad["post"] and bad["id"] not in [x["id"] for x in c.get("/api/gallery").
 
 def boom(*a, **k):
     raise RuntimeError("groq down")
-app.groq = boom
+app.llm = boom
 r2 = c.post("/api/generate", json={"text": "made toast"}).json
 assert r2["fallback"] is True and "made toast" in r2["post"]
 assert c.post("/api/delarp", json={"text": "x"}).json["truth"]

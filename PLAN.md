@@ -411,3 +411,13 @@ Lucas asked me to make these changes in your files directly. They are kept narro
 - `test_app.py`: the escalate assertion now checks for "one level more inflated".
 - `post.html`: the LinkedIn button is "Copy + open LinkedIn". It copies the post first (LinkedIn's prefill is ignored by its mobile app), then opens the composer. The `linkedin.js` tag is removed, so no page loads `linkedin.js` anymore.
 - Frontend: the slider level names match the new `LEVELS` (Resume-speak ... Maximum larp).
+
+### Featherless (Kimi K2) as the main writer (Mohammad's call)
+
+- Posts, delarp and battles now use Featherless `moonshotai/Kimi-K2-Instruct-0905` first. It writes much funnier posts, but each post takes about 25-30 s (delarp about 8-20 s, battle about 30 s).
+- Profile and jobs stay on Groq (`fast=True`), because Kimi needed 65-90 s for those long answers.
+- Mohammad's $25 plan runs one Kimi request at a time. Other requests get a 429 and instantly fall back to Groq, so a busy room still gets about 3 s answers.
+- Frontend: your 60 s request timeout is fine. A loading state that admits the wait ("Our AI ghostwriter is drafting…") would help, because posts now take about 30 s.
+- Render: please add the environment variable `FEATHERLESS_API_KEY`. Mohammad sends you the value privately, never in this repo. Without it, everything keeps running on Groq as before.
+- The gunicorn timeout is now 120 s in `render.yaml`, so long requests are not killed.
+

@@ -24,14 +24,14 @@ Live demo: https://larpedin-p1fd.onrender.com
 ## How it works
 
 - The backend is one Flask file, `app.py`. The frontend is plain HTML, CSS and JavaScript in `static/`, with no build step.
-- Text comes from the free Groq API. Each request uses a strict JSON schema, so the model always returns the exact fields that the page needs. One call returns the post, headline, comments and scores together.
-- Reliability: if a model hits its rate limit or fails, the request moves to the next model (`gpt-oss-120b`, then `gpt-oss-20b`, then `qwen3.8-27b`). If all three fail, the user still gets a canned post, never an error page. A burst of 12 requests at once all returned real posts in 3 to 5 seconds.
+- Text comes from Kimi K2 on Featherless for posts, delarp and battles, and from the free Groq API for everything else. Each request uses a strict JSON schema, so the model always returns the exact fields that the page needs. One call returns the post, headline, comments and scores together.
+- Reliability: if a model is busy, hits its rate limit or fails, the request moves to the next model (Kimi K2, then Groq's `gpt-oss-120b`, `gpt-oss-20b` and `qwen3.8-27b`). If all three fail, the user still gets a canned post, never an error page. A burst of 12 requests at once all returned real posts in 3 to 5 seconds.
 - Link preview images are drawn on the server with Pillow.
 - The gallery, profiles and stats live in memory. A restart clears them. This keeps the app free to run with no database.
 - Share links carry the post itself in the URL (compressed), so they keep working after the free server restarts and forgets everything in memory.
 - A GitHub Actions job pings the server every 10 minutes, so it does not fall asleep.
 - A word filter keeps slurs off the projector wall. The Hall starts with 12 seed posts after every restart.
-- Total running cost: $0. Render free plan, Groq free plan.
+- Running cost: Render free plan, Groq free plan and a $25/month Featherless plan. Without the Featherless key, it runs for $0 on Groq alone.
 
 ## Run locally
 
