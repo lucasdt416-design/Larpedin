@@ -649,6 +649,11 @@ function renderCard(data, slot, req) {
   }
   q(".regen-btn").addEventListener("click", () => run(req.text, [generateTask(req)], item));
 
+  // Close the "More" menu after picking an action.
+  q(".more-menu").addEventListener("click", (e) => {
+    if (e.target.closest("button, a")) q(".more-actions").open = false;
+  });
+
   // Full circle: feed the generated post back through Delarp.
   q(".delarp-btn").addEventListener("click", () => {
     if ($("generate").disabled) return;
@@ -731,6 +736,20 @@ function burst(anchor) {
     document.body.append(piece);
   }
 }
+
+// Close any open "More" menu on an outside click or Escape.
+document.addEventListener("click", (e) => {
+  document.querySelectorAll(".more-actions[open]").forEach((d) => {
+    if (!d.contains(e.target)) d.open = false;
+  });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  document.querySelectorAll(".more-actions[open]").forEach((d) => {
+    d.open = false;
+    d.querySelector("summary").focus();
+  });
+});
 
 // ---------- Hall preview ----------
 

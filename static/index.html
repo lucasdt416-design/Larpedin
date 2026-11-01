@@ -101,6 +101,9 @@
                        LinkedIn (copies the text, opens LinkedIn's composer; the
                        user posts it themselves). Fake-card buttons must never call it.
     .escalate-btn      rewrite this post one cringe level higher, in place
+    .more-actions      <details> "More" menu holding the secondary actions below
+    .more-btn          its <summary> toggle
+    .more-menu         the dropdown panel
     .copy-btn          copy the post text only
     .link-btn          copy a shareable /p/<id> link (hidden if no id)
     .x-btn             open X's compose box with an excerpt + share link
@@ -278,13 +281,18 @@
       <div class="post-actions">
         <button type="button" class="share-btn" title="Copies the post and opens LinkedIn. Nothing is posted unless you paste and post it there yourself.">Copy + open LinkedIn</button>
         <button type="button" class="escalate-btn">Escalate</button>
-        <button type="button" class="copy-btn">Copy</button>
         <button type="button" class="link-btn" hidden>Share link</button>
-        <button type="button" class="x-btn" hidden>Post on X</button>
-        <button type="button" class="delarp-btn"> Delarp this</button>
-        <button type="button" class="download-btn">Download image</button>
-        <button type="button" class="regen-btn">Regenerate</button>
-        <a class="gallery-link" hidden>See it in the Hall of Larp</a>
+        <details class="more-actions">
+          <summary class="more-btn">More</summary>
+          <div class="more-menu">
+            <button type="button" class="copy-btn">Copy text</button>
+            <button type="button" class="x-btn" hidden>Post on X</button>
+            <button type="button" class="delarp-btn">Delarp this</button>
+            <button type="button" class="download-btn">Download image</button>
+            <button type="button" class="regen-btn">Regenerate</button>
+            <a class="gallery-link" hidden>See it in the Hall of Larp</a>
+          </div>
+        </details>
       </div>
     </div>
   </template>

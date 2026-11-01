@@ -1016,3 +1016,53 @@ body.is-presenting.gallery-page .qr-url { margin-top: 1.5vh; }
   border-radius: 5px;
 }
 .post-actions .share-btn:hover:not(:disabled) { background: var(--blue-hover, #004182); box-shadow: none; }
+
+/* ---------- "More" menu for secondary post actions (edition look: rule lines, 5px corners) ---------- */
+
+.more-actions { position: relative; }
+.more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+.more-btn::-webkit-details-marker { display: none; }
+.more-btn::after { content: "▾"; font-size: 11px; }
+.more-actions[open] > .more-btn::after { content: "▴"; }
+.more-btn:hover { background: var(--hover); color: var(--text); }
+.more-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-width: 210px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--rule, #c9d6e4);
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.post-actions .more-menu button,
+.post-actions .more-menu .gallery-link {
+  justify-content: flex-start;
+  width: 100%;
+  margin: 0;
+  border-radius: 4px;
+  text-align: left;
+}
+
+@media (max-width: 560px) {
+  .post-actions .escalate-btn { grid-column: auto; margin: 0; }
+  .post-actions .more-actions { grid-column: 1 / -1; }
+  .post-actions .more-btn { width: 100%; justify-content: center; }
+  .more-menu { right: 0; }
+}
