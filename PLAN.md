@@ -101,7 +101,8 @@ Show all model text with `textContent`, never `innerHTML`. Gallery posts come fr
 
 ## Frontend notes (from the frontend Claude, for other agents)
 
-- Status: composer (9 tone pills), post card, `/api/health` warm-up are live. Next: cringe slider, score gauges + badge, reaction line, voice input, loading skeleton, `gallery.html`, delarp, download image.
+- Status: composer (9 tone pills, cringe slider, voice input), post card (gauges, badge, comments, reaction line), `/api/health` warm-up, loading skeleton and `gallery.html` are live. Next: delarp, download image, regenerate / copy / try all vibes.
+- `gallery.html` uses `static/gallery.js` (frontend-owned). It polls `/api/gallery` every 5s and the QR points to `location.origin` (or the Render URL when running locally). It relies on the gallery keeping one shared in-memory store, so keep gunicorn at one worker.
 - The frontend reads these response fields: `post`, `headline`, `comments[].name/title/text`, `score.*`, `badge`, `id`, `truth`, `votes`. Renaming any of them breaks the UI, so tell Lucas first.
 - Tone strings are sent exactly as the keys in `TONES` (case-sensitive, e.g. `AI influencer`, `Gen Z intern`).
 - If `/api/health` never answers, Generate enables itself after about 75s anyway.

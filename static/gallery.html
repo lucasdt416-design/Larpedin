@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!--
+  LarpedIn live gallery — class reference for the designer (style.css).
+  Shares .app-header, .brand, .tagline, .error-banner, .avatar, .post-headline,
+  .post-meta, .parody-label, .post-body, .see-more, .badge with index.html.
+
+    .gallery-page      <body> class for this page
+    .nav-link          link between the composer and the gallery
+    .gallery-layout    two columns: QR panel + feed
+    .qr-panel          "Scan to post" box
+    .qr-code           element the QR image is drawn into
+    .qr-url            the URL printed under the QR
+    .gallery-feed      list of gallery posts (most votes first)
+    .gallery-empty     shown when there are no posts yet
+    .gallery-card      one post; .is-new briefly when it first appears
+    .gallery-original  "What they actually did: ..." line
+    .gallery-footer    badge + score + vote button row
+    .gallery-score     "Cringe 81/100"
+    .vote-btn          upvote button; .is-active after this browser voted
+    .vote-count        number inside the vote button
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LarpedIn Gallery</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="gallery-page">
+  <header class="app-header">
+    <a class="brand" href="/">LarpedIn</a>
+    <p class="tagline">Live gallery: the most delusional posts, voted by you.</p>
+    <a class="nav-link" href="/">Make your own →</a>
+  </header>
+
+  <main class="gallery-layout">
+    <aside class="qr-panel" aria-label="Scan to post">
+      <h2>Scan to post</h2>
+      <div class="qr-code" id="qr" role="img" aria-label="QR code to open LarpedIn"></div>
+      <p class="qr-url" id="qr-url"></p>
+    </aside>
+
+    <section aria-label="Gallery posts">
+      <p class="error-banner" id="error" role="alert" hidden></p>
+      <p class="gallery-empty" id="empty" hidden>No posts yet. Scan the code and be the first to larp.</p>
+      <ol class="gallery-feed" id="feed" aria-live="polite"></ol>
+    </section>
+  </main>
+
+  <template id="gallery-card-template">
+    <li class="gallery-card">
+      <header class="post-header">
+        <div class="avatar" aria-hidden="true"></div>
+        <div class="post-author-block">
+          <span class="post-headline"></span>
+          <span class="post-meta"><span class="gallery-tone"></span> · <span class="parody-label">Parody</span></span>
+        </div>
+      </header>
+      <p class="gallery-original"></p>
+      <div class="post-body"></div>
+      <button type="button" class="see-more" aria-expanded="false" hidden>...see more</button>
+      <div class="gallery-footer">
+        <span class="badge"></span>
+        <span class="gallery-score"></span>
+        <button type="button" class="vote-btn" aria-pressed="false">▲ <span class="vote-count">0</span></button>
+      </div>
+    </li>
+  </template>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="gallery.js"></script>
+</body>
+</html>
